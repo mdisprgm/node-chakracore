@@ -203,7 +203,7 @@ namespace node {
 
 // TODO(addaleax): Officially deprecate this and replace it with something
 // better suited for a public embedder API.
-NODE_EXTERN int Start(int argc, char* argv[]);
+NODE_EXTERN int Start(int argc, char* argv[], JsContextRef* context_out);
 
 // TODO(addaleax): Officially deprecate this and replace it with something
 // better suited for a public embedder API.

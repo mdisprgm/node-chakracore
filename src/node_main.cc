@@ -69,7 +69,8 @@ int wmain(int argc, wchar_t* wargv[]) {
   }
   argv[argc] = nullptr;
   // Now that conversion is done, we can finally start.
-  return node::Start(argc, argv);
+  JsContextRef dummy;
+  return node::Start(argc, argv, &dummy);
 }
 #else
 // UNIX

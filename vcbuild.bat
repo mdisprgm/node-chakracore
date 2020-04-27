@@ -72,6 +72,7 @@ if /i "%1"=="x86"           set target_arch=x86&goto arg-ok
 if /i "%1"=="x64"           set target_arch=x64&goto arg-ok
 if /i "%1"=="arm"           set target_arch=arm&goto arg-ok
 if /i "%1"=="vs2017"        set target_env=vs2017&goto arg-ok
+if /i "%1"=="vs2019"        set target_env=vs2019&goto arg-ok
 if /i "%1"=="noprojgen"     set noprojgen=1&goto arg-ok
 if /i "%1"=="projgen"       set projgen=1&goto arg-ok
 if /i "%1"=="nobuild"       set nobuild=1&goto arg-ok
@@ -241,6 +242,34 @@ if %target_arch%==x64 if %msvs_host_arch%==amd64 set vcvarsall_arg=amd64
 @rem also if both are x86
 if %target_arch%==x86 if %msvs_host_arch%==x86 set vcvarsall_arg=x86
 
+@rem Look for Visual Studio 2019
+if defined target_env if %target_env% == "vs2019" (
+  echo Looking for Visual Studio 2019
+  call tools\msvs\vswhere_usability_wrapper.cmd
+  if "_%VCINSTALLDIR%_" == "__" goto msbuild-not-found
+  if defined msi (
+    echo Looking for WiX installation for Visual Studio 2019...
+    if not exist "%WIX%\SDK\VS2019" (
+      echo Failed to find WiX install for Visual Studio 2019
+      echo VS2017 support for WiX is only present starting at version 3.11
+      goto msbuild-not-found
+    )
+    if not exist "%VCINSTALLDIR%\..\MSBuild\Microsoft\WiX" (
+      echo Failed to find the Wix Toolset Visual Studio 2019 Extension
+      goto msbuild-not-found
+    )
+  )
+  @rem check if VS2019 is already setup, and for the requested arch
+  if "_%VisualStudioVersion%_" == "_16.0_" if "_%VSCMD_ARG_TGT_ARCH%_"=="_%target_arch%_" goto found_vs2019
+  @rem need to clear VSINSTALLDIR for vcvarsall to work as expected
+  set "VSINSTALLDIR="
+  @rem prevent VsDevCmd.bat from changing the current working directory
+  set "VSCMD_START_DIR=%CD%"
+  set vcvars_call="%VCINSTALLDIR%\Auxiliary\Build\vcvarsall.bat" %vcvarsall_arg%
+  echo calling: %vcvars_call%
+  call %vcvars_call%
+  goto found_vs2019
+)
 @rem Look for Visual Studio 2017
 :vs-set-2017
 if defined target_env if "%target_env%" NEQ "vs2017" goto msbuild-not-found
@@ -273,6 +302,12 @@ if errorlevel 1 goto msbuild-not-found
 echo Found MSVS version %VisualStudioVersion%
 set GYP_MSVS_VERSION=2017
 set PLATFORM_TOOLSET=v141
+goto msbuild-found
+
+:found_vs2019
+echo Found MSVS version %VisualStudioVersion%
+set GYP_MSVS_VERSION=2019
+set PLATFORM_TOOLSET=v142
 goto msbuild-found
 
 :msbuild-not-found
@@ -678,7 +713,7 @@ del .used_configure_flags
 goto exit
 
 :help
-echo vcbuild.bat [debug/release] [msi] [doc] [test/test-ci/test-all/test-addons/test-addons-napi/test-benchmark/test-internet/test-pummel/test-simple/test-message/test-tick-processor/test-known-issues/test-node-inspect/test-check-deopts/test-npm/test-async-hooks/test-v8/test-v8-intl/test-v8-benchmarks/test-v8-all] [ignore-flaky] [static/dll] [noprojgen] [projgen] [small-icu/full-icu/without-intl] [nobuild] [nosnapshot] [noetw] [ltcg] [nopch] [licensetf] [sign] [ia32/x86/x64] [vs2017] [download-all] [enable-vtune] [lint/lint-ci/lint-js/lint-js-ci/lint-md] [lint-md-build] [package] [build-release] [upload] [no-NODE-OPTIONS] [link-module path-to-module] [debug-http2] [debug-nghttp2] [clean] [cctest] [no-cctest] [openssl-no-asm]
+echo vcbuild.bat [debug/release] [msi] [doc] [test/test-ci/test-all/test-addons/test-addons-napi/test-benchmark/test-internet/test-pummel/test-simple/test-message/test-tick-processor/test-known-issues/test-node-inspect/test-check-deopts/test-npm/test-async-hooks/test-v8/test-v8-intl/test-v8-benchmarks/test-v8-all] [ignore-flaky] [static/dll] [noprojgen] [projgen] [small-icu/full-icu/without-intl] [nobuild] [nosnapshot] [noetw] [ltcg] [nopch] [licensetf] [sign] [ia32/x86/x64] [vs2017] [vs2019] [download-all] [enable-vtune] [lint/lint-ci/lint-js/lint-js-ci/lint-md] [lint-md-build] [package] [build-release] [upload] [no-NODE-OPTIONS] [link-module path-to-module] [debug-http2] [debug-nghttp2] [clean] [cctest] [no-cctest] [openssl-no-asm]
 echo Examples:
 echo   vcbuild.bat                          : builds release build
 echo   vcbuild.bat debug                    : builds debug build
