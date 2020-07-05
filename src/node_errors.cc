@@ -377,7 +377,7 @@ void FatalException(Isolate* isolate,
     // Failed before the process._fatalException function was added!
     // this is probably pretty bad.  Nothing to do but report and exit.
     ReportException(env, error, message);
-    exit(6);
+    //exit(6);
   } else {
     errors::TryCatchScope fatal_try_catch(env);
 
@@ -393,7 +393,7 @@ void FatalException(Isolate* isolate,
     if (fatal_try_catch.HasCaught()) {
       // The fatal exception function threw, so we must exit
       ReportException(env, fatal_try_catch);
-      exit(7);
+      //exit(7);
 
     } else if (caught.ToLocalChecked()->IsFalse()) {
       ReportException(env, error, message);
@@ -404,9 +404,9 @@ void FatalException(Isolate* isolate,
       Local<Value> code;
       if (!process_object->Get(env->context(), exit_code).ToLocal(&code) ||
           !code->IsInt32()) {
-        exit(1);
+        //exit(1);
       }
-      exit(code.As<Int32>()->Value());
+      //exit(code.As<Int32>()->Value());
     }
   }
 }

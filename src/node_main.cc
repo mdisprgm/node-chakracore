@@ -28,6 +28,7 @@
 #include <WinError.h>
 
 int wmain(int argc, wchar_t* wargv[]) {
+
   if (!IsWindows7OrGreater()) {
     fprintf(stderr, "This application is only supported on Windows 7, "
                     "Windows Server 2008 R2, or higher.");
@@ -69,8 +70,7 @@ int wmain(int argc, wchar_t* wargv[]) {
   }
   argv[argc] = nullptr;
   // Now that conversion is done, we can finally start.
-  JsContextRef dummy;
-  return node::Start(argc, argv, &dummy);
+  return node::Start(argc, argv);
 }
 #else
 // UNIX

@@ -110,6 +110,13 @@ typedef int mode_t;
 #include <grp.h>  // getgrnam()
 #endif
 
+#define NODEGATE_EXPORT
+#include "../../bdsx/nodegate.h"
+
+namespace nodegate {
+  node::Environment* g_env;
+}
+
 #if ENABLE_TTD_NODE
 bool s_doTTRecord = false;
 bool s_doTTReplay = false;
@@ -2046,8 +2053,7 @@ Local<Context> NewContext(Isolate* isolate,
 
 inline int Start(Isolate* isolate, void* isolate_context,
                  const std::vector<std::string>& args,
-                 const std::vector<std::string>& exec_args,
-                 JsContextRef* context_out) {
+                 const std::vector<std::string>& exec_args) {
   HandleScope handle_scope(isolate);
 
 #if ENABLE_TTD_NODE
@@ -2055,7 +2061,6 @@ inline int Start(Isolate* isolate, void* isolate_context,
 #else
   Local<Context> context = NewContext(isolate);
 #endif
-  *context_out = *context;
 
   Context::Scope context_scope(context);
 
@@ -2076,6 +2081,7 @@ inline int Start(Isolate* isolate, void* isolate_context,
 #endif
 
   Environment env(isolate_data, context);
+  nodegate::g_env = &env;
   env.Start(args, exec_args, v8_is_profiling);
 
   const char* path = args.size() > 1 ? args[1].c_str() : nullptr;
@@ -2226,8 +2232,7 @@ Isolate* NewIsolate(ArrayBufferAllocator* allocator, uv_loop_t* event_loop) {
 
 inline int Start(uv_loop_t* event_loop,
                  const std::vector<std::string>& args,
-                 const std::vector<std::string>& exec_args,
-                 JsContextRef* context_out) {
+                 const std::vector<std::string>& exec_args) {
   std::unique_ptr<ArrayBufferAllocator, decltype(&FreeArrayBufferAllocator)>
       allocator(CreateArrayBufferAllocator(), &FreeArrayBufferAllocator);
   Isolate* const isolate = NewIsolate(allocator.get(), event_loop);
@@ -2277,7 +2282,7 @@ inline int Start(uv_loop_t* event_loop,
       isolate->GetHeapProfiler()->StartTrackingHeapObjects(true);
     }
     exit_code =
-        Start(isolate, isolate_data_ptr, args, exec_args, context_out);
+        Start(isolate, isolate_data_ptr, args, exec_args);
   }
 
   {
@@ -2292,7 +2297,8 @@ inline int Start(uv_loop_t* event_loop,
   return exit_code;
 }
 
-int Start(int argc, char** argv, JsContextRef* context_out) {
+int Start(int argc,
+          char** argv) {
   atexit([] () { uv_tty_reset_mode(); });
   PlatformInit();
   performance::performance_node_start = PERFORMANCE_NOW();
@@ -2392,7 +2398,7 @@ int Start(int argc, char** argv, JsContextRef* context_out) {
 #endif
 
   const int exit_code =
-      Start(uv_default_loop(), args, exec_args, context_out);
+      Start(uv_default_loop(), args, exec_args);
   v8_platform.StopTracingAgent();
   v8_initialized = false;
   V8::Dispose();
@@ -2415,3 +2421,13 @@ void Initialize() {}
 
 NODE_BUILTIN_MODULE_CONTEXT_AWARE(inspector, Initialize)
 #endif  // !HAVE_INSPECTOR
+
+void NODEGATE_EXPORT_ nodegate::nodeProcessTimer() noexcept {
+  uv_loop_t* loop = g_env->event_loop();
+  uv_run(loop, UV_RUN_NOWAIT);
+}
+
+bool NODEGATE_EXPORT_ nodegate::isAlive() noexcept {
+  uv_loop_t* loop = g_env->event_loop();
+  return uv_loop_alive(loop) && loop->stop_flag == 0;
+}

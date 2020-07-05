@@ -198,12 +198,11 @@ typedef intptr_t ssize_t;
 # include <sys/types.h>  // size_t, ssize_t
 #endif  // _WIN32
 
-
 namespace node {
 
 // TODO(addaleax): Officially deprecate this and replace it with something
 // better suited for a public embedder API.
-NODE_EXTERN int Start(int argc, char* argv[], JsContextRef* context_out);
+NODE_EXTERN int Start(int argc, char* argv[]);
 
 // TODO(addaleax): Officially deprecate this and replace it with something
 // better suited for a public embedder API.
