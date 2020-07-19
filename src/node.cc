@@ -85,6 +85,7 @@
 
 #include <string>
 #include <vector>
+#include <codecvt>
 
 #if defined(NODE_HAVE_I18N_SUPPORT)
 #include <unicode/uvernum.h>
@@ -525,24 +526,60 @@ const char* signo_string(int signo) {
 }
 
 // Look up environment variable unless running as setuid root.
-bool SafeGetenv(const char* key, std::string* text) {
+bool SafeGetenv(const wchar_t* key, std::string* text) {
 #if !defined(__CloudABI__) && !defined(_WIN32)
   if (linux_at_secure || getuid() != geteuid() || getgid() != getegid())
     goto fail;
 #endif
 
   {
-    Mutex::ScopedLock lock(environ_mutex);
-    if (const char* value = getenv(key)) {
-      *text = value;
+    environ_mutex.Lock();
+    if (DWORD len = GetEnvironmentVariableW(key, nullptr, 0)) {
+      std::wstring envvar;
+      envvar.resize(len);
+      GetEnvironmentVariableW(key, &envvar.front(), len);
+      environ_mutex.Unlock();
+
+      std::wstring_convert<std::codecvt_utf8<wchar_t>> utf8_conv;
+      *text = utf8_conv.to_bytes(envvar);
       return true;
     }
+
+    environ_mutex.Unlock();
   }
 
 fail:
   text->clear();
   return false;
 }
+
+// Look up environment variable unless running as setuid root.
+bool SafeGetenvW(const wchar_t* key, std::wstring* text) {
+#if !defined(__CloudABI__) && !defined(_WIN32)
+  if (linux_at_secure || getuid() != geteuid() || getgid() != getegid())
+    goto fail;
+#endif
+
+  {
+    environ_mutex.Lock();
+    if (DWORD len = GetEnvironmentVariableW(key, nullptr, 0)) {
+      std::wstring envvar;
+      envvar.resize(len);
+      GetEnvironmentVariableW(key, &envvar.front(), len);
+      environ_mutex.Unlock();
+
+      *text = envvar;
+      return true;
+    }
+
+    environ_mutex.Unlock();
+  }
+
+fail:
+  text->clear();
+  return false;
+}
+
 
 
 void* ArrayBufferAllocator::Allocate(size_t size) {
@@ -1725,54 +1762,51 @@ void Init(std::vector<std::string>* argv,
   {
     std::string text;
     default_env_options->pending_deprecation =
-        SafeGetenv("NODE_PENDING_DEPRECATION", &text) && text[0] == '1';
+        SafeGetenv(L"NODE_PENDING_DEPRECATION", &text) && text[0] == '1';
   }
 
   // Allow for environment set preserving symlinks.
   {
     std::string text;
     default_env_options->preserve_symlinks =
-        SafeGetenv("NODE_PRESERVE_SYMLINKS", &text) && text[0] == '1';
+        SafeGetenv(L"NODE_PRESERVE_SYMLINKS", &text) && text[0] == '1';
   }
 
   {
     std::string text;
     default_env_options->preserve_symlinks_main =
-        SafeGetenv("NODE_PRESERVE_SYMLINKS_MAIN", &text) && text[0] == '1';
+        SafeGetenv(L"NODE_PRESERVE_SYMLINKS_MAIN", &text) && text[0] == '1';
   }
 
   if (default_env_options->redirect_warnings.empty()) {
-    SafeGetenv("NODE_REDIRECT_WARNINGS",
+    SafeGetenv(L"NODE_REDIRECT_WARNINGS",
                &default_env_options->redirect_warnings);
   }
 
 #if HAVE_OPENSSL
   std::string* openssl_config = &per_process_opts->openssl_config;
   if (openssl_config->empty()) {
-    SafeGetenv("OPENSSL_CONF", openssl_config);
+    SafeGetenv(L"OPENSSL_CONF", openssl_config);
   }
 #endif
 
 #if !defined(NODE_WITHOUT_NODE_OPTIONS)
-  std::string node_options;
-  if (SafeGetenv("NODE_OPTIONS", &node_options)) {
+  std::wstring node_options;
+  if (SafeGetenvW(L"NODE_OPTIONS", &node_options)) {
     std::vector<std::string> env_argv;
     // [0] is expected to be the program name, fill it in from the real argv.
     env_argv.push_back(argv->at(0));
 
-    // Split NODE_OPTIONS at each ' ' character.
-    std::string::size_type index = std::string::npos;
-    do {
-      std::string::size_type prev_index = index;
-      index = node_options.find(' ', index + 1);
-      if (index - prev_index == 1) continue;
+    int argc;
+    wchar_t** argv_16_start =
+        CommandLineToArgvW(&node_options.front(), &argc);
+    wchar_t** argv_16 = argv_16_start;
+    while (*argv_16 != nullptr) {
+      std::wstring_convert<std::codecvt_utf8<wchar_t>> cvt;
+      env_argv.emplace_back(cvt.to_bytes(*argv_16++));
+    }
 
-      const std::string option = node_options.substr(
-          prev_index + 1, index - prev_index - 1);
-      if (!option.empty())
-        env_argv.emplace_back(std::move(option));
-    } while (index != std::string::npos);
-
+    LocalFree(argv_16_start);
 
     ProcessArgv(&env_argv, nullptr, true);
   }
@@ -1787,7 +1821,7 @@ void Init(std::vector<std::string>* argv,
 #if defined(NODE_HAVE_I18N_SUPPORT)
   // If the parameter isn't given, use the env variable.
   if (per_process_opts->icu_data_dir.empty())
-    SafeGetenv("NODE_ICU_DATA", &per_process_opts->icu_data_dir);
+    SafeGetenv(L"NODE_ICU_DATA", &per_process_opts->icu_data_dir);
   // Initialize ICU.
   // If icu_data_dir is empty here, it will load the 'minimal' data.
   if (!i18n::InitializeICUDirectory(per_process_opts->icu_data_dir)) {
@@ -2324,7 +2358,7 @@ int Start(int argc,
 #if HAVE_OPENSSL
   {
     std::string extra_ca_certs;
-    if (SafeGetenv("NODE_EXTRA_CA_CERTS", &extra_ca_certs))
+    if (SafeGetenv(L"NODE_EXTRA_CA_CERTS", &extra_ca_certs))
       crypto::UseExtraCaCerts(extra_ca_certs);
   }
 #ifdef NODE_FIPS_MODE
@@ -2347,7 +2381,8 @@ int Start(int argc,
     per_process_opts->per_isolate->per_env->debug_options->inspector_enabled;
 
   std::string envDoRecordVar;
-  bool envDoRecord = SafeGetenv("DO_TTD_RECORD", &envDoRecordVar) &&
+  bool envDoRecord =
+      SafeGetenv(L"DO_TTD_RECORD", &envDoRecordVar) &&
       envDoRecordVar[0] == '1';
 
   if (!s_doTTRecord && !s_doTTReplay) {
