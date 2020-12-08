@@ -6,19 +6,6 @@
 #include "src/jsrtcontextshim.h"
 #include "src/jsrtisolateshim.h"
 
-#define NODEGATE_EXPORT
-#include "../../bdsx/nodegate.h"
-
-namespace nodegate {
-NodeGateConfig* config;
-
-} // namespace nodegate
-
-void NODEGATE_EXPORT_ nodegate::setMainCallback(
-    NodeGateConfig* _config) noexcept {
-  config = _config;
-}
-
 namespace node {
 namespace native_module {
 
@@ -140,103 +127,6 @@ void NativeModuleLoader::CompileFunction(
   }
 }
 
-class JsCallImpl : public nodegate::JsCall {
- private:
-  v8::Isolate* isolate;
-  v8::Persistent<Context> context;
-
-  class JsFunction {
-   public:
-    v8::Persistent<Function> func;
-    
-    void call(JsCallImpl* call) {
-      v8::HandleScope _scope(call->isolate);
-
-      Local<Context> context = call->context.Get(call->isolate);
-      Local<Function> require = func.Get(call->isolate);
-      require->Call(context, context->Global(), 0, nullptr);
-    }
-    void call(JsCallImpl* call, nodegate::StringView path) {
-      v8::HandleScope _scope(call->isolate);
-
-      v8::Handle<Value> v8path;
-      v8::String::NewFromTwoByte(call->isolate,
-                                 (const uint16_t*)path.string,
-                                 v8::NewStringType::kNormal,
-                                 path.length)
-          .ToLocal(&v8path);
-      Local<Context> context = call->context.Get(call->isolate);
-      Local<Function> require = func.Get(call->isolate);
-      require->Call(context, context->Global(), 1, &v8path);
-    }
-  };
-
- public:
-  JsFunction m_callmain;
-  JsFunction m_require;
-  JsFunction m_log;
-  JsFunction m_error;
-
-  JsCallImpl(v8::Isolate* isolate, v8::Handle<Context> context) noexcept
-      : isolate(isolate), context(isolate, context) {}
-
-  // Inherited via JsCall
-  virtual void callMain() noexcept override {
-    m_callmain.call(this);
-  }
-  virtual void require(nodegate::StringView path) noexcept override {
-    m_require.call(this, path);
-  }
-  virtual void log(nodegate::StringView msg) noexcept override {
-    m_log.call(this, msg);
-  }
-  virtual void error(nodegate::StringView msg) noexcept override {
-    m_error.call(this, msg);
-  }
-};
-
-
-void NativeModuleLoader::_nodegate(
-    const FunctionCallbackInfo<Value>& args) {
-  v8::Isolate* isolate = args.GetIsolate();
-  v8::Local<Context> context = isolate->GetCurrentContext();
-
-  JsCallImpl* callImpl = new JsCallImpl(isolate, context);
-  callImpl->m_callmain.func.Reset(isolate, args[0].As<Function>());
-  callImpl->m_require.func.Reset(isolate, args[1].As<Function>());
-  callImpl->m_log.func.Reset(isolate, args[2].As<Function>());
-  callImpl->m_error.func.Reset(isolate, args[3].As<Function>());
-  nodegate::config->main_call(callImpl);
-}
-void NativeModuleLoader::_nodegate_stdout(
-    const v8::FunctionCallbackInfo<v8::Value>& args) {
-  v8::Isolate* isolate = args.GetIsolate();
-  v8::Local<Context> context = isolate->GetCurrentContext();
-  v8::Handle<Value> data = args[0];
-  if (data->IsArrayBufferView()) {
-    ArrayBuffer::Contents contents = args[0].As<v8::ArrayBufferView>()->Buffer()->GetContents();
-    nodegate::config->stdout_call((const char*)contents.Data(), contents.ByteLength());
-  } else {
-    v8::String::Utf8Value utf8data(data->ToString());
-    nodegate::config->stdout_call(*utf8data, utf8data.length());
-  }
-}
-// stderr write hook
-void NativeModuleLoader::_nodegate_stderr(
-    const v8::FunctionCallbackInfo<v8::Value>& args) {
-  v8::Isolate* isolate = args.GetIsolate();
-  v8::Local<Context> context = isolate->GetCurrentContext();
-  v8::Handle<Value> data = args[0];
-  if (data->IsArrayBufferView()) {
-    ArrayBuffer::Contents contents =
-        args[0].As<v8::ArrayBufferView>()->Buffer()->GetContents();
-    nodegate::config->stderr_call((const char*)contents.Data(),
-                                  contents.ByteLength());
-  } else {
-    v8::String::Utf8Value utf8data(data->ToString());
-    nodegate::config->stderr_call(*utf8data, utf8data.length());
-  }
-}
 // TODO(joyeecheung): it should be possible to generate the argument names
 // from some special comments for the bootstrapper case.
 MaybeLocal<Value> NativeModuleLoader::CompileAndCall(
@@ -443,11 +333,6 @@ void NativeModuleLoader::Initialize(Local<Object> target,
       target, "compileFunction", NativeModuleLoader::CompileFunction);
   env->SetMethod(
       target, "compileCodeCache", NativeModuleLoader::CompileCodeCache);
-  if (nodegate::config) {
-    env->SetMethod(target, "_nodegate", NativeModuleLoader::_nodegate);
-    env->SetMethod(target, "_nodegate_stdout", NativeModuleLoader::_nodegate_stdout);
-    env->SetMethod(target, "_nodegate_stderr", NativeModuleLoader::_nodegate_stderr);
-  }
   // internalBinding('native_module') should be frozen
   target->SetIntegrityLevel(context, IntegrityLevel::kFrozen).FromJust();
 }

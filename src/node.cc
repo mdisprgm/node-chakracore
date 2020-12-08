@@ -111,13 +111,6 @@ typedef int mode_t;
 #include <grp.h>  // getgrnam()
 #endif
 
-#define NODEGATE_EXPORT
-#include "../../bdsx/nodegate.h"
-
-namespace nodegate {
-  node::Environment* g_env;
-}
-
 #if ENABLE_TTD_NODE
 bool s_doTTRecord = false;
 bool s_doTTReplay = false;
@@ -2115,7 +2108,6 @@ inline int Start(Isolate* isolate, void* isolate_context,
 #endif
 
   Environment env(isolate_data, context);
-  nodegate::g_env = &env;
   env.Start(args, exec_args, v8_is_profiling);
 
   const char* path = args.size() > 1 ? args[1].c_str() : nullptr;
@@ -2456,13 +2448,3 @@ void Initialize() {}
 
 NODE_BUILTIN_MODULE_CONTEXT_AWARE(inspector, Initialize)
 #endif  // !HAVE_INSPECTOR
-
-void NODEGATE_EXPORT_ nodegate::nodeProcessTimer() noexcept {
-  uv_loop_t* loop = g_env->event_loop();
-  uv_run(loop, UV_RUN_NOWAIT);
-}
-
-bool NODEGATE_EXPORT_ nodegate::isAlive() noexcept {
-  uv_loop_t* loop = g_env->event_loop();
-  return uv_loop_alive(loop) && loop->stop_flag == 0;
-}
