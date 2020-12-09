@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="16.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{FEADCB9B-A88E-152B-3F1D-C31A8E9D5C7D}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>chakracore</RootNamespace>
+    <IgnoreWarnCompileDuplicatedFilename>true</IgnoreWarnCompileDuplicatedFilename>
+    <PreferredToolArchitecture>x64</PreferredToolArchitecture>
+    <WindowsTargetPlatformVersion>10.0.18362.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Label="Configuration">
+    <ConfigurationType>Utility</ConfigurationType>
+  </PropertyGroup>
+  <PropertyGroup Label="Locals">
+    <PlatformToolset>v142</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <Import Project="$(VCTargetsPath)\BuildCustomizations\masm.props" />
+  <ImportGroup Label="ExtensionSettings" />
+  <ImportGroup Label="PropertySheets">
+    <Import Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <ExecutablePath>$(ExecutablePath);$(MSBuildProjectDirectory)\.\bin\;$(MSBuildProjectDirectory)\.\bin\</ExecutablePath>
+    <IntDir>$(Configuration)\obj\$(ProjectName)\</IntDir>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkIncremental>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</LinkIncremental>
+    <OutDir>$(SolutionDir)bin\$(PlatformShortName)\$(Configuration)\</OutDir>
+    <TargetName>$(ProjectName)</TargetName>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <BufferSecurityCheck>true</BufferSecurityCheck>
+      <DebugInformationFormat>OldStyle</DebugInformationFormat>
+      <DisableSpecificWarnings>4351;4355;4800;4251;4275;4244;4267;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+      <ExceptionHandling>false</ExceptionHandling>
+      <MinimalRebuild>false</MinimalRebuild>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <OmitFramePointers>false</OmitFramePointers>
+      <Optimization>Disabled</Optimization>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <PreprocessorDefinitions>V8_DEPRECATION_WARNINGS;V8_IMMINENT_DEPRECATION_WARNINGS;NODE_ENGINE="chakracore";NODE_ENGINE_CHAKRACORE;WIN32;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE;_HAS_EXCEPTIONS=0;BUILDING_V8_SHARED=1;BUILDING_UV_SHARED=1;OPENSSL_THREADS;DEBUG;_DEBUG;V8_ENABLE_CHECKS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <StringPooling>true</StringPooling>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <TreatWarningAsError>false</TreatWarningAsError>
+      <WarningLevel>Level3</WarningLevel>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>
+      </AdditionalDependencies>
+      <AllowIsolation>true</AllowIsolation>
+      <DataExecutionPrevention>true</DataExecutionPrevention>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <GenerateMapFile>true</GenerateMapFile>
+      <MapExports>true</MapExports>
+      <RandomizedBaseAddress>true</RandomizedBaseAddress>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <TargetMachine>MachineX64</TargetMachine>
+    </Link>
+    <ResourceCompile>
+      <PreprocessorDefinitions>V8_DEPRECATION_WARNINGS;V8_IMMINENT_DEPRECATION_WARNINGS;NODE_ENGINE="chakracore";NODE_ENGINE_CHAKRACORE;WIN32;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE;_HAS_EXCEPTIONS=0;BUILDING_V8_SHARED=1;BUILDING_UV_SHARED=1;OPENSSL_THREADS;DEBUG;_DEBUG;V8_ENABLE_CHECKS;%(PreprocessorDefinitions);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <AdditionalOptions>%(AdditionalOptions)</AdditionalOptions>
+      <BufferSecurityCheck>true</BufferSecurityCheck>
+      <DebugInformationFormat>OldStyle</DebugInformationFormat>
+      <DisableSpecificWarnings>4351;4355;4800;4251;4275;4244;4267;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+      <ExceptionHandling>false</ExceptionHandling>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <OmitFramePointers>true</OmitFramePointers>
+      <Optimization>Full</Optimization>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <PreprocessorDefinitions>V8_DEPRECATION_WARNINGS;V8_IMMINENT_DEPRECATION_WARNINGS;NODE_ENGINE="chakracore";NODE_ENGINE_CHAKRACORE;WIN32;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE;_HAS_EXCEPTIONS=0;BUILDING_V8_SHARED=1;BUILDING_UV_SHARED=1;OPENSSL_THREADS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <RuntimeTypeInfo>false</RuntimeTypeInfo>
+      <StringPooling>true</StringPooling>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <TreatWarningAsError>false</TreatWarningAsError>
+      <WarningLevel>Level3</WarningLevel>
+      <WholeProgramOptimization>true</WholeProgramOptimization>
+    </ClCompile>
+    <Lib>
+      <AdditionalOptions>/LTCG:INCREMENTAL %(AdditionalOptions)</AdditionalOptions>
+    </Lib>
+    <Link>
+      <AdditionalDependencies>
+      </AdditionalDependencies>
+      <AdditionalOptions>/LTCG:INCREMENTAL %(AdditionalOptions)</AdditionalOptions>
+      <AllowIsolation>true</AllowIsolation>
+      <DataExecutionPrevention>true</DataExecutionPrevention>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <GenerateMapFile>true</GenerateMapFile>
+      <MapExports>true</MapExports>
+      <OptimizeReferences>true</OptimizeReferences>
+      <RandomizedBaseAddress>true</RandomizedBaseAddress>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <TargetMachine>MachineX64</TargetMachine>
+    </Link>
+    <ResourceCompile>
+      <PreprocessorDefinitions>V8_DEPRECATION_WARNINGS;V8_IMMINENT_DEPRECATION_WARNINGS;NODE_ENGINE="chakracore";NODE_ENGINE_CHAKRACORE;WIN32;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE;_HAS_EXCEPTIONS=0;BUILDING_V8_SHARED=1;BUILDING_UV_SHARED=1;OPENSSL_THREADS;%(PreprocessorDefinitions);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <None Include="chakracore.gyp" />
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="core\lib\Jsrt\ChakraCore.h">
+      <FileType>Document</FileType>
+      <Command>call mkdir "include" 2&gt;nul &amp; set ERRORLEVEL=0 &amp; copy /Y "core\lib\Jsrt\ChakraCore.h" "include\ChakraCore.h"
+if %errorlevel% neq 0 exit /b %errorlevel%</Command>
+      <Message>Copying core/lib/Jsrt/ChakraCore.h to include</Message>
+      <Outputs>include\ChakraCore.h</Outputs>
+    </CustomBuild>
+    <CustomBuild Include="core\lib\Jsrt\ChakraCommon.h">
+      <FileType>Document</FileType>
+      <Command>call mkdir "include" 2&gt;nul &amp; set ERRORLEVEL=0 &amp; copy /Y "core\lib\Jsrt\ChakraCommon.h" "include\ChakraCommon.h"
+if %errorlevel% neq 0 exit /b %errorlevel%</Command>
+      <Message>Copying core/lib/Jsrt/ChakraCommon.h to include</Message>
+      <Outputs>include\ChakraCommon.h</Outputs>
+    </CustomBuild>
+    <CustomBuild Include="core\lib\Jsrt\ChakraDebug.h">
+      <FileType>Document</FileType>
+      <Command>call mkdir "include" 2&gt;nul &amp; set ERRORLEVEL=0 &amp; copy /Y "core\lib\Jsrt\ChakraDebug.h" "include\ChakraDebug.h"
+if %errorlevel% neq 0 exit /b %errorlevel%</Command>
+      <Message>Copying core/lib/Jsrt/ChakraDebug.h to include</Message>
+      <Outputs>include\ChakraDebug.h</Outputs>
+    </CustomBuild>
+    <CustomBuild Include="core\build\vcbuild\bin\x64_Release\chakracore.dll">
+      <FileType>Document</FileType>
+      <Command>call mkdir "$(OutDir)" 2&gt;nul &amp; set ERRORLEVEL=0 &amp; copy /Y "core\build\vcbuild\bin\x64_Release\chakracore.dll" "$(OutDir)chakracore.dll"
+if %errorlevel% neq 0 exit /b %errorlevel%</Command>
+      <Message>Copying core/build/vcbuild/bin/x64_Release/chakracore.dll to $(OutDir)</Message>
+      <Outputs>$(OutDir)\chakracore.dll</Outputs>
+    </CustomBuild>
+    <CustomBuild Include="core\build\vcbuild\bin\x64_Release\chakracore.pdb">
+      <FileType>Document</FileType>
+      <Command>call mkdir "$(OutDir)" 2&gt;nul &amp; set ERRORLEVEL=0 &amp; copy /Y "core\build\vcbuild\bin\x64_Release\chakracore.pdb" "$(OutDir)chakracore.pdb"
+if %errorlevel% neq 0 exit /b %errorlevel%</Command>
+      <Message>Copying core/build/vcbuild/bin/x64_Release/chakracore.pdb to $(OutDir)</Message>
+      <Outputs>$(OutDir)\chakracore.pdb</Outputs>
+    </CustomBuild>
+    <CustomBuild Include="core\build\vcbuild\bin\x64_Release\chakracore.lib">
+      <FileType>Document</FileType>
+      <Command>call mkdir "$(OutDir)" 2&gt;nul &amp; set ERRORLEVEL=0 &amp; copy /Y "core\build\vcbuild\bin\x64_Release\chakracore.lib" "$(OutDir)chakracore.lib"
+if %errorlevel% neq 0 exit /b %errorlevel%</Command>
+      <Message>Copying core/build/vcbuild/bin/x64_Release/chakracore.lib to $(OutDir)</Message>
+      <Outputs>$(OutDir)\chakracore.lib</Outputs>
+    </CustomBuild>
+    <CustomBuild Include="core\build\Chakra.Core.sln">
+      <FileType>Document</FileType>
+      <Command>call call msbuild "/p:Platform=x64" "/p:Configuration=Release" "/p:RuntimeLib=static_library" "/p:AdditionalPreprocessorDefinitions=COMPILE_DISABLE_Simdjs=1" "/m" "core\build\Chakra.Core.sln"
+if %errorlevel% neq 0 exit /b %errorlevel%</Command>
+      <Message>build_chakracore</Message>
+      <Outputs>core\build\vcbuild\bin\x64_Release\chakracore.dll;core\build\vcbuild\bin\x64_Release\chakracore.pdb;core\build\vcbuild\bin\x64_Release\chakracore.lib</Outputs>
+    </CustomBuild>
+    <CustomBuild Include="core\lib\Jsrt\ChakraCommonWindows.h">
+      <FileType>Document</FileType>
+      <Command>call mkdir "include" 2&gt;nul &amp; set ERRORLEVEL=0 &amp; copy /Y "core\lib\Jsrt\ChakraCommonWindows.h" "include\ChakraCommonWindows.h"
+if %errorlevel% neq 0 exit /b %errorlevel%</Command>
+      <Message>Copying core/lib/Jsrt/ChakraCommonWindows.h to include</Message>
+      <Outputs>include\ChakraCommonWindows.h</Outputs>
+    </CustomBuild>
+    <CustomBuild Include="core\lib\Common\ChakraCoreVersion.h">
+      <FileType>Document</FileType>
+      <Command>call mkdir "include" 2&gt;nul &amp; set ERRORLEVEL=0 &amp; copy /Y "core\lib\Common\ChakraCoreVersion.h" "include\ChakraCoreVersion.h"
+if %errorlevel% neq 0 exit /b %errorlevel%</Command>
+      <Message>Copying core/lib/Common/ChakraCoreVersion.h to include</Message>
+      <Outputs>include\ChakraCoreVersion.h</Outputs>
+    </CustomBuild>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <Import Project="$(VCTargetsPath)\BuildCustomizations\masm.targets" />
+  <ImportGroup Label="ExtensionTargets" />
+</Project>

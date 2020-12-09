@@ -1,0 +1,60 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2019
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "(inspector)", "..\..\src\inspector", "{BB3AEE64-56F9-E7E1-B0A4-7669F66FB9E0}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "(src)", "..\..\src", "{607B4E81-FB72-43DF-177C-C1403E500480}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "chakra_js2c", "chakra_js2c.vcxproj", "{3EFEAF4E-6EA8-2B3D-11E4-BDBD308513A9}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "chakracore", "chakracore.vcxproj", "{FEADCB9B-A88E-152B-3F1D-C31A8E9D5C7D}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "chakrashim", "chakrashim.vcxproj", "{B28E5F17-2109-3CF3-62AA-711105ACD59E}"
+	ProjectSection(ProjectDependencies) = postProject
+		{3EFEAF4E-6EA8-2B3D-11E4-BDBD308513A9} = {3EFEAF4E-6EA8-2B3D-11E4-BDBD308513A9}
+		{FEADCB9B-A88E-152B-3F1D-C31A8E9D5C7D} = {FEADCB9B-A88E-152B-3F1D-C31A8E9D5C7D}
+		{4A7E5D42-A040-2BBF-A989-D024722DA473} = {4A7E5D42-A040-2BBF-A989-D024722DA473}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "protocol_compatibility", "src\inspector\protocol_compatibility.vcxproj", "{9153D5EB-3D86-9F03-6933-9EE0932FD937}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "protocol_generated_sources", "src\inspector\protocol_generated_sources.vcxproj", "{4A7E5D42-A040-2BBF-A989-D024722DA473}"
+	ProjectSection(ProjectDependencies) = postProject
+		{9153D5EB-3D86-9F03-6933-9EE0932FD937} = {9153D5EB-3D86-9F03-6933-9EE0932FD937}
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{3EFEAF4E-6EA8-2B3D-11E4-BDBD308513A9}.Debug|x64.ActiveCfg = Debug|x64
+		{3EFEAF4E-6EA8-2B3D-11E4-BDBD308513A9}.Debug|x64.Build.0 = Debug|x64
+		{3EFEAF4E-6EA8-2B3D-11E4-BDBD308513A9}.Release|x64.ActiveCfg = Release|x64
+		{3EFEAF4E-6EA8-2B3D-11E4-BDBD308513A9}.Release|x64.Build.0 = Release|x64
+		{4A7E5D42-A040-2BBF-A989-D024722DA473}.Debug|x64.ActiveCfg = Debug|x64
+		{4A7E5D42-A040-2BBF-A989-D024722DA473}.Debug|x64.Build.0 = Debug|x64
+		{4A7E5D42-A040-2BBF-A989-D024722DA473}.Release|x64.ActiveCfg = Release|x64
+		{4A7E5D42-A040-2BBF-A989-D024722DA473}.Release|x64.Build.0 = Release|x64
+		{9153D5EB-3D86-9F03-6933-9EE0932FD937}.Debug|x64.ActiveCfg = Debug|x64
+		{9153D5EB-3D86-9F03-6933-9EE0932FD937}.Debug|x64.Build.0 = Debug|x64
+		{9153D5EB-3D86-9F03-6933-9EE0932FD937}.Release|x64.ActiveCfg = Release|x64
+		{9153D5EB-3D86-9F03-6933-9EE0932FD937}.Release|x64.Build.0 = Release|x64
+		{B28E5F17-2109-3CF3-62AA-711105ACD59E}.Debug|x64.ActiveCfg = Debug|x64
+		{B28E5F17-2109-3CF3-62AA-711105ACD59E}.Debug|x64.Build.0 = Debug|x64
+		{B28E5F17-2109-3CF3-62AA-711105ACD59E}.Release|x64.ActiveCfg = Release|x64
+		{B28E5F17-2109-3CF3-62AA-711105ACD59E}.Release|x64.Build.0 = Release|x64
+		{FEADCB9B-A88E-152B-3F1D-C31A8E9D5C7D}.Debug|x64.ActiveCfg = Debug|x64
+		{FEADCB9B-A88E-152B-3F1D-C31A8E9D5C7D}.Debug|x64.Build.0 = Debug|x64
+		{FEADCB9B-A88E-152B-3F1D-C31A8E9D5C7D}.Release|x64.ActiveCfg = Release|x64
+		{FEADCB9B-A88E-152B-3F1D-C31A8E9D5C7D}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{9153D5EB-3D86-9F03-6933-9EE0932FD937} = {BB3AEE64-56F9-E7E1-B0A4-7669F66FB9E0}
+		{4A7E5D42-A040-2BBF-A989-D024722DA473} = {BB3AEE64-56F9-E7E1-B0A4-7669F66FB9E0}
+		{BB3AEE64-56F9-E7E1-B0A4-7669F66FB9E0} = {607B4E81-FB72-43DF-177C-C1403E500480}
+	EndGlobalSection
+EndGlobal

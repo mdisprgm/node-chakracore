@@ -1,0 +1,304 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="16.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{B28E5F17-2109-3CF3-62AA-711105ACD59E}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>chakrashim</RootNamespace>
+    <IgnoreWarnCompileDuplicatedFilename>true</IgnoreWarnCompileDuplicatedFilename>
+    <PreferredToolArchitecture>x64</PreferredToolArchitecture>
+    <WindowsTargetPlatformVersion>10.0.18362.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+  </PropertyGroup>
+  <PropertyGroup Label="Locals">
+    <PlatformToolset>v142</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <Import Project="$(VCTargetsPath)\BuildCustomizations\masm.props" />
+  <ImportGroup Label="ExtensionSettings" />
+  <ImportGroup Label="PropertySheets">
+    <Import Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <ExecutablePath>$(ExecutablePath);$(MSBuildProjectDirectory)\.\bin\;$(MSBuildProjectDirectory)\.\bin\</ExecutablePath>
+    <IntDir>$(Configuration)\obj\$(ProjectName)\</IntDir>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkIncremental>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</LinkIncremental>
+    <OutDir>$(SolutionDir)bin\$(PlatformShortName)\$(Configuration)\</OutDir>
+    <TargetName>$(ProjectName)</TargetName>
+    <TargetPath>$(OutDir)lib\$(ProjectName)$(TargetExt)</TargetPath>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>.;include;$(OutDir)obj\global_intermediate;..\uv\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <BufferSecurityCheck>true</BufferSecurityCheck>
+      <DebugInformationFormat>OldStyle</DebugInformationFormat>
+      <DisableSpecificWarnings>4351;4355;4800;4251;4275;4244;4267;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+      <ExceptionHandling>false</ExceptionHandling>
+      <MinimalRebuild>false</MinimalRebuild>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <OmitFramePointers>false</OmitFramePointers>
+      <Optimization>Disabled</Optimization>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <PreprocessorDefinitions>V8_DEPRECATION_WARNINGS;V8_IMMINENT_DEPRECATION_WARNINGS;NODE_ENGINE="chakracore";NODE_ENGINE_CHAKRACORE;WIN32;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE;_HAS_EXCEPTIONS=0;BUILDING_V8_SHARED=1;BUILDING_UV_SHARED=1;OPENSSL_THREADS;BUILDING_CHAKRASHIM=1;__x86_64__=1;DEBUG;_DEBUG;V8_ENABLE_CHECKS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <StringPooling>true</StringPooling>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <TreatWarningAsError>false</TreatWarningAsError>
+      <WarningLevel>Level3</WarningLevel>
+    </ClCompile>
+    <Lib>
+      <OutputFile>$(OutDir)lib\$(ProjectName)$(TargetExt)</OutputFile>
+    </Lib>
+    <Link>
+      <AdditionalDependencies>
+      </AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AllowIsolation>true</AllowIsolation>
+      <DataExecutionPrevention>true</DataExecutionPrevention>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <GenerateMapFile>true</GenerateMapFile>
+      <MapExports>true</MapExports>
+      <RandomizedBaseAddress>true</RandomizedBaseAddress>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <TargetMachine>MachineX64</TargetMachine>
+    </Link>
+    <ResourceCompile>
+      <AdditionalIncludeDirectories>.;include;$(OutDir)obj\global_intermediate;..\uv\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>V8_DEPRECATION_WARNINGS;V8_IMMINENT_DEPRECATION_WARNINGS;NODE_ENGINE="chakracore";NODE_ENGINE_CHAKRACORE;WIN32;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE;_HAS_EXCEPTIONS=0;BUILDING_V8_SHARED=1;BUILDING_UV_SHARED=1;OPENSSL_THREADS;BUILDING_CHAKRASHIM=1;__x86_64__=1;DEBUG;_DEBUG;V8_ENABLE_CHECKS;%(PreprocessorDefinitions);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>.;include;$(OutDir)obj\global_intermediate;..\uv\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>%(AdditionalOptions)</AdditionalOptions>
+      <BufferSecurityCheck>true</BufferSecurityCheck>
+      <DebugInformationFormat>OldStyle</DebugInformationFormat>
+      <DisableSpecificWarnings>4351;4355;4800;4251;4275;4244;4267;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+      <ExceptionHandling>false</ExceptionHandling>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <OmitFramePointers>true</OmitFramePointers>
+      <Optimization>Full</Optimization>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <PreprocessorDefinitions>V8_DEPRECATION_WARNINGS;V8_IMMINENT_DEPRECATION_WARNINGS;NODE_ENGINE="chakracore";NODE_ENGINE_CHAKRACORE;WIN32;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE;_HAS_EXCEPTIONS=0;BUILDING_V8_SHARED=1;BUILDING_UV_SHARED=1;OPENSSL_THREADS;BUILDING_CHAKRASHIM=1;__x86_64__=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <RuntimeTypeInfo>false</RuntimeTypeInfo>
+      <StringPooling>true</StringPooling>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <TreatWarningAsError>false</TreatWarningAsError>
+      <WarningLevel>Level3</WarningLevel>
+      <WholeProgramOptimization>true</WholeProgramOptimization>
+    </ClCompile>
+    <Lib>
+      <AdditionalOptions>/LTCG:INCREMENTAL %(AdditionalOptions)</AdditionalOptions>
+      <OutputFile>$(OutDir)lib\$(ProjectName)$(TargetExt)</OutputFile>
+    </Lib>
+    <Link>
+      <AdditionalDependencies>
+      </AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalOptions>/LTCG:INCREMENTAL %(AdditionalOptions)</AdditionalOptions>
+      <AllowIsolation>true</AllowIsolation>
+      <DataExecutionPrevention>true</DataExecutionPrevention>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <GenerateMapFile>true</GenerateMapFile>
+      <MapExports>true</MapExports>
+      <OptimizeReferences>true</OptimizeReferences>
+      <RandomizedBaseAddress>true</RandomizedBaseAddress>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <TargetMachine>MachineX64</TargetMachine>
+    </Link>
+    <ResourceCompile>
+      <AdditionalIncludeDirectories>.;include;$(OutDir)obj\global_intermediate;..\uv\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>V8_DEPRECATION_WARNINGS;V8_IMMINENT_DEPRECATION_WARNINGS;NODE_ENGINE="chakracore";NODE_ENGINE_CHAKRACORE;WIN32;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE;_HAS_EXCEPTIONS=0;BUILDING_V8_SHARED=1;BUILDING_UV_SHARED=1;OPENSSL_THREADS;BUILDING_CHAKRASHIM=1;__x86_64__=1;%(PreprocessorDefinitions);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <None Include="src\jsrtcachedpropertyidref.inc" />
+    <None Include="src\jsrtcontextcachedobj.inc" />
+    <None Include="chakrashim.gyp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="include\libplatform\libplatform.h" />
+    <ClInclude Include="include\v8.h" />
+    <ClInclude Include="include\v8config.h" />
+    <ClInclude Include="include\v8-debug.h" />
+    <ClInclude Include="include\v8-platform.h" />
+    <ClInclude Include="include\v8-profiler.h" />
+    <ClInclude Include="include\v8-version.h" />
+    <ClInclude Include="src\base\logging.h" />
+    <ClInclude Include="src\base\macros.h" />
+    <ClInclude Include="src\base\platform\platform.h" />
+    <ClInclude Include="src\jsrtcontextshim.h" />
+    <ClInclude Include="src\jsrtinspector.h" />
+    <ClInclude Include="src\jsrtinspectorhelpers.h" />
+    <ClInclude Include="src\jsrtisolateshim.h" />
+    <ClInclude Include="src\jsrtproxyutils.h" />
+    <ClInclude Include="src\jsrtutils.h" />
+    <ClInclude Include="src\v8chakra.h" />
+    <ClInclude Include="$(OutDir)obj\global_intermediate\src\inspector\protocol\Forward.h" />
+    <ClInclude Include="$(OutDir)obj\global_intermediate\src\inspector\protocol\Protocol.h" />
+    <ClInclude Include="$(OutDir)obj\global_intermediate\src\inspector\protocol\Console.h" />
+    <ClInclude Include="$(OutDir)obj\global_intermediate\src\inspector\protocol\Debugger.h" />
+    <ClInclude Include="$(OutDir)obj\global_intermediate\src\inspector\protocol\Runtime.h" />
+    <ClInclude Include="$(OutDir)obj\global_intermediate\src\inspector\protocol\Schema.h" />
+    <ClInclude Include="$(OutDir)obj\global_intermediate\src\inspector\protocol\TimeTravel.h" />
+    <ClInclude Include="$(OutDir)obj\global_intermediate\include\inspector\Debugger.h" />
+    <ClInclude Include="$(OutDir)obj\global_intermediate\include\inspector\Runtime.h" />
+    <ClInclude Include="$(OutDir)obj\global_intermediate\include\inspector\Schema.h" />
+    <ClInclude Include="$(OutDir)obj\global_intermediate\include\inspector\TimeTravel.h" />
+    <ClInclude Include="include\v8-inspector.h" />
+    <ClInclude Include="include\v8-inspector-protocol.h" />
+    <ClInclude Include="src\inspector\inspected-context.h" />
+    <ClInclude Include="src\inspector\java-script-call-frame.h" />
+    <ClInclude Include="src\inspector\protocol-platform.h" />
+    <ClInclude Include="src\inspector\script-breakpoint.h" />
+    <ClInclude Include="src\inspector\search-util.h" />
+    <ClInclude Include="src\inspector\string-16.h" />
+    <ClInclude Include="src\inspector\string-util.h" />
+    <ClInclude Include="src\inspector\v8-console.h" />
+    <ClInclude Include="src\inspector\v8-console-agent-impl.h" />
+    <ClInclude Include="src\inspector\v8-console-message.h" />
+    <ClInclude Include="src\inspector\v8-debugger.h" />
+    <ClInclude Include="src\inspector\v8-debugger-agent-impl.h" />
+    <ClInclude Include="src\inspector\v8-debugger-script.h" />
+    <ClInclude Include="src\inspector\v8-function-call.h" />
+    <ClInclude Include="src\inspector\v8-inspector-impl.h" />
+    <ClInclude Include="src\inspector\v8-inspector-session-impl.h" />
+    <ClInclude Include="src\inspector\v8-internal-value-type.h" />
+    <ClInclude Include="src\inspector\v8-regex.h" />
+    <ClInclude Include="src\inspector\v8-runtime-agent-impl.h" />
+    <ClInclude Include="src\inspector\v8-schema-agent-impl.h" />
+    <ClInclude Include="src\inspector\v8-stack-trace-impl.h" />
+    <ClInclude Include="src\inspector\v8-timetravel-agent-impl.h" />
+    <ClInclude Include="src\inspector\v8-value-copier.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\base\logging.cc" />
+    <ClCompile Include="src\base\platform\platform.cc" />
+    <ClCompile Include="src\pal\pal.cc" />
+    <ClCompile Include="src\jsrtcontextshim.cc" />
+    <ClCompile Include="src\jsrtinspector.cc" />
+    <ClCompile Include="src\jsrtinspectorhelpers.cc" />
+    <ClCompile Include="src\jsrtisolateshim.cc" />
+    <ClCompile Include="src\jsrtpromise.cc" />
+    <ClCompile Include="src\jsrtproxyutils.cc" />
+    <ClCompile Include="src\jsrtutils.cc" />
+    <ClCompile Include="src\v8array.cc" />
+    <ClCompile Include="src\v8arraybuffer.cc" />
+    <ClCompile Include="src\v8boolean.cc" />
+    <ClCompile Include="src\v8booleanobject.cc" />
+    <ClCompile Include="src\v8chakra.cc" />
+    <ClCompile Include="src\v8context.cc" />
+    <ClCompile Include="src\v8date.cc" />
+    <ClCompile Include="src\v8debug.cc" />
+    <ClCompile Include="src\v8exception.cc" />
+    <ClCompile Include="src\v8external.cc" />
+    <ClCompile Include="src\v8function.cc" />
+    <ClCompile Include="src\v8functiontemplate.cc" />
+    <ClCompile Include="src\v8global.cc" />
+    <ClCompile Include="src\v8handlescope.cc" />
+    <ClCompile Include="src\v8int32.cc" />
+    <ClCompile Include="src\v8integer.cc" />
+    <ClCompile Include="src\v8isolate.cc" />
+    <ClCompile Include="src\v8json.cc" />
+    <ClCompile Include="src\v8map.cc" />
+    <ClCompile Include="src\v8message.cc" />
+    <ClCompile Include="src\v8microtasksscope.cc" />
+    <ClCompile Include="src\v8module.cc" />
+    <ClCompile Include="src\v8name.cc" />
+    <ClCompile Include="src\v8number.cc" />
+    <ClCompile Include="src\v8numberobject.cc" />
+    <ClCompile Include="src\v8object.cc" />
+    <ClCompile Include="src\v8objecttemplate.cc" />
+    <ClCompile Include="src\v8persistent.cc" />
+    <ClCompile Include="src\v8primitivearray.cc" />
+    <ClCompile Include="src\v8private.cc" />
+    <ClCompile Include="src\v8promise.cc" />
+    <ClCompile Include="src\v8propertydescriptor.cc" />
+    <ClCompile Include="src\v8proxy.cc" />
+    <ClCompile Include="src\v8regexp.cc" />
+    <ClCompile Include="src\v8script.cc" />
+    <ClCompile Include="src\v8scriptormodule.cc" />
+    <ClCompile Include="src\v8sharedarraybuffer.cc" />
+    <ClCompile Include="src\v8set.cc" />
+    <ClCompile Include="src\v8signature.cc" />
+    <ClCompile Include="src\v8stacktrace.cc" />
+    <ClCompile Include="src\v8string.cc" />
+    <ClCompile Include="src\v8stringobject.cc" />
+    <ClCompile Include="src\v8symbol.cc" />
+    <ClCompile Include="src\v8symbolobject.cc" />
+    <ClCompile Include="src\v8template.cc" />
+    <ClCompile Include="src\v8trycatch.cc" />
+    <ClCompile Include="src\v8typedarray.cc" />
+    <ClCompile Include="src\v8uint32.cc" />
+    <ClCompile Include="src\v8v8.cc" />
+    <ClCompile Include="src\v8value.cc" />
+    <ClCompile Include="src\v8valueserializer.cc" />
+    <ClCompile Include="src\v8valuedeserializer.cc" />
+    <ClCompile Include="$(OutDir)obj\global_intermediate\src\inspector\protocol\Protocol.cpp" />
+    <ClCompile Include="$(OutDir)obj\global_intermediate\src\inspector\protocol\Console.cpp" />
+    <ClCompile Include="$(OutDir)obj\global_intermediate\src\inspector\protocol\Debugger.cpp" />
+    <ClCompile Include="$(OutDir)obj\global_intermediate\src\inspector\protocol\Runtime.cpp" />
+    <ClCompile Include="$(OutDir)obj\global_intermediate\src\inspector\protocol\Schema.cpp" />
+    <ClCompile Include="$(OutDir)obj\global_intermediate\src\inspector\protocol\TimeTravel.cpp" />
+    <ClCompile Include="src\inspector\inspected-context.cc" />
+    <ClCompile Include="src\inspector\java-script-call-frame.cc" />
+    <ClCompile Include="src\inspector\search-util.cc" />
+    <ClCompile Include="src\inspector\string-16.cc" />
+    <ClCompile Include="src\inspector\string-util.cc" />
+    <ClCompile Include="src\inspector\v8-console.cc" />
+    <ClCompile Include="src\inspector\v8-console-agent-impl.cc" />
+    <ClCompile Include="src\inspector\v8-console-message.cc" />
+    <ClCompile Include="src\inspector\v8-debugger.cc" />
+    <ClCompile Include="src\inspector\v8-debugger-agent-impl.cc" />
+    <ClCompile Include="src\inspector\v8-debugger-script.cc" />
+    <ClCompile Include="src\inspector\v8-function-call.cc" />
+    <ClCompile Include="src\inspector\v8-inspector-impl.cc" />
+    <ClCompile Include="src\inspector\v8-inspector-session-impl.cc" />
+    <ClCompile Include="src\inspector\v8-internal-value-type.cc" />
+    <ClCompile Include="src\inspector\v8-regex.cc" />
+    <ClCompile Include="src\inspector\v8-runtime-agent-impl.cc" />
+    <ClCompile Include="src\inspector\v8-schema-agent-impl.cc" />
+    <ClCompile Include="src\inspector\v8-stack-trace-impl.cc" />
+    <ClCompile Include="src\inspector\v8-timetravel-agent-impl.cc" />
+    <ClCompile Include="src\inspector\v8-value-copier.cc" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="chakra_js2c.vcxproj">
+      <Project>{3EFEAF4E-6EA8-2B3D-11E4-BDBD308513A9}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="chakracore.vcxproj">
+      <Project>{FEADCB9B-A88E-152B-3F1D-C31A8E9D5C7D}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="src\inspector\protocol_generated_sources.vcxproj">
+      <Project>{4A7E5D42-A040-2BBF-A989-D024722DA473}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <Import Project="$(VCTargetsPath)\BuildCustomizations\masm.targets" />
+  <ImportGroup Label="ExtensionTargets" />
+</Project>

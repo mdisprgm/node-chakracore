@@ -176,6 +176,7 @@ class JsCallImpl : public nodegate::JsCall {
   JsFunction m_require;
   JsFunction m_log;
   JsFunction m_error;
+  JsFunction m_tickCallback;
 
   JsCallImpl(v8::Isolate* isolate, v8::Handle<Context> context) noexcept
       : isolate(isolate), context(isolate, context) {}
@@ -193,6 +194,9 @@ class JsCallImpl : public nodegate::JsCall {
   virtual void error(nodegate::StringView msg) noexcept override {
     m_error.call(this, msg);
   }
+  virtual void tickCallback() noexcept override {
+    m_tickCallback.call(this);
+  }
 };
 
 
@@ -206,6 +210,7 @@ void NativeModuleLoader::_nodegate(
   callImpl->m_require.func.Reset(isolate, args[1].As<Function>());
   callImpl->m_log.func.Reset(isolate, args[2].As<Function>());
   callImpl->m_error.func.Reset(isolate, args[3].As<Function>());
+  callImpl->m_tickCallback.func.Reset(isolate, args[4].As<Function>());
   nodegate::config->main_call(callImpl);
 }
 void NativeModuleLoader::_nodegate_stdout(

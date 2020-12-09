@@ -1,0 +1,224 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="16.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{4A7E5D42-A040-2BBF-A989-D024722DA473}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>protocol_generated_sources</RootNamespace>
+    <IgnoreWarnCompileDuplicatedFilename>true</IgnoreWarnCompileDuplicatedFilename>
+    <PreferredToolArchitecture>x64</PreferredToolArchitecture>
+    <WindowsTargetPlatformVersion>10.0.18362.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Label="Configuration">
+    <ConfigurationType>Utility</ConfigurationType>
+  </PropertyGroup>
+  <PropertyGroup Label="Locals">
+    <PlatformToolset>v142</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <Import Project="$(VCTargetsPath)\BuildCustomizations\masm.props" />
+  <ImportGroup Label="ExtensionSettings" />
+  <ImportGroup Label="PropertySheets">
+    <Import Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <ExecutablePath>$(ExecutablePath);$(MSBuildProjectDirectory)\.\bin\;$(MSBuildProjectDirectory)\.\bin\</ExecutablePath>
+    <IntDir>$(Configuration)\obj\$(ProjectName)\</IntDir>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkIncremental>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</LinkIncremental>
+    <OutDir>$(SolutionDir)bin\$(PlatformShortName)\$(Configuration)\</OutDir>
+    <TargetName>$(ProjectName)</TargetName>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <BufferSecurityCheck>true</BufferSecurityCheck>
+      <DebugInformationFormat>OldStyle</DebugInformationFormat>
+      <DisableSpecificWarnings>4351;4355;4800;4251;4275;4244;4267;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+      <ExceptionHandling>false</ExceptionHandling>
+      <MinimalRebuild>false</MinimalRebuild>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <OmitFramePointers>false</OmitFramePointers>
+      <Optimization>Disabled</Optimization>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <PreprocessorDefinitions>V8_DEPRECATION_WARNINGS;V8_IMMINENT_DEPRECATION_WARNINGS;NODE_ENGINE="chakracore";NODE_ENGINE_CHAKRACORE;WIN32;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE;_HAS_EXCEPTIONS=0;BUILDING_V8_SHARED=1;BUILDING_UV_SHARED=1;OPENSSL_THREADS;DEBUG;_DEBUG;V8_ENABLE_CHECKS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <StringPooling>true</StringPooling>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <TreatWarningAsError>false</TreatWarningAsError>
+      <WarningLevel>Level3</WarningLevel>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>
+      </AdditionalDependencies>
+      <AllowIsolation>true</AllowIsolation>
+      <DataExecutionPrevention>true</DataExecutionPrevention>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <GenerateMapFile>true</GenerateMapFile>
+      <MapExports>true</MapExports>
+      <RandomizedBaseAddress>true</RandomizedBaseAddress>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <TargetMachine>MachineX64</TargetMachine>
+    </Link>
+    <ResourceCompile>
+      <PreprocessorDefinitions>V8_DEPRECATION_WARNINGS;V8_IMMINENT_DEPRECATION_WARNINGS;NODE_ENGINE="chakracore";NODE_ENGINE_CHAKRACORE;WIN32;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE;_HAS_EXCEPTIONS=0;BUILDING_V8_SHARED=1;BUILDING_UV_SHARED=1;OPENSSL_THREADS;DEBUG;_DEBUG;V8_ENABLE_CHECKS;%(PreprocessorDefinitions);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <AdditionalOptions>%(AdditionalOptions)</AdditionalOptions>
+      <BufferSecurityCheck>true</BufferSecurityCheck>
+      <DebugInformationFormat>OldStyle</DebugInformationFormat>
+      <DisableSpecificWarnings>4351;4355;4800;4251;4275;4244;4267;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+      <ExceptionHandling>false</ExceptionHandling>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <OmitFramePointers>true</OmitFramePointers>
+      <Optimization>Full</Optimization>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <PreprocessorDefinitions>V8_DEPRECATION_WARNINGS;V8_IMMINENT_DEPRECATION_WARNINGS;NODE_ENGINE="chakracore";NODE_ENGINE_CHAKRACORE;WIN32;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE;_HAS_EXCEPTIONS=0;BUILDING_V8_SHARED=1;BUILDING_UV_SHARED=1;OPENSSL_THREADS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <RuntimeTypeInfo>false</RuntimeTypeInfo>
+      <StringPooling>true</StringPooling>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <TreatWarningAsError>false</TreatWarningAsError>
+      <WarningLevel>Level3</WarningLevel>
+      <WholeProgramOptimization>true</WholeProgramOptimization>
+    </ClCompile>
+    <Lib>
+      <AdditionalOptions>/LTCG:INCREMENTAL %(AdditionalOptions)</AdditionalOptions>
+    </Lib>
+    <Link>
+      <AdditionalDependencies>
+      </AdditionalDependencies>
+      <AdditionalOptions>/LTCG:INCREMENTAL %(AdditionalOptions)</AdditionalOptions>
+      <AllowIsolation>true</AllowIsolation>
+      <DataExecutionPrevention>true</DataExecutionPrevention>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <GenerateMapFile>true</GenerateMapFile>
+      <MapExports>true</MapExports>
+      <OptimizeReferences>true</OptimizeReferences>
+      <RandomizedBaseAddress>true</RandomizedBaseAddress>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <TargetMachine>MachineX64</TargetMachine>
+    </Link>
+    <ResourceCompile>
+      <PreprocessorDefinitions>V8_DEPRECATION_WARNINGS;V8_IMMINENT_DEPRECATION_WARNINGS;NODE_ENGINE="chakracore";NODE_ENGINE_CHAKRACORE;WIN32;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE;_HAS_EXCEPTIONS=0;BUILDING_V8_SHARED=1;BUILDING_UV_SHARED=1;OPENSSL_THREADS;%(PreprocessorDefinitions);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <None Include="inspector.gyp" />
+    <None Include="..\..\third_party\inspector_protocol\lib\Allocator_h.template">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="..\..\third_party\inspector_protocol\lib\Array_h.template">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="..\..\third_party\inspector_protocol\lib\BackendCallback_h.template">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="..\..\third_party\inspector_protocol\lib\Collections_h.template">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="..\..\third_party\inspector_protocol\lib\DispatcherBase_cpp.template">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="..\..\third_party\inspector_protocol\lib\DispatcherBase_h.template">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="..\..\third_party\inspector_protocol\lib\ErrorSupport_cpp.template">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="..\..\third_party\inspector_protocol\lib\ErrorSupport_h.template">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="..\..\third_party\inspector_protocol\lib\Forward_h.template">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="..\..\third_party\inspector_protocol\lib\FrontendChannel_h.template">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="..\..\third_party\inspector_protocol\lib\Maybe_h.template">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="..\..\third_party\inspector_protocol\lib\Object_cpp.template">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="..\..\third_party\inspector_protocol\lib\Object_h.template">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="..\..\third_party\inspector_protocol\lib\Parser_cpp.template">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="..\..\third_party\inspector_protocol\lib\Parser_h.template">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="..\..\third_party\inspector_protocol\lib\Protocol_cpp.template">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="..\..\third_party\inspector_protocol\lib\ValueConversions_h.template">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="..\..\third_party\inspector_protocol\lib\Values_cpp.template">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="..\..\third_party\inspector_protocol\lib\Values_h.template">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="..\..\third_party\inspector_protocol\templates\Exported_h.template">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="..\..\third_party\inspector_protocol\templates\Imported_h.template">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="..\..\third_party\inspector_protocol\templates\TypeBuilder_cpp.template">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="..\..\third_party\inspector_protocol\templates\TypeBuilder_h.template">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="..\..\third_party\inspector_protocol\CodeGenerator.py">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="inspector_protocol_config.json">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="js_protocol.json">
+      <FileType>Document</FileType>
+      <Command>call call python "..\..\third_party\inspector_protocol\CodeGenerator.py" "--jinja_dir" "..\..\third_party" "--output_base" "$(OutDir)obj\global_intermediate\src\inspector" "--config" "inspector_protocol_config.json"
+if %errorlevel% neq 0 exit /b %errorlevel%</Command>
+      <Message>Generating inspector protocol sources from protocol json</Message>
+      <Outputs>$(OutDir)obj\global_intermediate\src\inspector\protocol\Forward.h;$(OutDir)obj\global_intermediate\src\inspector\protocol\Protocol.cpp;$(OutDir)obj\global_intermediate\src\inspector\protocol\Protocol.h;$(OutDir)obj\global_intermediate\src\inspector\protocol\Console.cpp;$(OutDir)obj\global_intermediate\src\inspector\protocol\Console.h;$(OutDir)obj\global_intermediate\src\inspector\protocol\Debugger.cpp;$(OutDir)obj\global_intermediate\src\inspector\protocol\Debugger.h;$(OutDir)obj\global_intermediate\src\inspector\protocol\Runtime.cpp;$(OutDir)obj\global_intermediate\src\inspector\protocol\Runtime.h;$(OutDir)obj\global_intermediate\src\inspector\protocol\Schema.cpp;$(OutDir)obj\global_intermediate\src\inspector\protocol\Schema.h;$(OutDir)obj\global_intermediate\src\inspector\protocol\TimeTravel.cpp;$(OutDir)obj\global_intermediate\src\inspector\protocol\TimeTravel.h;$(OutDir)obj\global_intermediate\include\inspector\Debugger.h;$(OutDir)obj\global_intermediate\include\inspector\Runtime.h;$(OutDir)obj\global_intermediate\include\inspector\Schema.h;$(OutDir)obj\global_intermediate\include\inspector\TimeTravel.h</Outputs>
+      <AdditionalInputs>inspector_protocol_config.json;..\..\third_party\inspector_protocol\lib\Allocator_h.template;..\..\third_party\inspector_protocol\lib\Array_h.template;..\..\third_party\inspector_protocol\lib\BackendCallback_h.template;..\..\third_party\inspector_protocol\lib\Collections_h.template;..\..\third_party\inspector_protocol\lib\DispatcherBase_cpp.template;..\..\third_party\inspector_protocol\lib\DispatcherBase_h.template;..\..\third_party\inspector_protocol\lib\ErrorSupport_cpp.template;..\..\third_party\inspector_protocol\lib\ErrorSupport_h.template;..\..\third_party\inspector_protocol\lib\Forward_h.template;..\..\third_party\inspector_protocol\lib\FrontendChannel_h.template;..\..\third_party\inspector_protocol\lib\Maybe_h.template;..\..\third_party\inspector_protocol\lib\Object_cpp.template;..\..\third_party\inspector_protocol\lib\Object_h.template;..\..\third_party\inspector_protocol\lib\Parser_cpp.template;..\..\third_party\inspector_protocol\lib\Parser_h.template;..\..\third_party\inspector_protocol\lib\Protocol_cpp.template;..\..\third_party\inspector_protocol\lib\ValueConversions_h.template;..\..\third_party\inspector_protocol\lib\Values_cpp.template;..\..\third_party\inspector_protocol\lib\Values_h.template;..\..\third_party\inspector_protocol\templates\Exported_h.template;..\..\third_party\inspector_protocol\templates\Imported_h.template;..\..\third_party\inspector_protocol\templates\TypeBuilder_cpp.template;..\..\third_party\inspector_protocol\templates\TypeBuilder_h.template;..\..\third_party\inspector_protocol\CodeGenerator.py</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(OutDir)obj\global_intermediate\src\inspector\protocol\Forward.h;$(OutDir)obj\global_intermediate\src\inspector\protocol\Protocol.cpp;$(OutDir)obj\global_intermediate\src\inspector\protocol\Protocol.h;$(OutDir)obj\global_intermediate\src\inspector\protocol\Console.cpp;$(OutDir)obj\global_intermediate\src\inspector\protocol\Console.h;$(OutDir)obj\global_intermediate\src\inspector\protocol\Debugger.cpp;$(OutDir)obj\global_intermediate\src\inspector\protocol\Debugger.h;$(OutDir)obj\global_intermediate\src\inspector\protocol\Runtime.cpp;$(OutDir)obj\global_intermediate\src\inspector\protocol\Runtime.h;$(OutDir)obj\global_intermediate\src\inspector\protocol\Schema.cpp;$(OutDir)obj\global_intermediate\src\inspector\protocol\Schema.h;$(OutDir)obj\global_intermediate\src\inspector\protocol\TimeTravel.cpp;$(OutDir)obj\global_intermediate\src\inspector\protocol\TimeTravel.h;$(OutDir)obj\global_intermediate\include\inspector\Debugger.h;$(OutDir)obj\global_intermediate\include\inspector\Runtime.h;$(OutDir)obj\global_intermediate\include\inspector\Schema.h</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(OutDir)obj\global_intermediate\src\inspector\protocol\Forward.h;$(OutDir)obj\global_intermediate\src\inspector\protocol\Protocol.cpp;$(OutDir)obj\global_intermediate\src\inspector\protocol\Protocol.h;$(OutDir)obj\global_intermediate\src\inspector\protocol\Console.cpp;$(OutDir)obj\global_intermediate\src\inspector\protocol\Console.h;$(OutDir)obj\global_intermediate\src\inspector\protocol\Debugger.cpp;$(OutDir)obj\global_intermediate\src\inspector\protocol\Debugger.h;$(OutDir)obj\global_intermediate\src\inspector\protocol\Runtime.cpp;$(OutDir)obj\global_intermediate\src\inspector\protocol\Runtime.h;$(OutDir)obj\global_intermediate\src\inspector\protocol\Schema.cpp;$(OutDir)obj\global_intermediate\src\inspector\protocol\Schema.h;$(OutDir)obj\global_intermediate\src\inspector\protocol\TimeTravel.cpp;$(OutDir)obj\global_intermediate\src\inspector\protocol\TimeTravel.h;$(OutDir)obj\global_intermediate\include\inspector\Debugger.h;$(OutDir)obj\global_intermediate\include\inspector\Runtime.h;$(OutDir)obj\global_intermediate\include\inspector\Schema.h</Outputs>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="protocol_compatibility.vcxproj">
+      <Project>{9153D5EB-3D86-9F03-6933-9EE0932FD937}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <Import Project="$(VCTargetsPath)\BuildCustomizations\masm.targets" />
+  <ImportGroup Label="ExtensionTargets" />
+</Project>

@@ -49,14 +49,9 @@ Debug/
 Release/
 !**/node_modules/**/release
 !doc/blog/**
-*.sln
 !nodemsi.sln
 *.suo
-*.vcproj
-*.vcxproj
 !custom_actions.vcxproj
-*.vcxproj.user
-*.vcxproj.filters
 UpgradeLog*.XML
 _UpgradeReport_Files/
 ipch/

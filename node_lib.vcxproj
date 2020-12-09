@@ -1,0 +1,1116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="16.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{BB1BFF01-BBA9-3885-7A95-1E5372405CD3}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>node_lib</RootNamespace>
+    <IgnoreWarnCompileDuplicatedFilename>true</IgnoreWarnCompileDuplicatedFilename>
+    <PreferredToolArchitecture>x64</PreferredToolArchitecture>
+    <WindowsTargetPlatformVersion>10.0.18362.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+  </PropertyGroup>
+  <PropertyGroup Label="Locals">
+    <PlatformToolset>v142</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <Import Project="$(VCTargetsPath)\BuildCustomizations\masm.props" />
+  <ImportGroup Label="ExtensionSettings" />
+  <ImportGroup Label="PropertySheets">
+    <Import Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <ExecutablePath>$(ExecutablePath);$(MSBuildProjectDirectory)\.\bin\;$(MSBuildProjectDirectory)\.\bin\</ExecutablePath>
+    <IntDir>$(Configuration)\obj\$(ProjectName)\</IntDir>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkIncremental>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</LinkIncremental>
+    <OutDir>$(SolutionDir)bin\$(PlatformShortName)\$(Configuration)\</OutDir>
+    <TargetName>node_lib</TargetName>
+    <TargetPath>$(OutDir)\node$(TargetExt)</TargetPath>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>src;$(OutDir)obj\global_intermediate;$(OutDir)obj\global_intermediate\include;$(OutDir)obj\global_intermediate\src;tools\msvs\genfiles;deps\chakrashim;deps\icu-small\source\i18n;deps\icu-small\source\common;deps\chakrashim\include;deps\zlib;deps\http_parser;deps\cares\include;deps\uv\include;deps\nghttp2\lib\includes;deps\openssl\openssl\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <BufferSecurityCheck>true</BufferSecurityCheck>
+      <DebugInformationFormat>OldStyle</DebugInformationFormat>
+      <DisableSpecificWarnings>4351;4355;4800;4251;4275;4267;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+      <ExceptionHandling>false</ExceptionHandling>
+      <MinimalRebuild>false</MinimalRebuild>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <OmitFramePointers>false</OmitFramePointers>
+      <Optimization>Disabled</Optimization>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <PreprocessorDefinitions>V8_DEPRECATION_WARNINGS;V8_IMMINENT_DEPRECATION_WARNINGS;NODE_ENGINE="chakracore";NODE_ENGINE_CHAKRACORE;WIN32;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE;_HAS_EXCEPTIONS=0;BUILDING_V8_SHARED=1;BUILDING_UV_SHARED=1;OPENSSL_THREADS;NODE_ARCH="x64";NODE_WANT_INTERNALS=1;V8_DEPRECATION_WARNINGS=1;NODE_OPENSSL_SYSTEM_CERT_PATH="";HAVE_INSPECTOR=1;HAVE_ETW=1;NODE_SHARED_MODE;FD_SETSIZE=1024;NODE_PLATFORM="win32";NOMINMAX;_UNICODE=1;NODE_USE_V8_PLATFORM=1;NODE_HAVE_I18N_SUPPORT=1;NODE_HAVE_SMALL_ICU=1;HAVE_OPENSSL=1;UCONFIG_NO_SERVICE=1;U_ENABLE_DYLOAD=0;U_STATIC_IMPLEMENTATION=1;U_HAVE_STD_STRING=1;UCONFIG_NO_BREAK_ITERATION=0;BUILDING_CHAKRASHIM=1;HTTP_PARSER_STRICT=0;NGHTTP2_STATICLIB;DEBUG;_DEBUG;V8_ENABLE_CHECKS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <StringPooling>true</StringPooling>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <TreatWarningAsError>false</TreatWarningAsError>
+      <WarningLevel>Level3</WarningLevel>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>dbghelp.lib;chakracore.lib;ole32.lib;version.lib;AdvAPI32.lib;User32.lib;iphlpapi.lib;psapi.lib;shell32.lib;userenv.lib;ws2_32.lib;gdi32.lib;advapi32.lib;crypt32.lib;user32.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalOptions>/WHOLEARCHIVE:zlib.lib /WHOLEARCHIVE:libuv.lib /WHOLEARCHIVE:openssl.lib %(AdditionalOptions)</AdditionalOptions>
+      <AllowIsolation>true</AllowIsolation>
+      <DataExecutionPrevention>true</DataExecutionPrevention>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <GenerateMapFile>true</GenerateMapFile>
+      <MapExports>true</MapExports>
+      <ModuleDefinitionFile>$(OutDir)obj\global_intermediate\openssl.def</ModuleDefinitionFile>
+      <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
+      <RandomizedBaseAddress>true</RandomizedBaseAddress>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <TargetMachine>MachineX64</TargetMachine>
+    </Link>
+    <ResourceCompile>
+      <AdditionalIncludeDirectories>src;$(OutDir)obj\global_intermediate;$(OutDir)obj\global_intermediate\include;$(OutDir)obj\global_intermediate\src;tools\msvs\genfiles;deps\chakrashim;deps\icu-small\source\i18n;deps\icu-small\source\common;deps\chakrashim\include;deps\zlib;deps\http_parser;deps\cares\include;deps\uv\include;deps\nghttp2\lib\includes;deps\openssl\openssl\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>V8_DEPRECATION_WARNINGS;V8_IMMINENT_DEPRECATION_WARNINGS;NODE_ENGINE="chakracore";NODE_ENGINE_CHAKRACORE;WIN32;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE;_HAS_EXCEPTIONS=0;BUILDING_V8_SHARED=1;BUILDING_UV_SHARED=1;OPENSSL_THREADS;NODE_ARCH="x64";NODE_WANT_INTERNALS=1;V8_DEPRECATION_WARNINGS=1;NODE_OPENSSL_SYSTEM_CERT_PATH="";HAVE_INSPECTOR=1;HAVE_ETW=1;NODE_SHARED_MODE;FD_SETSIZE=1024;NODE_PLATFORM="win32";NOMINMAX;_UNICODE=1;NODE_USE_V8_PLATFORM=1;NODE_HAVE_I18N_SUPPORT=1;NODE_HAVE_SMALL_ICU=1;HAVE_OPENSSL=1;UCONFIG_NO_SERVICE=1;U_ENABLE_DYLOAD=0;U_STATIC_IMPLEMENTATION=1;U_HAVE_STD_STRING=1;UCONFIG_NO_BREAK_ITERATION=0;BUILDING_CHAKRASHIM=1;HTTP_PARSER_STRICT=0;NGHTTP2_STATICLIB;DEBUG;_DEBUG;V8_ENABLE_CHECKS;%(PreprocessorDefinitions);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>src;$(OutDir)obj\global_intermediate;$(OutDir)obj\global_intermediate\include;$(OutDir)obj\global_intermediate\src;tools\msvs\genfiles;deps\chakrashim;deps\icu-small\source\i18n;deps\icu-small\source\common;deps\chakrashim\include;deps\zlib;deps\http_parser;deps\cares\include;deps\uv\include;deps\nghttp2\lib\includes;deps\openssl\openssl\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>%(AdditionalOptions)</AdditionalOptions>
+      <BufferSecurityCheck>true</BufferSecurityCheck>
+      <DebugInformationFormat>OldStyle</DebugInformationFormat>
+      <DisableSpecificWarnings>4351;4355;4800;4251;4275;4267;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+      <ExceptionHandling>false</ExceptionHandling>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <OmitFramePointers>true</OmitFramePointers>
+      <Optimization>Full</Optimization>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <PreprocessorDefinitions>V8_DEPRECATION_WARNINGS;V8_IMMINENT_DEPRECATION_WARNINGS;NODE_ENGINE="chakracore";NODE_ENGINE_CHAKRACORE;WIN32;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE;_HAS_EXCEPTIONS=0;BUILDING_V8_SHARED=1;BUILDING_UV_SHARED=1;OPENSSL_THREADS;NODE_ARCH="x64";NODE_WANT_INTERNALS=1;V8_DEPRECATION_WARNINGS=1;NODE_OPENSSL_SYSTEM_CERT_PATH="";HAVE_INSPECTOR=1;HAVE_ETW=1;NODE_SHARED_MODE;FD_SETSIZE=1024;NODE_PLATFORM="win32";NOMINMAX;_UNICODE=1;NODE_USE_V8_PLATFORM=1;NODE_HAVE_I18N_SUPPORT=1;NODE_HAVE_SMALL_ICU=1;HAVE_OPENSSL=1;UCONFIG_NO_SERVICE=1;U_ENABLE_DYLOAD=0;U_STATIC_IMPLEMENTATION=1;U_HAVE_STD_STRING=1;UCONFIG_NO_BREAK_ITERATION=0;BUILDING_CHAKRASHIM=1;HTTP_PARSER_STRICT=0;NGHTTP2_STATICLIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <RuntimeTypeInfo>false</RuntimeTypeInfo>
+      <StringPooling>true</StringPooling>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <TreatWarningAsError>false</TreatWarningAsError>
+      <WarningLevel>Level3</WarningLevel>
+      <WholeProgramOptimization>true</WholeProgramOptimization>
+    </ClCompile>
+    <Lib>
+      <AdditionalOptions>/LTCG:INCREMENTAL %(AdditionalOptions)</AdditionalOptions>
+    </Lib>
+    <Link>
+      <AdditionalDependencies>dbghelp.lib;chakracore.lib;ole32.lib;version.lib;AdvAPI32.lib;User32.lib;iphlpapi.lib;psapi.lib;shell32.lib;userenv.lib;ws2_32.lib;gdi32.lib;advapi32.lib;crypt32.lib;user32.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalOptions>/WHOLEARCHIVE:zlib.lib /WHOLEARCHIVE:libuv.lib /WHOLEARCHIVE:openssl.lib /LTCG:INCREMENTAL %(AdditionalOptions)</AdditionalOptions>
+      <AllowIsolation>true</AllowIsolation>
+      <DataExecutionPrevention>true</DataExecutionPrevention>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <GenerateMapFile>true</GenerateMapFile>
+      <MapExports>true</MapExports>
+      <ModuleDefinitionFile>$(OutDir)obj\global_intermediate\openssl.def</ModuleDefinitionFile>
+      <OptimizeReferences>true</OptimizeReferences>
+      <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
+      <RandomizedBaseAddress>true</RandomizedBaseAddress>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <TargetMachine>MachineX64</TargetMachine>
+    </Link>
+    <ResourceCompile>
+      <AdditionalIncludeDirectories>src;$(OutDir)obj\global_intermediate;$(OutDir)obj\global_intermediate\include;$(OutDir)obj\global_intermediate\src;tools\msvs\genfiles;deps\chakrashim;deps\icu-small\source\i18n;deps\icu-small\source\common;deps\chakrashim\include;deps\zlib;deps\http_parser;deps\cares\include;deps\uv\include;deps\nghttp2\lib\includes;deps\openssl\openssl\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>V8_DEPRECATION_WARNINGS;V8_IMMINENT_DEPRECATION_WARNINGS;NODE_ENGINE="chakracore";NODE_ENGINE_CHAKRACORE;WIN32;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE;_HAS_EXCEPTIONS=0;BUILDING_V8_SHARED=1;BUILDING_UV_SHARED=1;OPENSSL_THREADS;NODE_ARCH="x64";NODE_WANT_INTERNALS=1;V8_DEPRECATION_WARNINGS=1;NODE_OPENSSL_SYSTEM_CERT_PATH="";HAVE_INSPECTOR=1;HAVE_ETW=1;NODE_SHARED_MODE;FD_SETSIZE=1024;NODE_PLATFORM="win32";NOMINMAX;_UNICODE=1;NODE_USE_V8_PLATFORM=1;NODE_HAVE_I18N_SUPPORT=1;NODE_HAVE_SMALL_ICU=1;HAVE_OPENSSL=1;UCONFIG_NO_SERVICE=1;U_ENABLE_DYLOAD=0;U_STATIC_IMPLEMENTATION=1;U_HAVE_STD_STRING=1;UCONFIG_NO_BREAK_ITERATION=0;BUILDING_CHAKRASHIM=1;HTTP_PARSER_STRICT=0;NGHTTP2_STATICLIB;%(PreprocessorDefinitions);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <None Include="lib\internal\bootstrap\cache.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\bootstrap\loaders.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\bootstrap\node.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\async_hooks.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\assert.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\buffer.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\child_process.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\console.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\constants.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\crypto.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\cluster.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\dgram.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\dns.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\domain.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\events.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\fs.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\http.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\http2.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\_http_agent.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\_http_client.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\_http_common.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\_http_incoming.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\_http_outgoing.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\_http_server.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\https.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\inspector.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\module.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\net.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\os.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\path.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\perf_hooks.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\process.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\punycode.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\querystring.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\readline.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\repl.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\stream.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\_stream_readable.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\_stream_writable.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\_stream_duplex.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\_stream_transform.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\_stream_passthrough.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\_stream_wrap.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\string_decoder.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\sys.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\timers.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\tls.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\_tls_common.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\_tls_wrap.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\trace_events.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\trace_mgr.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\tty.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\url.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\util.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\v8.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\vm.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\worker_threads.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\zlib.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\assert.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\async_hooks.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\bash_completion.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\buffer.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\cli_table.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\child_process.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\cluster\child.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\cluster\master.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\cluster\round_robin_handle.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\cluster\shared_handle.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\cluster\utils.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\cluster\worker.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\console\constructor.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\console\global.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\console\inspector.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\crypto\certificate.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\crypto\cipher.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\crypto\diffiehellman.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\crypto\hash.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\crypto\keygen.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\crypto\pbkdf2.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\crypto\random.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\crypto\scrypt.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\crypto\sig.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\crypto\util.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\constants.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\dgram.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\dns\promises.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\dns\utils.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\domexception.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\encoding.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\errors.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\error-serdes.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\fixed_queue.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\freelist.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\fs\promises.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\fs\read_file_context.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\fs\streams.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\fs\sync_write_stream.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\fs\utils.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\fs\watchers.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\http.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\inspector_async_hook.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\linkedlist.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\modules\cjs\helpers.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\modules\cjs\loader.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\modules\esm\loader.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\modules\esm\create_dynamic_module.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\modules\esm\default_resolve.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\modules\esm\module_job.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\modules\esm\module_map.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\modules\esm\translators.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\safe_globals.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\net.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\options.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\print_help.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\priority_queue.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\process\esm_loader.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\process\main_thread_only.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\process\next_tick.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\process\per_thread.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\process\promises.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\process\stdio.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\process\warning.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\process\worker_thread_only.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\querystring.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\process\write-coverage.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\process\coverage.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\queue_microtask.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\readline.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\repl.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\repl\await.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\repl\recoverable.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\socket_list.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\test\binding.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\test\heap.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\test\unicode.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\timers.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\tls.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\trace_events_async_hooks.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\tty.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\url.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\util.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\util\comparisons.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\util\inspect.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\util\inspector.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\util\types.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\http2\core.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\http2\compat.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\http2\util.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\v8_prof_polyfill.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\v8_prof_processor.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\validators.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\stream_base_commons.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\vm\source_text_module.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\worker.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\streams\lazy_transform.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\streams\async_iterator.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\streams\buffer_list.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\streams\duplexpair.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\streams\legacy.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\streams\destroy.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\streams\state.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\streams\pipeline.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\streams\end-of-stream.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="lib\internal\wrap_js_stream.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="deps\v8\tools\splaytree.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="deps\v8\tools\codemap.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="deps\v8\tools\consarray.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="deps\v8\tools\csvparser.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="deps\v8\tools\profile.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="deps\v8\tools\profile_view.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="deps\v8\tools\logreader.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="deps\v8\tools\arguments.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="deps\v8\tools\tickprocessor.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="deps\v8\tools\SourceMap.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="deps\v8\tools\tickprocessor-driver.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="deps\node-inspect\lib\_inspect.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="deps\node-inspect\lib\internal\inspect_client.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="deps\node-inspect\lib\internal\inspect_repl.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="deps\acorn\dist\acorn.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="deps\acorn\dist\walk.js">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="common.gypi" />
+    <None Include="$(OutDir)obj\global_intermediate\openssl.def" />
+    <None Include="node.gyp" />
+    <None Include="tools\check_macros.py">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="tools\nodcheck_macros.py">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="$(OutDir)obj\global_intermediate\node_protocol.json">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="tools\inspector_protocol\lib\Allocator_h.template">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="tools\inspector_protocol\lib\Array_h.template">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="tools\inspector_protocol\lib\Collections_h.template">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="tools\inspector_protocol\lib\DispatcherBase_cpp.template">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="tools\inspector_protocol\lib\DispatcherBase_h.template">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="tools\inspector_protocol\lib\ErrorSupport_cpp.template">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="tools\inspector_protocol\lib\ErrorSupport_h.template">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="tools\inspector_protocol\lib\Forward_h.template">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="tools\inspector_protocol\lib\FrontendChannel_h.template">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="tools\inspector_protocol\lib\Maybe_h.template">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="tools\inspector_protocol\lib\Object_cpp.template">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="tools\inspector_protocol\lib\Object_h.template">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="tools\inspector_protocol\lib\Parser_cpp.template">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="tools\inspector_protocol\lib\Parser_h.template">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="tools\inspector_protocol\lib\Protocol_cpp.template">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="tools\inspector_protocol\lib\ValueConversions_h.template">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="tools\inspector_protocol\lib\Values_cpp.template">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="tools\inspector_protocol\lib\Values_h.template">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="tools\inspector_protocol\templates\Exported_h.template">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="tools\inspector_protocol\templates\Imported_h.template">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="tools\inspector_protocol\templates\TypeBuilder_cpp.template">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="tools\inspector_protocol\templates\TypeBuilder_h.template">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="tools\inspector_protocol\CodeGenerator.py">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="deps\openssl\openssl\util\libssl.num">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+    <None Include="config.gypi">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\js_native_api.h" />
+    <ClInclude Include="src\js_native_api_types.h" />
+    <ClInclude Include="src\js_native_api_v8.h" />
+    <ClInclude Include="src\js_native_api_v8_internals.h" />
+    <ClInclude Include="src\aliased_buffer.h" />
+    <ClInclude Include="src\async_wrap.h" />
+    <ClInclude Include="src\async_wrap-inl.h" />
+    <ClInclude Include="src\base_object.h" />
+    <ClInclude Include="src\base_object-inl.h" />
+    <ClInclude Include="src\base64.h" />
+    <ClInclude Include="src\chakra_ttd.h" />
+    <ClInclude Include="src\connect_wrap.h" />
+    <ClInclude Include="src\connection_wrap.h" />
+    <ClInclude Include="src\env.h" />
+    <ClInclude Include="src\env-inl.h" />
+    <ClInclude Include="src\handle_wrap.h" />
+    <ClInclude Include="src\http_parser_adaptor.h" />
+    <ClInclude Include="src\js_stream.h" />
+    <ClInclude Include="src\memory_tracker.h" />
+    <ClInclude Include="src\memory_tracker-inl.h" />
+    <ClInclude Include="src\module_wrap.h" />
+    <ClInclude Include="src\node.h" />
+    <ClInclude Include="src\node_api.h" />
+    <ClInclude Include="src\node_api_types.h" />
+    <ClInclude Include="src\node_binding.h" />
+    <ClInclude Include="src\node_buffer.h" />
+    <ClInclude Include="src\node_constants.h" />
+    <ClInclude Include="src\node_context_data.h" />
+    <ClInclude Include="src\node_contextify.h" />
+    <ClInclude Include="src\node_errors.h" />
+    <ClInclude Include="src\node_file.h" />
+    <ClInclude Include="src\node_http2.h" />
+    <ClInclude Include="src\node_http2_state.h" />
+    <ClInclude Include="src\node_i18n.h" />
+    <ClInclude Include="src\node_internals.h" />
+    <ClInclude Include="src\node_messaging.h" />
+    <ClInclude Include="src\node_metadata.h" />
+    <ClInclude Include="src\node_mutex.h" />
+    <ClInclude Include="src\node_native_module.h" />
+    <ClInclude Include="src\node_object_wrap.h" />
+    <ClInclude Include="src\node_options.h" />
+    <ClInclude Include="src\node_options-inl.h" />
+    <ClInclude Include="src\node_perf.h" />
+    <ClInclude Include="src\node_perf_common.h" />
+    <ClInclude Include="src\node_persistent.h" />
+    <ClInclude Include="src\node_platform.h" />
+    <ClInclude Include="src\node_revert.h" />
+    <ClInclude Include="src\node_root_certs.h" />
+    <ClInclude Include="src\node_stat_watcher.h" />
+    <ClInclude Include="src\node_union_bytes.h" />
+    <ClInclude Include="src\node_url.h" />
+    <ClInclude Include="src\node_version.h" />
+    <ClInclude Include="src\node_watchdog.h" />
+    <ClInclude Include="src\node_worker.h" />
+    <ClInclude Include="src\pipe_wrap.h" />
+    <ClInclude Include="src\req_wrap.h" />
+    <ClInclude Include="src\req_wrap-inl.h" />
+    <ClInclude Include="src\sharedarraybuffer_metadata.h" />
+    <ClInclude Include="src\spawn_sync.h" />
+    <ClInclude Include="src\stream_base.h" />
+    <ClInclude Include="src\stream_base-inl.h" />
+    <ClInclude Include="src\stream_pipe.h" />
+    <ClInclude Include="src\stream_wrap.h" />
+    <ClInclude Include="src\string_bytes.h" />
+    <ClInclude Include="src\string_decoder.h" />
+    <ClInclude Include="src\string_decoder-inl.h" />
+    <ClInclude Include="src\string_search.h" />
+    <ClInclude Include="src\tcp_wrap.h" />
+    <ClInclude Include="src\tracing\agent.h" />
+    <ClInclude Include="src\tracing\node_trace_buffer.h" />
+    <ClInclude Include="src\tracing\node_trace_writer.h" />
+    <ClInclude Include="src\tracing\trace_event.h" />
+    <ClInclude Include="src\tracing\trace_event_common.h" />
+    <ClInclude Include="src\tracing\traced_value.h" />
+    <ClInclude Include="src\tty_wrap.h" />
+    <ClInclude Include="src\udp_wrap.h" />
+    <ClInclude Include="src\util.h" />
+    <ClInclude Include="src\util-inl.h" />
+    <ClInclude Include="deps\http_parser\http_parser.h" />
+    <ClInclude Include="deps\v8\include\v8.h" />
+    <ClInclude Include="src\inspector_agent.h" />
+    <ClInclude Include="src\inspector_io.h" />
+    <ClInclude Include="src\inspector_socket.h" />
+    <ClInclude Include="src\inspector_socket_server.h" />
+    <ClInclude Include="src\inspector\main_thread_interface.h" />
+    <ClInclude Include="src\inspector\node_string.h" />
+    <ClInclude Include="src\inspector\tracing_agent.h" />
+    <ClInclude Include="src\inspector\worker_agent.h" />
+    <ClInclude Include="src\inspector\worker_inspector.h" />
+    <ClInclude Include="src\node_win32_etw_provider.h" />
+    <ClInclude Include="src\node_win32_etw_provider-inl.h" />
+    <ClInclude Include="src\node_dtrace.h" />
+    <ClInclude Include="tools\msvs\genfiles\node_etw_provider.h" />
+    <ClInclude Include="src\node_crypto.h" />
+    <ClInclude Include="src\node_crypto_bio.h" />
+    <ClInclude Include="src\node_crypto_clienthello.h" />
+    <ClInclude Include="src\node_crypto_clienthello-inl.h" />
+    <ClInclude Include="src\node_crypto_groups.h" />
+    <ClInclude Include="src\tls_wrap.h" />
+    <ClInclude Include="$(OutDir)obj\global_intermediate\src\node\inspector\protocol\Forward.h" />
+    <ClInclude Include="$(OutDir)obj\global_intermediate\src\node\inspector\protocol\Protocol.h" />
+    <ClInclude Include="$(OutDir)obj\global_intermediate\src\node\inspector\protocol\NodeWorker.h" />
+    <ClInclude Include="$(OutDir)obj\global_intermediate\src\node\inspector\protocol\NodeTracing.h" />
+    <ClInclude Include="$(OutDir)obj\global_intermediate\v8_inspector_protocol_json.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\async_wrap.cc" />
+    <ClCompile Include="src\bootstrapper.cc" />
+    <ClCompile Include="src\callback_scope.cc" />
+    <ClCompile Include="src\cares_wrap.cc" />
+    <ClCompile Include="src\connect_wrap.cc" />
+    <ClCompile Include="src\connection_wrap.cc" />
+    <ClCompile Include="src\debug_utils.cc" />
+    <ClCompile Include="src\env.cc" />
+    <ClCompile Include="src\exceptions.cc" />
+    <ClCompile Include="src\fs_event_wrap.cc" />
+    <ClCompile Include="src\handle_wrap.cc" />
+    <ClCompile Include="src\heap_utils.cc" />
+    <ClCompile Include="src\js_stream.cc" />
+    <ClCompile Include="src\module_wrap.cc" />
+    <ClCompile Include="src\node.cc" />
+    <ClCompile Include="src\node_binding.cc" />
+    <ClCompile Include="src\node_buffer.cc" />
+    <ClCompile Include="src\node_config.cc" />
+    <ClCompile Include="src\node_constants.cc" />
+    <ClCompile Include="src\node_contextify.cc" />
+    <ClCompile Include="src\node_domain.cc" />
+    <ClCompile Include="src\node_encoding.cc" />
+    <ClCompile Include="src\node_errors.cc" />
+    <ClCompile Include="src\node_file.cc" />
+    <ClCompile Include="src\node_http_parser.cc" />
+    <ClCompile Include="src\node_http2.cc" />
+    <ClCompile Include="src\node_i18n.cc" />
+    <ClCompile Include="src\node_messaging.cc" />
+    <ClCompile Include="src\node_metadata.cc" />
+    <ClCompile Include="src\node_native_module.cc" />
+    <ClCompile Include="src\node_options.cc" />
+    <ClCompile Include="src\node_os.cc" />
+    <ClCompile Include="src\node_perf.cc" />
+    <ClCompile Include="src\node_platform.cc" />
+    <ClCompile Include="src\node_postmortem_metadata.cc" />
+    <ClCompile Include="src\node_process.cc" />
+    <ClCompile Include="src\node_serdes.cc" />
+    <ClCompile Include="src\node_stat_watcher.cc" />
+    <ClCompile Include="src\node_trace_events.cc" />
+    <ClCompile Include="src\node_types.cc" />
+    <ClCompile Include="src\node_url.cc" />
+    <ClCompile Include="src\node_util.cc" />
+    <ClCompile Include="src\node_v8.cc" />
+    <ClCompile Include="src\node_watchdog.cc" />
+    <ClCompile Include="src\node_worker.cc" />
+    <ClCompile Include="src\node_zlib.cc" />
+    <ClCompile Include="src\pipe_wrap.cc" />
+    <ClCompile Include="src\process_wrap.cc" />
+    <ClCompile Include="src\sharedarraybuffer_metadata.cc" />
+    <ClCompile Include="src\signal_wrap.cc" />
+    <ClCompile Include="src\spawn_sync.cc" />
+    <ClCompile Include="src\stream_base.cc" />
+    <ClCompile Include="src\stream_pipe.cc" />
+    <ClCompile Include="src\stream_wrap.cc" />
+    <ClCompile Include="src\string_bytes.cc" />
+    <ClCompile Include="src\string_decoder.cc" />
+    <ClCompile Include="src\tcp_wrap.cc" />
+    <ClCompile Include="src\timers.cc" />
+    <ClCompile Include="src\tracing\agent.cc" />
+    <ClCompile Include="src\tracing\node_trace_buffer.cc" />
+    <ClCompile Include="src\tracing\node_trace_writer.cc" />
+    <ClCompile Include="src\tracing\trace_event.cc" />
+    <ClCompile Include="src\tracing\traced_value.cc" />
+    <ClCompile Include="src\tty_wrap.cc" />
+    <ClCompile Include="src\udp_wrap.cc" />
+    <ClCompile Include="src\util.cc" />
+    <ClCompile Include="src\uv.cc" />
+    <ClCompile Include="src\node_api_jsrt.cc" />
+    <ClCompile Include="src\node_code_cache_stub.cc" />
+    <ClCompile Include="src\inspector_agent.cc" />
+    <ClCompile Include="src\inspector_io.cc" />
+    <ClCompile Include="src\inspector_js_api.cc" />
+    <ClCompile Include="src\inspector_socket.cc" />
+    <ClCompile Include="src\inspector_socket_server.cc" />
+    <ClCompile Include="src\inspector\main_thread_interface.cc" />
+    <ClCompile Include="src\inspector\node_string.cc" />
+    <ClCompile Include="src\inspector\tracing_agent.cc" />
+    <ClCompile Include="src\inspector\worker_agent.cc" />
+    <ClCompile Include="src\inspector\worker_inspector.cc" />
+    <ClCompile Include="src\node_win32_etw_provider.cc" />
+    <ClCompile Include="src\node_dtrace.cc" />
+    <ClCompile Include="src\node_crypto.cc" />
+    <ClCompile Include="src\node_crypto_bio.cc" />
+    <ClCompile Include="src\node_crypto_clienthello.cc" />
+    <ClCompile Include="src\tls_wrap.cc" />
+    <ClCompile Include="$(OutDir)obj\global_intermediate\node_javascript.cc" />
+    <ClCompile Include="$(OutDir)obj\global_intermediate\src\node\inspector\protocol\Protocol.cpp" />
+    <ClCompile Include="$(OutDir)obj\global_intermediate\src\node\inspector\protocol\NodeWorker.cpp" />
+    <ClCompile Include="$(OutDir)obj\global_intermediate\src\node\inspector\protocol\NodeTracing.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="tools\msvs\genfiles\node_etw_provider.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="lib\internal\per_context.js">
+      <FileType>Document</FileType>
+      <Command>call call python "tools\js2c.py" "$(OutDir)obj\global_intermediate\node_javascript.cc" "lib\internal\per_context.js" "lib\internal\bootstrap\cache.js" "lib\internal\bootstrap\loaders.js" "lib\internal\bootstrap\node.js" "lib\async_hooks.js" "lib\assert.js" "lib\buffer.js" "lib\child_process.js" "lib\console.js" "lib\constants.js" "lib\crypto.js" "lib\cluster.js" "lib\dgram.js" "lib\dns.js" "lib\domain.js" "lib\events.js" "lib\fs.js" "lib\http.js" "lib\http2.js" "lib\_http_agent.js" "lib\_http_client.js" "lib\_http_common.js" "lib\_http_incoming.js" "lib\_http_outgoing.js" "lib\_http_server.js" "lib\https.js" "lib\inspector.js" "lib\module.js" "lib\net.js" "lib\os.js" "lib\path.js" "lib\perf_hooks.js" "lib\process.js" "lib\punycode.js" "lib\querystring.js" "lib\readline.js" "lib\repl.js" "lib\stream.js" "lib\_stream_readable.js" "lib\_stream_writable.js" "lib\_stream_duplex.js" "lib\_stream_transform.js" "lib\_stream_passthrough.js" "lib\_stream_wrap.js" "lib\string_decoder.js" "lib\sys.js" "lib\timers.js" "lib\tls.js" "lib\_tls_common.js" "lib\_tls_wrap.js" "lib\trace_events.js" "lib\trace_mgr.js" "lib\tty.js" "lib\url.js" "lib\util.js" "lib\v8.js" "lib\vm.js" "lib\worker_threads.js" "lib\zlib.js" "lib\internal\assert.js" "lib\internal\async_hooks.js" "lib\internal\bash_completion.js" "lib\internal\buffer.js" "lib\internal\cli_table.js" "lib\internal\child_process.js" "lib\internal\cluster\child.js" "lib\internal\cluster\master.js" "lib\internal\cluster\round_robin_handle.js" "lib\internal\cluster\shared_handle.js" "lib\internal\cluster\utils.js" "lib\internal\cluster\worker.js" "lib\internal\console\constructor.js" "lib\internal\console\global.js" "lib\internal\console\inspector.js" "lib\internal\crypto\certificate.js" "lib\internal\crypto\cipher.js" "lib\internal\crypto\diffiehellman.js" "lib\internal\crypto\hash.js" "lib\internal\crypto\keygen.js" "lib\internal\crypto\pbkdf2.js" "lib\internal\crypto\random.js" "lib\internal\crypto\scrypt.js" "lib\internal\crypto\sig.js" "lib\internal\crypto\util.js" "lib\internal\constants.js" "lib\internal\dgram.js" "lib\internal\dns\promises.js" "lib\internal\dns\utils.js" "lib\internal\domexception.js" "lib\internal\encoding.js" "lib\internal\errors.js" "lib\internal\error-serdes.js" "lib\internal\fixed_queue.js" "lib\internal\freelist.js" "lib\internal\fs\promises.js" "lib\internal\fs\read_file_context.js" "lib\internal\fs\streams.js" "lib\internal\fs\sync_write_stream.js" "lib\internal\fs\utils.js" "lib\internal\fs\watchers.js" "lib\internal\http.js" "lib\internal\inspector_async_hook.js" "lib\internal\linkedlist.js" "lib\internal\modules\cjs\helpers.js" "lib\internal\modules\cjs\loader.js" "lib\internal\modules\esm\loader.js" "lib\internal\modules\esm\create_dynamic_module.js" "lib\internal\modules\esm\default_resolve.js" "lib\internal\modules\esm\module_job.js" "lib\internal\modules\esm\module_map.js" "lib\internal\modules\esm\translators.js" "lib\internal\safe_globals.js" "lib\internal\net.js" "lib\internal\options.js" "lib\internal\print_help.js" "lib\internal\priority_queue.js" "lib\internal\process\esm_loader.js" "lib\internal\process\main_thread_only.js" "lib\internal\process\next_tick.js" "lib\internal\process\per_thread.js" "lib\internal\process\promises.js" "lib\internal\process\stdio.js" "lib\internal\process\warning.js" "lib\internal\process\worker_thread_only.js" "lib\internal\querystring.js" "lib\internal\process\write-coverage.js" "lib\internal\process\coverage.js" "lib\internal\queue_microtask.js" "lib\internal\readline.js" "lib\internal\repl.js" "lib\internal\repl\await.js" "lib\internal\repl\recoverable.js" "lib\internal\socket_list.js" "lib\internal\test\binding.js" "lib\internal\test\heap.js" "lib\internal\test\unicode.js" "lib\internal\timers.js" "lib\internal\tls.js" "lib\internal\trace_events_async_hooks.js" "lib\internal\tty.js" "lib\internal\url.js" "lib\internal\util.js" "lib\internal\util\comparisons.js" "lib\internal\util\inspect.js" "lib\internal\util\inspector.js" "lib\internal\util\types.js" "lib\internal\http2\core.js" "lib\internal\http2\compat.js" "lib\internal\http2\util.js" "lib\internal\v8_prof_polyfill.js" "lib\internal\v8_prof_processor.js" "lib\internal\validators.js" "lib\internal\stream_base_commons.js" "lib\internal\vm\source_text_module.js" "lib\internal\worker.js" "lib\internal\streams\lazy_transform.js" "lib\internal\streams\async_iterator.js" "lib\internal\streams\buffer_list.js" "lib\internal\streams\duplexpair.js" "lib\internal\streams\legacy.js" "lib\internal\streams\destroy.js" "lib\internal\streams\state.js" "lib\internal\streams\pipeline.js" "lib\internal\streams\end-of-stream.js" "lib\internal\wrap_js_stream.js" "deps\v8\tools\splaytree.js" "deps\v8\tools\codemap.js" "deps\v8\tools\consarray.js" "deps\v8\tools\csvparser.js" "deps\v8\tools\profile.js" "deps\v8\tools\profile_view.js" "deps\v8\tools\logreader.js" "deps\v8\tools\arguments.js" "deps\v8\tools\tickprocessor.js" "deps\v8\tools\SourceMap.js" "deps\v8\tools\tickprocessor-driver.js" "deps\node-inspect\lib\_inspect.js" "deps\node-inspect\lib\internal\inspect_client.js" "deps\node-inspect\lib\internal\inspect_repl.js" "deps\acorn\dist\acorn.js" "deps\acorn\dist\walk.js" "config.gypi" "tools\check_macros.py" "tools\nodcheck_macros.py"
+if %errorlevel% neq 0 exit /b %errorlevel%</Command>
+      <Message>node_js2c</Message>
+      <Outputs>$(OutDir)obj\global_intermediate\node_javascript.cc</Outputs>
+      <AdditionalInputs>lib\internal\bootstrap\cache.js;lib\internal\bootstrap\loaders.js;lib\internal\bootstrap\node.js;lib\async_hooks.js;lib\assert.js;lib\buffer.js;lib\child_process.js;lib\console.js;lib\constants.js;lib\crypto.js;lib\cluster.js;lib\dgram.js;lib\dns.js;lib\domain.js;lib\events.js;lib\fs.js;lib\http.js;lib\http2.js;lib\_http_agent.js;lib\_http_client.js;lib\_http_common.js;lib\_http_incoming.js;lib\_http_outgoing.js;lib\_http_server.js;lib\https.js;lib\inspector.js;lib\module.js;lib\net.js;lib\os.js;lib\path.js;lib\perf_hooks.js;lib\process.js;lib\punycode.js;lib\querystring.js;lib\readline.js;lib\repl.js;lib\stream.js;lib\_stream_readable.js;lib\_stream_writable.js;lib\_stream_duplex.js;lib\_stream_transform.js;lib\_stream_passthrough.js;lib\_stream_wrap.js;lib\string_decoder.js;lib\sys.js;lib\timers.js;lib\tls.js;lib\_tls_common.js;lib\_tls_wrap.js;lib\trace_events.js;lib\trace_mgr.js;lib\tty.js;lib\url.js;lib\util.js;lib\v8.js;lib\vm.js;lib\worker_threads.js;lib\zlib.js;lib\internal\assert.js;lib\internal\async_hooks.js;lib\internal\bash_completion.js;lib\internal\buffer.js;lib\internal\cli_table.js;lib\internal\child_process.js;lib\internal\cluster\child.js;lib\internal\cluster\master.js;lib\internal\cluster\round_robin_handle.js;lib\internal\cluster\shared_handle.js;lib\internal\cluster\utils.js;lib\internal\cluster\worker.js;lib\internal\console\constructor.js;lib\internal\console\global.js;lib\internal\console\inspector.js;lib\internal\crypto\certificate.js;lib\internal\crypto\cipher.js;lib\internal\crypto\diffiehellman.js;lib\internal\crypto\hash.js;lib\internal\crypto\keygen.js;lib\internal\crypto\pbkdf2.js;lib\internal\crypto\random.js;lib\internal\crypto\scrypt.js;lib\internal\crypto\sig.js;lib\internal\crypto\util.js;lib\internal\constants.js;lib\internal\dgram.js;lib\internal\dns\promises.js;lib\internal\dns\utils.js;lib\internal\domexception.js;lib\internal\encoding.js;lib\internal\errors.js;lib\internal\error-serdes.js;lib\internal\fixed_queue.js;lib\internal\freelist.js;lib\internal\fs\promises.js;lib\internal\fs\read_file_context.js;lib\internal\fs\streams.js;lib\internal\fs\sync_write_stream.js;lib\internal\fs\utils.js;lib\internal\fs\watchers.js;lib\internal\http.js;lib\internal\inspector_async_hook.js;lib\internal\linkedlist.js;lib\internal\modules\cjs\helpers.js;lib\internal\modules\cjs\loader.js;lib\internal\modules\esm\loader.js;lib\internal\modules\esm\create_dynamic_module.js;lib\internal\modules\esm\default_resolve.js;lib\internal\modules\esm\module_job.js;lib\internal\modules\esm\module_map.js;lib\internal\modules\esm\translators.js;lib\internal\safe_globals.js;lib\internal\net.js;lib\internal\options.js;lib\internal\print_help.js;lib\internal\priority_queue.js;lib\internal\process\esm_loader.js;lib\internal\process\main_thread_only.js;lib\internal\process\next_tick.js;lib\internal\process\per_thread.js;lib\internal\process\promises.js;lib\internal\process\stdio.js;lib\internal\process\warning.js;lib\internal\process\worker_thread_only.js;lib\internal\querystring.js;lib\internal\process\write-coverage.js;lib\internal\process\coverage.js;lib\internal\queue_microtask.js;lib\internal\readline.js;lib\internal\repl.js;lib\internal\repl\await.js;lib\internal\repl\recoverable.js;lib\internal\socket_list.js;lib\internal\test\binding.js;lib\internal\test\heap.js;lib\internal\test\unicode.js;lib\internal\timers.js;lib\internal\tls.js;lib\internal\trace_events_async_hooks.js;lib\internal\tty.js;lib\internal\url.js;lib\internal\util.js;lib\internal\util\comparisons.js;lib\internal\util\inspect.js;lib\internal\util\inspector.js;lib\internal\util\types.js;lib\internal\http2\core.js;lib\internal\http2\compat.js;lib\internal\http2\util.js;lib\internal\v8_prof_polyfill.js;lib\internal\v8_prof_processor.js;lib\internal\validators.js;lib\internal\stream_base_commons.js;lib\internal\vm\source_text_module.js;lib\internal\worker.js;lib\internal\streams\lazy_transform.js;lib\internal\streams\async_iterator.js;lib\internal\streams\buffer_list.js;lib\internal\streams\duplexpair.js;lib\internal\streams\legacy.js;lib\internal\streams\destroy.js;lib\internal\streams\state.js;lib\internal\streams\pipeline.js;lib\internal\streams\end-of-stream.js;lib\internal\wrap_js_stream.js;deps\v8\tools\splaytree.js;deps\v8\tools\codemap.js;deps\v8\tools\consarray.js;deps\v8\tools\csvparser.js;deps\v8\tools\profile.js;deps\v8\tools\profile_view.js;deps\v8\tools\logreader.js;deps\v8\tools\arguments.js;deps\v8\tools\tickprocessor.js;deps\v8\tools\SourceMap.js;deps\v8\tools\tickprocessor-driver.js;deps\node-inspect\lib\_inspect.js;deps\node-inspect\lib\internal\inspect_client.js;deps\node-inspect\lib\internal\inspect_repl.js;deps\acorn\dist\acorn.js;deps\acorn\dist\walk.js;config.gypi;tools\check_macros.py;tools\nodcheck_macros.py</AdditionalInputs>
+    </CustomBuild>
+    <CustomBuild Include="$(OutDir)obj\global_intermediate\node_protocol_config.json">
+      <FileType>Document</FileType>
+      <Command>call call python "tools\inspector_protocol\CodeGenerator.py" "--jinja_dir" "tools" "--output_base" "$(OutDir)obj\global_intermediate\src" "--config" "$(OutDir)obj\global_intermediate\node_protocol_config.json"
+if %errorlevel% neq 0 exit /b %errorlevel%</Command>
+      <Message>Generating node protocol sources from protocol json</Message>
+      <Outputs>$(OutDir)obj\global_intermediate\src\node\inspector\protocol\Forward.h;$(OutDir)obj\global_intermediate\src\node\inspector\protocol\Protocol.cpp;$(OutDir)obj\global_intermediate\src\node\inspector\protocol\Protocol.h;$(OutDir)obj\global_intermediate\src\node\inspector\protocol\NodeWorker.cpp;$(OutDir)obj\global_intermediate\src\node\inspector\protocol\NodeWorker.h;$(OutDir)obj\global_intermediate\src\node\inspector\protocol\NodeTracing.cpp;$(OutDir)obj\global_intermediate\src\node\inspector\protocol\NodeTracing.h</Outputs>
+      <AdditionalInputs>$(OutDir)obj\global_intermediate\node_protocol.json;tools\inspector_protocol\lib\Allocator_h.template;tools\inspector_protocol\lib\Array_h.template;tools\inspector_protocol\lib\Collections_h.template;tools\inspector_protocol\lib\DispatcherBase_cpp.template;tools\inspector_protocol\lib\DispatcherBase_h.template;tools\inspector_protocol\lib\ErrorSupport_cpp.template;tools\inspector_protocol\lib\ErrorSupport_h.template;tools\inspector_protocol\lib\Forward_h.template;tools\inspector_protocol\lib\FrontendChannel_h.template;tools\inspector_protocol\lib\Maybe_h.template;tools\inspector_protocol\lib\Object_cpp.template;tools\inspector_protocol\lib\Object_h.template;tools\inspector_protocol\lib\Parser_cpp.template;tools\inspector_protocol\lib\Parser_h.template;tools\inspector_protocol\lib\Protocol_cpp.template;tools\inspector_protocol\lib\ValueConversions_h.template;tools\inspector_protocol\lib\Values_cpp.template;tools\inspector_protocol\lib\Values_h.template;tools\inspector_protocol\templates\Exported_h.template;tools\inspector_protocol\templates\Imported_h.template;tools\inspector_protocol\templates\TypeBuilder_cpp.template;tools\inspector_protocol\templates\TypeBuilder_h.template;tools\inspector_protocol\CodeGenerator.py</AdditionalInputs>
+    </CustomBuild>
+    <CustomBuild Include="$(OutDir)obj\global_intermediate\concatenated_protocol.json">
+      <FileType>Document</FileType>
+      <Command>call call python "tools\compress_json.py" "$(OutDir)obj\global_intermediate\concatenated_protocol.json" "$(OutDir)obj\global_intermediate\v8_inspector_protocol_json.h"
+if %errorlevel% neq 0 exit /b %errorlevel%</Command>
+      <Message>v8_inspector_compress_protocol_json</Message>
+      <Outputs>$(OutDir)obj\global_intermediate\v8_inspector_protocol_json.h</Outputs>
+    </CustomBuild>
+    <CustomBuild Include="src\inspector\node_protocol_config.json">
+      <FileType>Document</FileType>
+      <Command>call mkdir "$(OutDir)obj\global_intermediate" 2&gt;nul &amp; set ERRORLEVEL=0 &amp; copy /Y "src\inspector\node_protocol_config.json" "$(OutDir)obj\global_intermediate\node_protocol_config.json"
+if %errorlevel% neq 0 exit /b %errorlevel%</Command>
+      <Message>Copying src/inspector/node_protocol_config.json to $(OutDir)obj\global_intermediate</Message>
+      <Outputs>$(OutDir)obj\global_intermediate\node_protocol_config.json</Outputs>
+    </CustomBuild>
+    <CustomBuild Include="deps\openssl\openssl\util\libcrypto.num">
+      <FileType>Document</FileType>
+      <Command>call call python "tools\mkssldef.py" "-CAES,BF,BIO,DES,DH,DSA,EC,ECDH,ECDSA,ENGINE,EVP,HMAC,MD4,MD5,PSK,RC2,RC4,RSA,SHA,SHA0,SHA1,SHA256,SHA512,SOCK,STDIO,TLSEXT,FP_API,TLS1_METHOD,TLS1_1_METHOD,TLS1_2_METHOD,SCRYPT,OCSP,NEXTPROTONEG,RMD160,CAST" "-DWIN32" "-X^DSO" "-X^_" "-X^private_" "-Bdeps/zlib/win32/zlib.def" "-o" "$(OutDir)obj\global_intermediate\openssl.def" "deps\openssl\openssl\util\libcrypto.num" "deps\openssl\openssl\util\libssl.num"
+if %errorlevel% neq 0 exit /b %errorlevel%</Command>
+      <Message>mkssldef</Message>
+      <Outputs>$(OutDir)obj\global_intermediate\openssl.def</Outputs>
+      <AdditionalInputs>deps\openssl\openssl\util\libssl.num</AdditionalInputs>
+    </CustomBuild>
+    <CustomBuild Include="deps\v8\src\inspector\js_protocol.json">
+      <FileType>Document</FileType>
+      <Command>call call python "tools\inspector_protocol\ConcatenateProtocols.py" "deps\v8\src\inspector\js_protocol.json" "$(OutDir)obj\global_intermediate\node_protocol.json" "$(OutDir)obj\global_intermediate\concatenated_protocol.json"
+if %errorlevel% neq 0 exit /b %errorlevel%</Command>
+      <Message>concatenate_protocols</Message>
+      <Outputs>$(OutDir)obj\global_intermediate\concatenated_protocol.json</Outputs>
+      <AdditionalInputs>$(OutDir)obj\global_intermediate\node_protocol.json</AdditionalInputs>
+    </CustomBuild>
+    <CustomBuild Include="src\inspector\node_protocol.pdl">
+      <FileType>Document</FileType>
+      <Command>call mkdir "$(OutDir)obj\global_intermediate" 2&gt;nul &amp; set ERRORLEVEL=0 &amp; copy /Y "src\inspector\node_protocol.pdl" "$(OutDir)obj\global_intermediate\node_protocol.pdl"
+if %errorlevel% neq 0 exit /b %errorlevel%</Command>
+      <Message>Copying src/inspector/node_protocol.pdl to $(OutDir)obj\global_intermediate</Message>
+      <Outputs>$(OutDir)obj\global_intermediate\node_protocol.pdl</Outputs>
+    </CustomBuild>
+    <CustomBuild Include="$(OutDir)obj\global_intermediate\node_protocol.pdl">
+      <FileType>Document</FileType>
+      <Command>call call python "tools\inspector_protocol\ConvertProtocolToJSON.py" "$(OutDir)obj\global_intermediate\node_protocol.pdl" "$(OutDir)obj\global_intermediate\node_protocol.json"
+if %errorlevel% neq 0 exit /b %errorlevel%</Command>
+      <Message>convert_node_protocol_to_json</Message>
+      <Outputs>$(OutDir)obj\global_intermediate\node_protocol.json</Outputs>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="node_etw.vcxproj">
+      <Project>{F6F4AF82-6B99-6964-D7F3-CF38A17D3F8B}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="tools\icu\icui18n.vcxproj">
+      <Project>{DA8ED0C8-CD96-7F39-8BFC-C647C8C6E3FE}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="tools\icu\icuuc.vcxproj">
+      <Project>{6FEB5F0A-E6B2-54BE-BBB8-95D0237DA4D7}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="deps\chakrashim\chakracore.vcxproj">
+      <Project>{FEADCB9B-A88E-152B-3F1D-C31A8E9D5C7D}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="deps\chakrashim\chakrashim.vcxproj">
+      <Project>{B28E5F17-2109-3CF3-62AA-711105ACD59E}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+      <UseLibraryDependencyInputs>true</UseLibraryDependencyInputs>
+    </ProjectReference>
+    <ProjectReference Include="deps\zlib\zlib.vcxproj">
+      <Project>{7FF6F247-3828-69AF-7EDB-FB0A9FF393E1}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="deps\http_parser\http_parser.vcxproj">
+      <Project>{3D75A4D7-C52C-EA52-8959-BDF659A0ED66}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="deps\cares\cares.vcxproj">
+      <Project>{74CF319D-6651-E4ED-35FD-B82D47DC2516}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="deps\uv\libuv.vcxproj">
+      <Project>{603C6853-166F-A229-0CE7-B001CAF96C76}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="deps\nghttp2\nghttp2.vcxproj">
+      <Project>{43081741-32EC-9436-5F9B-8A7353222B0B}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="deps\openssl\openssl.vcxproj">
+      <Project>{5C6460DB-F7B1-5315-A0DE-79A9DFC525A1}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="deps\openssl\openssl-cli.vcxproj">
+      <Project>{21D888B2-15AC-898B-EA33-9C73445681C1}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="tools\icu\icuucx.vcxproj">
+      <Project>{7362F535-B75C-DE03-B61F-F3D55ACA6F3A}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="tools\icu\icu_implementation.vcxproj">
+      <Project>{D55221E2-5E95-4477-0DF9-5F0475549667}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="tools\icu\icu_uconfig.vcxproj">
+      <Project>{5D0F9DE8-EFCE-B66B-3E06-BFDD2A61D31C}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="tools\icu\icu_uconfig_target.vcxproj">
+      <Project>{965003B2-25D6-CEB8-6C90-88F0A71606F1}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="tools\icu\icudata.vcxproj">
+      <Project>{F4CAEC9A-07E1-7F49-5630-116B9D21C367}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="tools\icu\icustubdata.vcxproj">
+      <Project>{AC5E0BF8-49FD-27AF-B254-E1CAD9123401}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="deps\chakrashim\chakra_js2c.vcxproj">
+      <Project>{3EFEAF4E-6EA8-2B3D-11E4-BDBD308513A9}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="deps\chakrashim\src\inspector\protocol_generated_sources.vcxproj">
+      <Project>{4A7E5D42-A040-2BBF-A989-D024722DA473}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="deps\chakrashim\src\inspector\protocol_compatibility.vcxproj">
+      <Project>{9153D5EB-3D86-9F03-6933-9EE0932FD937}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <Import Project="$(VCTargetsPath)\BuildCustomizations\masm.targets" />
+  <ImportGroup Label="ExtensionTargets" />
+</Project>
