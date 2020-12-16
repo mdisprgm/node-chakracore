@@ -2046,8 +2046,7 @@ Local<Context> NewContext(Isolate* isolate,
 
 inline int Start(Isolate* isolate, void* isolate_context,
                  const std::vector<std::string>& args,
-                 const std::vector<std::string>& exec_args,
-                 JsContextRef* context_out) {
+                 const std::vector<std::string>& exec_args) {
   HandleScope handle_scope(isolate);
 
 #if ENABLE_TTD_NODE
@@ -2055,7 +2054,6 @@ inline int Start(Isolate* isolate, void* isolate_context,
 #else
   Local<Context> context = NewContext(isolate);
 #endif
-  *context_out = *context;
 
   Context::Scope context_scope(context);
 
@@ -2226,8 +2224,7 @@ Isolate* NewIsolate(ArrayBufferAllocator* allocator, uv_loop_t* event_loop) {
 
 inline int Start(uv_loop_t* event_loop,
                  const std::vector<std::string>& args,
-                 const std::vector<std::string>& exec_args,
-                 JsContextRef* context_out) {
+                 const std::vector<std::string>& exec_args) {
   std::unique_ptr<ArrayBufferAllocator, decltype(&FreeArrayBufferAllocator)>
       allocator(CreateArrayBufferAllocator(), &FreeArrayBufferAllocator);
   Isolate* const isolate = NewIsolate(allocator.get(), event_loop);
@@ -2277,7 +2274,7 @@ inline int Start(uv_loop_t* event_loop,
       isolate->GetHeapProfiler()->StartTrackingHeapObjects(true);
     }
     exit_code =
-        Start(isolate, isolate_data_ptr, args, exec_args, context_out);
+        Start(isolate, isolate_data_ptr, args, exec_args);
   }
 
   {
@@ -2292,7 +2289,7 @@ inline int Start(uv_loop_t* event_loop,
   return exit_code;
 }
 
-int Start(int argc, char** argv, JsContextRef* context_out) {
+int Start(int argc, char** argv) {
   atexit([] () { uv_tty_reset_mode(); });
   PlatformInit();
   performance::performance_node_start = PERFORMANCE_NOW();
@@ -2392,7 +2389,7 @@ int Start(int argc, char** argv, JsContextRef* context_out) {
 #endif
 
   const int exit_code =
-      Start(uv_default_loop(), args, exec_args, context_out);
+      Start(uv_default_loop(), args, exec_args);
   v8_platform.StopTracingAgent();
   v8_initialized = false;
   V8::Dispose();
