@@ -286,7 +286,7 @@ if defined msi (
   echo Looking for WiX installation for Visual Studio 2019...
   if not exist "%WIX%\SDK\VS2019" (
     echo Failed to find WiX install for Visual Studio 2019
-    echo VS2017 support for WiX is only present starting at version 3.11
+    echo VS2019 support for WiX is only present starting at version 3.11
     goto msbuild-not-found
   )
   if not exist "%VCINSTALLDIR%\..\MSBuild\Microsoft\WiX" (

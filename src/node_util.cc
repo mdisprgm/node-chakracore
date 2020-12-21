@@ -176,9 +176,11 @@ void WatchdogHasPendingSigint(const FunctionCallbackInfo<Value>& args) {
 
 void SafeGetenv(const FunctionCallbackInfo<Value>& args) {
   CHECK(args[0]->IsString());
-  Utf8Value strenvtag(args.GetIsolate(), args[0]);
+  String::Value strenvtag(args.GetIsolate(), args[0]);
   std::string text;
-  if (!node::SafeGetenv(*strenvtag, &text)) return;
+  static_assert(sizeof(wchar_t) == sizeof(char16_t), "wchar_t is not 16 bits");
+
+  if (!node::SafeGetenv((wchar_t*)*strenvtag, &text)) return;
   args.GetReturnValue()
       .Set(String::NewFromUtf8(
             args.GetIsolate(), text.c_str(),

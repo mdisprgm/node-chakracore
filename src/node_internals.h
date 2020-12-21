@@ -127,7 +127,7 @@ void RegisterSignalHandler(int signal,
                            bool reset_handler = false);
 #endif
 
-bool SafeGetenv(const char* key, std::string* text);
+bool SafeGetenv(const wchar_t* key, std::string* text);
 
 std::string GetHumanReadableProcessName();
 void GetHumanReadableProcessName(char (*name)[1024]);
