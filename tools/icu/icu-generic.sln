@@ -1,5 +1,5 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2019
+# Visual Studio 2017
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "genccode", "genccode.vcxproj", "{016C2B0D-3640-F3D9-A287-9671DCF72D48}"
 	ProjectSection(ProjectDependencies) = postProject
 		{502E900B-55F6-9390-AEA4-FA37B4677C7C} = {502E900B-55F6-9390-AEA4-FA37B4677C7C}

@@ -11,16 +11,16 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{9B5CC7B4-26AA-7B15-1C89-A1194E378AD5}</ProjectGuid>
+    <ProjectGuid>{3D75A4D7-C52C-EA52-8959-BDF659A0ED66}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>iculslocs</RootNamespace>
+    <RootNamespace>http_parser</RootNamespace>
     <IgnoreWarnCompileDuplicatedFilename>true</IgnoreWarnCompileDuplicatedFilename>
     <PreferredToolArchitecture>x64</PreferredToolArchitecture>
     <WindowsTargetPlatformVersion>10.0.18362.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
   </PropertyGroup>
   <PropertyGroup Label="Locals">
     <PlatformToolset>v142</PlatformToolset>
@@ -38,14 +38,15 @@
     <LinkIncremental>true</LinkIncremental>
     <OutDir>$(SolutionDir)bin\$(PlatformShortName)\$(Configuration)\</OutDir>
     <TargetName>$(ProjectName)</TargetName>
-    <TargetPath>$(OutDir)\$(ProjectName)$(TargetExt)</TargetPath>
+    <TargetPath>$(OutDir)lib\$(ProjectName)$(TargetExt)</TargetPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>..\..\deps\icu-small\source\common;..\..\deps\icu-small\source\i18n;..\..\deps\icu-small\source\tools\toolutil;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <BufferSecurityCheck>true</BufferSecurityCheck>
+      <CompileAs>CompileAsCpp</CompileAs>
       <DebugInformationFormat>OldStyle</DebugInformationFormat>
       <DisableSpecificWarnings>4351;4355;4800;4251;4275;4244;4267;%(DisableSpecificWarnings)</DisableSpecificWarnings>
       <ExceptionHandling>false</ExceptionHandling>
@@ -54,36 +55,39 @@
       <OmitFramePointers>false</OmitFramePointers>
       <Optimization>Disabled</Optimization>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
-      <PreprocessorDefinitions>V8_DEPRECATION_WARNINGS;V8_IMMINENT_DEPRECATION_WARNINGS;NODE_ENGINE="chakracore";NODE_ENGINE_CHAKRACORE;WIN32;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE;_HAS_EXCEPTIONS=0;BUILDING_V8_SHARED=1;BUILDING_UV_SHARED=1;OPENSSL_THREADS;UCONFIG_NO_SERVICE=1;U_ENABLE_DYLOAD=0;U_STATIC_IMPLEMENTATION=1;U_HAVE_STD_STRING=1;UCONFIG_NO_BREAK_ITERATION=0;DEBUG;_DEBUG;V8_ENABLE_CHECKS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>V8_DEPRECATION_WARNINGS;V8_IMMINENT_DEPRECATION_WARNINGS;NODE_ENGINE="chakracore";NODE_ENGINE_CHAKRACORE;WIN32;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE;_HAS_EXCEPTIONS=0;BUILDING_V8_SHARED=1;BUILDING_UV_SHARED=1;OPENSSL_THREADS;HTTP_MAX_HEADER_SIZE=8192;HTTP_PARSER_STRICT=0;DEBUG;_DEBUG;V8_ENABLE_CHECKS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <StringPooling>true</StringPooling>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <TreatWarningAsError>false</TreatWarningAsError>
       <WarningLevel>Level3</WarningLevel>
     </ClCompile>
+    <Lib>
+      <OutputFile>$(OutDir)lib\$(ProjectName)$(TargetExt)</OutputFile>
+    </Lib>
     <Link>
-      <AdditionalDependencies>AdvAPI32.lib;User32.lib</AdditionalDependencies>
-      <AdditionalOptions>/SubSystem:Console,"5.02" %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalDependencies>
+      </AdditionalDependencies>
       <AllowIsolation>true</AllowIsolation>
       <DataExecutionPrevention>true</DataExecutionPrevention>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <GenerateMapFile>true</GenerateMapFile>
       <MapExports>true</MapExports>
-      <OutputFile>$(OutDir)$(ProjectName)$(TargetExt)</OutputFile>
       <RandomizedBaseAddress>true</RandomizedBaseAddress>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <TargetMachine>MachineX64</TargetMachine>
     </Link>
     <ResourceCompile>
-      <AdditionalIncludeDirectories>..\..\deps\icu-small\source\common;..\..\deps\icu-small\source\i18n;..\..\deps\icu-small\source\tools\toolutil;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>V8_DEPRECATION_WARNINGS;V8_IMMINENT_DEPRECATION_WARNINGS;NODE_ENGINE="chakracore";NODE_ENGINE_CHAKRACORE;WIN32;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE;_HAS_EXCEPTIONS=0;BUILDING_V8_SHARED=1;BUILDING_UV_SHARED=1;OPENSSL_THREADS;UCONFIG_NO_SERVICE=1;U_ENABLE_DYLOAD=0;U_STATIC_IMPLEMENTATION=1;U_HAVE_STD_STRING=1;UCONFIG_NO_BREAK_ITERATION=0;DEBUG;_DEBUG;V8_ENABLE_CHECKS;%(PreprocessorDefinitions);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>.;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>V8_DEPRECATION_WARNINGS;V8_IMMINENT_DEPRECATION_WARNINGS;NODE_ENGINE="chakracore";NODE_ENGINE_CHAKRACORE;WIN32;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE;_HAS_EXCEPTIONS=0;BUILDING_V8_SHARED=1;BUILDING_UV_SHARED=1;OPENSSL_THREADS;HTTP_MAX_HEADER_SIZE=8192;HTTP_PARSER_STRICT=0;DEBUG;_DEBUG;V8_ENABLE_CHECKS;%(PreprocessorDefinitions);%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>..\..\deps\icu-small\source\common;..\..\deps\icu-small\source\i18n;..\..\deps\icu-small\source\tools\toolutil;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>%(AdditionalOptions)</AdditionalOptions>
       <BufferSecurityCheck>true</BufferSecurityCheck>
+      <CompileAs>CompileAsCpp</CompileAs>
       <DebugInformationFormat>OldStyle</DebugInformationFormat>
       <DisableSpecificWarnings>4351;4355;4800;4251;4275;4244;4267;%(DisableSpecificWarnings)</DisableSpecificWarnings>
       <ExceptionHandling>false</ExceptionHandling>
@@ -95,7 +99,7 @@
       <OmitFramePointers>true</OmitFramePointers>
       <Optimization>Full</Optimization>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
-      <PreprocessorDefinitions>V8_DEPRECATION_WARNINGS;V8_IMMINENT_DEPRECATION_WARNINGS;NODE_ENGINE="chakracore";NODE_ENGINE_CHAKRACORE;WIN32;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE;_HAS_EXCEPTIONS=0;BUILDING_V8_SHARED=1;BUILDING_UV_SHARED=1;OPENSSL_THREADS;UCONFIG_NO_SERVICE=1;U_ENABLE_DYLOAD=0;U_STATIC_IMPLEMENTATION=1;U_HAVE_STD_STRING=1;UCONFIG_NO_BREAK_ITERATION=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>V8_DEPRECATION_WARNINGS;V8_IMMINENT_DEPRECATION_WARNINGS;NODE_ENGINE="chakracore";NODE_ENGINE_CHAKRACORE;WIN32;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE;_HAS_EXCEPTIONS=0;BUILDING_V8_SHARED=1;BUILDING_UV_SHARED=1;OPENSSL_THREADS;HTTP_MAX_HEADER_SIZE=8192;HTTP_PARSER_STRICT=0;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <RuntimeTypeInfo>false</RuntimeTypeInfo>
       <StringPooling>true</StringPooling>
@@ -104,44 +108,31 @@
       <WarningLevel>Level3</WarningLevel>
       <WholeProgramOptimization>false</WholeProgramOptimization>
     </ClCompile>
+    <Lib>
+      <OutputFile>$(OutDir)lib\$(ProjectName)$(TargetExt)</OutputFile>
+    </Lib>
     <Link>
-      <AdditionalDependencies>AdvAPI32.lib;User32.lib</AdditionalDependencies>
-      <AdditionalOptions>/SubSystem:Console,"5.02" %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalDependencies>
+      </AdditionalDependencies>
       <AllowIsolation>true</AllowIsolation>
       <DataExecutionPrevention>true</DataExecutionPrevention>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <GenerateMapFile>true</GenerateMapFile>
       <MapExports>true</MapExports>
-      <OutputFile>$(OutDir)$(ProjectName)$(TargetExt)</OutputFile>
       <RandomizedBaseAddress>true</RandomizedBaseAddress>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <TargetMachine>MachineX64</TargetMachine>
     </Link>
     <ResourceCompile>
-      <AdditionalIncludeDirectories>..\..\deps\icu-small\source\common;..\..\deps\icu-small\source\i18n;..\..\deps\icu-small\source\tools\toolutil;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>V8_DEPRECATION_WARNINGS;V8_IMMINENT_DEPRECATION_WARNINGS;NODE_ENGINE="chakracore";NODE_ENGINE_CHAKRACORE;WIN32;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE;_HAS_EXCEPTIONS=0;BUILDING_V8_SHARED=1;BUILDING_UV_SHARED=1;OPENSSL_THREADS;UCONFIG_NO_SERVICE=1;U_ENABLE_DYLOAD=0;U_STATIC_IMPLEMENTATION=1;U_HAVE_STD_STRING=1;UCONFIG_NO_BREAK_ITERATION=0;%(PreprocessorDefinitions);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>.;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>V8_DEPRECATION_WARNINGS;V8_IMMINENT_DEPRECATION_WARNINGS;NODE_ENGINE="chakracore";NODE_ENGINE_CHAKRACORE;WIN32;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE;_HAS_EXCEPTIONS=0;BUILDING_V8_SHARED=1;BUILDING_UV_SHARED=1;OPENSSL_THREADS;HTTP_MAX_HEADER_SIZE=8192;HTTP_PARSER_STRICT=0;NDEBUG;%(PreprocessorDefinitions);%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <None Include="icu-generic.gyp" />
+    <None Include="http_parser.gyp" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="iculslocs.cc" />
-    <ClCompile Include="no-op.cc" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="icutools.vcxproj">
-      <Project>{502E900B-55F6-9390-AEA4-FA37B4677C7C}</Project>
-      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
-    </ProjectReference>
-    <ProjectReference Include="icu_implementation.vcxproj">
-      <Project>{D55221E2-5E95-4477-0DF9-5F0475549667}</Project>
-      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
-    </ProjectReference>
-    <ProjectReference Include="icu_uconfig.vcxproj">
-      <Project>{5D0F9DE8-EFCE-B66B-3E06-BFDD2A61D31C}</Project>
-      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
-    </ProjectReference>
+    <ClCompile Include="http_parser.c" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <Import Project="$(VCTargetsPath)\BuildCustomizations\masm.targets" />

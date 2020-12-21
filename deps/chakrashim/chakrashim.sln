@@ -1,5 +1,5 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2019
+# Visual Studio 2017
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "(inspector)", "..\..\src\inspector", "{BB3AEE64-56F9-E7E1-B0A4-7669F66FB9E0}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "(src)", "..\..\src", "{607B4E81-FB72-43DF-177C-C1403E500480}"

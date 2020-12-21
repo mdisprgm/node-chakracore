@@ -11,16 +11,16 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{9B5CC7B4-26AA-7B15-1C89-A1194E378AD5}</ProjectGuid>
+    <ProjectGuid>{603C6853-166F-A229-0CE7-B001CAF96C76}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>iculslocs</RootNamespace>
+    <RootNamespace>libuv</RootNamespace>
     <IgnoreWarnCompileDuplicatedFilename>true</IgnoreWarnCompileDuplicatedFilename>
     <PreferredToolArchitecture>x64</PreferredToolArchitecture>
     <WindowsTargetPlatformVersion>10.0.18362.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
   </PropertyGroup>
   <PropertyGroup Label="Locals">
     <PlatformToolset>v142</PlatformToolset>
@@ -38,11 +38,11 @@
     <LinkIncremental>true</LinkIncremental>
     <OutDir>$(SolutionDir)bin\$(PlatformShortName)\$(Configuration)\</OutDir>
     <TargetName>$(ProjectName)</TargetName>
-    <TargetPath>$(OutDir)\$(ProjectName)$(TargetExt)</TargetPath>
+    <TargetPath>$(OutDir)lib\$(ProjectName)$(TargetExt)</TargetPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>..\..\deps\icu-small\source\common;..\..\deps\icu-small\source\i18n;..\..\deps\icu-small\source\tools\toolutil;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>include;src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <BufferSecurityCheck>true</BufferSecurityCheck>
@@ -54,34 +54,36 @@
       <OmitFramePointers>false</OmitFramePointers>
       <Optimization>Disabled</Optimization>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
-      <PreprocessorDefinitions>V8_DEPRECATION_WARNINGS;V8_IMMINENT_DEPRECATION_WARNINGS;NODE_ENGINE="chakracore";NODE_ENGINE_CHAKRACORE;WIN32;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE;_HAS_EXCEPTIONS=0;BUILDING_V8_SHARED=1;BUILDING_UV_SHARED=1;OPENSSL_THREADS;UCONFIG_NO_SERVICE=1;U_ENABLE_DYLOAD=0;U_STATIC_IMPLEMENTATION=1;U_HAVE_STD_STRING=1;UCONFIG_NO_BREAK_ITERATION=0;DEBUG;_DEBUG;V8_ENABLE_CHECKS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>V8_DEPRECATION_WARNINGS;V8_IMMINENT_DEPRECATION_WARNINGS;NODE_ENGINE="chakracore";NODE_ENGINE_CHAKRACORE;WIN32;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE;_HAS_EXCEPTIONS=0;BUILDING_V8_SHARED=1;BUILDING_UV_SHARED=1;OPENSSL_THREADS;_WIN32_WINNT=0x0600;_GNU_SOURCE;DEBUG;_DEBUG;V8_ENABLE_CHECKS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <StringPooling>true</StringPooling>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <TreatWarningAsError>false</TreatWarningAsError>
       <WarningLevel>Level3</WarningLevel>
     </ClCompile>
+    <Lib>
+      <OutputFile>$(OutDir)lib\$(ProjectName)$(TargetExt)</OutputFile>
+    </Lib>
     <Link>
-      <AdditionalDependencies>AdvAPI32.lib;User32.lib</AdditionalDependencies>
-      <AdditionalOptions>/SubSystem:Console,"5.02" %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalDependencies>
+      </AdditionalDependencies>
       <AllowIsolation>true</AllowIsolation>
       <DataExecutionPrevention>true</DataExecutionPrevention>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <GenerateMapFile>true</GenerateMapFile>
       <MapExports>true</MapExports>
-      <OutputFile>$(OutDir)$(ProjectName)$(TargetExt)</OutputFile>
       <RandomizedBaseAddress>true</RandomizedBaseAddress>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <TargetMachine>MachineX64</TargetMachine>
     </Link>
     <ResourceCompile>
-      <AdditionalIncludeDirectories>..\..\deps\icu-small\source\common;..\..\deps\icu-small\source\i18n;..\..\deps\icu-small\source\tools\toolutil;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>V8_DEPRECATION_WARNINGS;V8_IMMINENT_DEPRECATION_WARNINGS;NODE_ENGINE="chakracore";NODE_ENGINE_CHAKRACORE;WIN32;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE;_HAS_EXCEPTIONS=0;BUILDING_V8_SHARED=1;BUILDING_UV_SHARED=1;OPENSSL_THREADS;UCONFIG_NO_SERVICE=1;U_ENABLE_DYLOAD=0;U_STATIC_IMPLEMENTATION=1;U_HAVE_STD_STRING=1;UCONFIG_NO_BREAK_ITERATION=0;DEBUG;_DEBUG;V8_ENABLE_CHECKS;%(PreprocessorDefinitions);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>include;src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>V8_DEPRECATION_WARNINGS;V8_IMMINENT_DEPRECATION_WARNINGS;NODE_ENGINE="chakracore";NODE_ENGINE_CHAKRACORE;WIN32;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE;_HAS_EXCEPTIONS=0;BUILDING_V8_SHARED=1;BUILDING_UV_SHARED=1;OPENSSL_THREADS;_WIN32_WINNT=0x0600;_GNU_SOURCE;DEBUG;_DEBUG;V8_ENABLE_CHECKS;%(PreprocessorDefinitions);%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>..\..\deps\icu-small\source\common;..\..\deps\icu-small\source\i18n;..\..\deps\icu-small\source\tools\toolutil;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>include;src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>%(AdditionalOptions)</AdditionalOptions>
       <BufferSecurityCheck>true</BufferSecurityCheck>
       <DebugInformationFormat>OldStyle</DebugInformationFormat>
@@ -95,7 +97,7 @@
       <OmitFramePointers>true</OmitFramePointers>
       <Optimization>Full</Optimization>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
-      <PreprocessorDefinitions>V8_DEPRECATION_WARNINGS;V8_IMMINENT_DEPRECATION_WARNINGS;NODE_ENGINE="chakracore";NODE_ENGINE_CHAKRACORE;WIN32;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE;_HAS_EXCEPTIONS=0;BUILDING_V8_SHARED=1;BUILDING_UV_SHARED=1;OPENSSL_THREADS;UCONFIG_NO_SERVICE=1;U_ENABLE_DYLOAD=0;U_STATIC_IMPLEMENTATION=1;U_HAVE_STD_STRING=1;UCONFIG_NO_BREAK_ITERATION=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>V8_DEPRECATION_WARNINGS;V8_IMMINENT_DEPRECATION_WARNINGS;NODE_ENGINE="chakracore";NODE_ENGINE_CHAKRACORE;WIN32;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE;_HAS_EXCEPTIONS=0;BUILDING_V8_SHARED=1;BUILDING_UV_SHARED=1;OPENSSL_THREADS;_WIN32_WINNT=0x0600;_GNU_SOURCE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <RuntimeTypeInfo>false</RuntimeTypeInfo>
       <StringPooling>true</StringPooling>
@@ -104,44 +106,83 @@
       <WarningLevel>Level3</WarningLevel>
       <WholeProgramOptimization>false</WholeProgramOptimization>
     </ClCompile>
+    <Lib>
+      <OutputFile>$(OutDir)lib\$(ProjectName)$(TargetExt)</OutputFile>
+    </Lib>
     <Link>
-      <AdditionalDependencies>AdvAPI32.lib;User32.lib</AdditionalDependencies>
-      <AdditionalOptions>/SubSystem:Console,"5.02" %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalDependencies>
+      </AdditionalDependencies>
       <AllowIsolation>true</AllowIsolation>
       <DataExecutionPrevention>true</DataExecutionPrevention>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <GenerateMapFile>true</GenerateMapFile>
       <MapExports>true</MapExports>
-      <OutputFile>$(OutDir)$(ProjectName)$(TargetExt)</OutputFile>
       <RandomizedBaseAddress>true</RandomizedBaseAddress>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <TargetMachine>MachineX64</TargetMachine>
     </Link>
     <ResourceCompile>
-      <AdditionalIncludeDirectories>..\..\deps\icu-small\source\common;..\..\deps\icu-small\source\i18n;..\..\deps\icu-small\source\tools\toolutil;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>V8_DEPRECATION_WARNINGS;V8_IMMINENT_DEPRECATION_WARNINGS;NODE_ENGINE="chakracore";NODE_ENGINE_CHAKRACORE;WIN32;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE;_HAS_EXCEPTIONS=0;BUILDING_V8_SHARED=1;BUILDING_UV_SHARED=1;OPENSSL_THREADS;UCONFIG_NO_SERVICE=1;U_ENABLE_DYLOAD=0;U_STATIC_IMPLEMENTATION=1;U_HAVE_STD_STRING=1;UCONFIG_NO_BREAK_ITERATION=0;%(PreprocessorDefinitions);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>include;src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>V8_DEPRECATION_WARNINGS;V8_IMMINENT_DEPRECATION_WARNINGS;NODE_ENGINE="chakracore";NODE_ENGINE_CHAKRACORE;WIN32;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE;_HAS_EXCEPTIONS=0;BUILDING_V8_SHARED=1;BUILDING_UV_SHARED=1;OPENSSL_THREADS;_WIN32_WINNT=0x0600;_GNU_SOURCE;%(PreprocessorDefinitions);%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <None Include="icu-generic.gyp" />
+    <None Include="common.gypi" />
+    <None Include="uv.gyp" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="iculslocs.cc" />
-    <ClCompile Include="no-op.cc" />
+    <ClInclude Include="include\uv.h" />
+    <ClInclude Include="include\uv\tree.h" />
+    <ClInclude Include="include\uv\errno.h" />
+    <ClInclude Include="include\uv\threadpool.h" />
+    <ClInclude Include="include\uv\version.h" />
+    <ClInclude Include="src\heap-inl.h" />
+    <ClInclude Include="src\idna.h" />
+    <ClInclude Include="src\queue.h" />
+    <ClInclude Include="src\uv-common.h" />
+    <ClInclude Include="include\uv\win.h" />
+    <ClInclude Include="src\win\atomicops-inl.h" />
+    <ClInclude Include="src\win\handle-inl.h" />
+    <ClInclude Include="src\win\internal.h" />
+    <ClInclude Include="src\win\req-inl.h" />
+    <ClInclude Include="src\win\stream-inl.h" />
+    <ClInclude Include="src\win\winapi.h" />
+    <ClInclude Include="src\win\winsock.h" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="icutools.vcxproj">
-      <Project>{502E900B-55F6-9390-AEA4-FA37B4677C7C}</Project>
-      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
-    </ProjectReference>
-    <ProjectReference Include="icu_implementation.vcxproj">
-      <Project>{D55221E2-5E95-4477-0DF9-5F0475549667}</Project>
-      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
-    </ProjectReference>
-    <ProjectReference Include="icu_uconfig.vcxproj">
-      <Project>{5D0F9DE8-EFCE-B66B-3E06-BFDD2A61D31C}</Project>
-      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
-    </ProjectReference>
+    <ClCompile Include="src\fs-poll.c" />
+    <ClCompile Include="src\idna.c" />
+    <ClCompile Include="src\inet.c" />
+    <ClCompile Include="src\threadpool.c" />
+    <ClCompile Include="src\timer.c" />
+    <ClCompile Include="src\uv-data-getter-setters.c" />
+    <ClCompile Include="src\uv-common.c" />
+    <ClCompile Include="src\version.c" />
+    <ClCompile Include="src\win\async.c" />
+    <ClCompile Include="src\win\core.c" />
+    <ClCompile Include="src\win\detect-wakeup.c" />
+    <ClCompile Include="src\win\dl.c" />
+    <ClCompile Include="src\win\error.c" />
+    <ClCompile Include="src\win\fs.c" />
+    <ClCompile Include="src\win\fs-event.c" />
+    <ClCompile Include="src\win\getaddrinfo.c" />
+    <ClCompile Include="src\win\getnameinfo.c" />
+    <ClCompile Include="src\win\handle.c" />
+    <ClCompile Include="src\win\loop-watcher.c" />
+    <ClCompile Include="src\win\pipe.c" />
+    <ClCompile Include="src\win\thread.c" />
+    <ClCompile Include="src\win\poll.c" />
+    <ClCompile Include="src\win\process.c" />
+    <ClCompile Include="src\win\process-stdio.c" />
+    <ClCompile Include="src\win\signal.c" />
+    <ClCompile Include="src\win\snprintf.c" />
+    <ClCompile Include="src\win\stream.c" />
+    <ClCompile Include="src\win\tcp.c" />
+    <ClCompile Include="src\win\tty.c" />
+    <ClCompile Include="src\win\udp.c" />
+    <ClCompile Include="src\win\util.c" />
+    <ClCompile Include="src\win\winapi.c" />
+    <ClCompile Include="src\win\winsock.c" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <Import Project="$(VCTargetsPath)\BuildCustomizations\masm.targets" />

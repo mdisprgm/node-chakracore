@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" ToolsVersion="16.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|x64">
       <Configuration>Debug</Configuration>
@@ -33,13 +33,13 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
+    <EmbedManifest>true</EmbedManifest>
     <ExecutablePath>$(ExecutablePath);$(MSBuildProjectDirectory)\.\bin\;$(MSBuildProjectDirectory)\.\bin\</ExecutablePath>
-    <IntDir>$(Configuration)\obj\$(ProjectName)\</IntDir>
-    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkIncremental>
-    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</LinkIncremental>
+    <IntDir>bin\$(PlatformShortName)\$(Configuration)\obj\$(ProjectName)\</IntDir>
+    <LinkIncremental>true</LinkIncremental>
     <OutDir>$(SolutionDir)bin\$(PlatformShortName)\$(Configuration)\</OutDir>
-    <TargetName>node_lib</TargetName>
-    <TargetPath>$(OutDir)\node$(TargetExt)</TargetPath>
+    <TargetName>node</TargetName>
+    <TargetPath>$(OutDir)lib\node$(TargetExt)</TargetPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -55,31 +55,34 @@
       <OmitFramePointers>false</OmitFramePointers>
       <Optimization>Disabled</Optimization>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
-      <PreprocessorDefinitions>V8_DEPRECATION_WARNINGS;V8_IMMINENT_DEPRECATION_WARNINGS;NODE_ENGINE="chakracore";NODE_ENGINE_CHAKRACORE;WIN32;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE;_HAS_EXCEPTIONS=0;BUILDING_V8_SHARED=1;BUILDING_UV_SHARED=1;OPENSSL_THREADS;NODE_ARCH="x64";NODE_WANT_INTERNALS=1;V8_DEPRECATION_WARNINGS=1;NODE_OPENSSL_SYSTEM_CERT_PATH="";HAVE_INSPECTOR=1;HAVE_ETW=1;NODE_SHARED_MODE;FD_SETSIZE=1024;NODE_PLATFORM="win32";NOMINMAX;_UNICODE=1;NODE_USE_V8_PLATFORM=1;NODE_HAVE_I18N_SUPPORT=1;NODE_HAVE_SMALL_ICU=1;HAVE_OPENSSL=1;UCONFIG_NO_SERVICE=1;U_ENABLE_DYLOAD=0;U_STATIC_IMPLEMENTATION=1;U_HAVE_STD_STRING=1;UCONFIG_NO_BREAK_ITERATION=0;BUILDING_CHAKRASHIM=1;HTTP_PARSER_STRICT=0;NGHTTP2_STATICLIB;DEBUG;_DEBUG;V8_ENABLE_CHECKS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <PreprocessorDefinitions>V8_DEPRECATION_WARNINGS;V8_IMMINENT_DEPRECATION_WARNINGS;NODE_ENGINE="chakracore";NODE_ENGINE_CHAKRACORE;WIN32;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE;_HAS_EXCEPTIONS=0;BUILDING_V8_SHARED=1;BUILDING_UV_SHARED=1;OPENSSL_THREADS;NODE_ARCH="x64";NODE_WANT_INTERNALS=1;V8_DEPRECATION_WARNINGS=1;NODE_OPENSSL_SYSTEM_CERT_PATH="";HAVE_INSPECTOR=1;HAVE_ETW=1;FD_SETSIZE=1024;NODE_PLATFORM="win32";NOMINMAX;_UNICODE=1;NODE_USE_V8_PLATFORM=1;NODE_HAVE_I18N_SUPPORT=1;NODE_HAVE_SMALL_ICU=1;HAVE_OPENSSL=1;UCONFIG_NO_SERVICE=1;U_ENABLE_DYLOAD=0;U_STATIC_IMPLEMENTATION=1;U_HAVE_STD_STRING=1;UCONFIG_NO_BREAK_ITERATION=0;BUILDING_CHAKRASHIM=1;HTTP_PARSER_STRICT=0;NGHTTP2_STATICLIB;DEBUG;_DEBUG;V8_ENABLE_CHECKS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <StringPooling>true</StringPooling>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <TreatWarningAsError>false</TreatWarningAsError>
       <WarningLevel>Level3</WarningLevel>
     </ClCompile>
+    <Lib>
+      <OutputFile>$(OutDir)lib\node$(TargetExt)</OutputFile>
+    </Lib>
     <Link>
-      <AdditionalDependencies>dbghelp.lib;chakracore.lib;ole32.lib;version.lib;AdvAPI32.lib;User32.lib;iphlpapi.lib;psapi.lib;shell32.lib;userenv.lib;ws2_32.lib;gdi32.lib;advapi32.lib;crypt32.lib;user32.lib</AdditionalDependencies>
+      <AdditionalDependencies>psapi.lib;dbghelp.lib;chakracore.lib;ole32.lib;version.lib</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalOptions>/WHOLEARCHIVE:zlib.lib /WHOLEARCHIVE:libuv.lib /WHOLEARCHIVE:openssl.lib %(AdditionalOptions)</AdditionalOptions>
       <AllowIsolation>true</AllowIsolation>
       <DataExecutionPrevention>true</DataExecutionPrevention>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <GenerateMapFile>true</GenerateMapFile>
       <MapExports>true</MapExports>
-      <ModuleDefinitionFile>$(OutDir)obj\global_intermediate\openssl.def</ModuleDefinitionFile>
-      <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
       <RandomizedBaseAddress>true</RandomizedBaseAddress>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <TargetMachine>MachineX64</TargetMachine>
     </Link>
+    <Manifest>
+      <AdditionalManifestFiles>src/res/node.exe.extra.manifest</AdditionalManifestFiles>
+    </Manifest>
     <ResourceCompile>
       <AdditionalIncludeDirectories>src;$(OutDir)obj\global_intermediate;$(OutDir)obj\global_intermediate\include;$(OutDir)obj\global_intermediate\src;tools\msvs\genfiles;deps\chakrashim;deps\icu-small\source\i18n;deps\icu-small\source\common;deps\chakrashim\include;deps\zlib;deps\http_parser;deps\cares\include;deps\uv\include;deps\nghttp2\lib\includes;deps\openssl\openssl\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>V8_DEPRECATION_WARNINGS;V8_IMMINENT_DEPRECATION_WARNINGS;NODE_ENGINE="chakracore";NODE_ENGINE_CHAKRACORE;WIN32;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE;_HAS_EXCEPTIONS=0;BUILDING_V8_SHARED=1;BUILDING_UV_SHARED=1;OPENSSL_THREADS;NODE_ARCH="x64";NODE_WANT_INTERNALS=1;V8_DEPRECATION_WARNINGS=1;NODE_OPENSSL_SYSTEM_CERT_PATH="";HAVE_INSPECTOR=1;HAVE_ETW=1;NODE_SHARED_MODE;FD_SETSIZE=1024;NODE_PLATFORM="win32";NOMINMAX;_UNICODE=1;NODE_USE_V8_PLATFORM=1;NODE_HAVE_I18N_SUPPORT=1;NODE_HAVE_SMALL_ICU=1;HAVE_OPENSSL=1;UCONFIG_NO_SERVICE=1;U_ENABLE_DYLOAD=0;U_STATIC_IMPLEMENTATION=1;U_HAVE_STD_STRING=1;UCONFIG_NO_BREAK_ITERATION=0;BUILDING_CHAKRASHIM=1;HTTP_PARSER_STRICT=0;NGHTTP2_STATICLIB;DEBUG;_DEBUG;V8_ENABLE_CHECKS;%(PreprocessorDefinitions);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>V8_DEPRECATION_WARNINGS;V8_IMMINENT_DEPRECATION_WARNINGS;NODE_ENGINE="chakracore";NODE_ENGINE_CHAKRACORE;WIN32;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE;_HAS_EXCEPTIONS=0;BUILDING_V8_SHARED=1;BUILDING_UV_SHARED=1;OPENSSL_THREADS;NODE_ARCH="x64";NODE_WANT_INTERNALS=1;V8_DEPRECATION_WARNINGS=1;NODE_OPENSSL_SYSTEM_CERT_PATH="";HAVE_INSPECTOR=1;HAVE_ETW=1;FD_SETSIZE=1024;NODE_PLATFORM="win32";NOMINMAX;_UNICODE=1;NODE_USE_V8_PLATFORM=1;NODE_HAVE_I18N_SUPPORT=1;NODE_HAVE_SMALL_ICU=1;HAVE_OPENSSL=1;UCONFIG_NO_SERVICE=1;U_ENABLE_DYLOAD=0;U_STATIC_IMPLEMENTATION=1;U_HAVE_STD_STRING=1;UCONFIG_NO_BREAK_ITERATION=0;BUILDING_CHAKRASHIM=1;HTTP_PARSER_STRICT=0;NGHTTP2_STATICLIB;DEBUG;_DEBUG;V8_ENABLE_CHECKS;%(PreprocessorDefinitions);%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -98,38 +101,36 @@
       <OmitFramePointers>true</OmitFramePointers>
       <Optimization>Full</Optimization>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
-      <PreprocessorDefinitions>V8_DEPRECATION_WARNINGS;V8_IMMINENT_DEPRECATION_WARNINGS;NODE_ENGINE="chakracore";NODE_ENGINE_CHAKRACORE;WIN32;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE;_HAS_EXCEPTIONS=0;BUILDING_V8_SHARED=1;BUILDING_UV_SHARED=1;OPENSSL_THREADS;NODE_ARCH="x64";NODE_WANT_INTERNALS=1;V8_DEPRECATION_WARNINGS=1;NODE_OPENSSL_SYSTEM_CERT_PATH="";HAVE_INSPECTOR=1;HAVE_ETW=1;NODE_SHARED_MODE;FD_SETSIZE=1024;NODE_PLATFORM="win32";NOMINMAX;_UNICODE=1;NODE_USE_V8_PLATFORM=1;NODE_HAVE_I18N_SUPPORT=1;NODE_HAVE_SMALL_ICU=1;HAVE_OPENSSL=1;UCONFIG_NO_SERVICE=1;U_ENABLE_DYLOAD=0;U_STATIC_IMPLEMENTATION=1;U_HAVE_STD_STRING=1;UCONFIG_NO_BREAK_ITERATION=0;BUILDING_CHAKRASHIM=1;HTTP_PARSER_STRICT=0;NGHTTP2_STATICLIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <PreprocessorDefinitions>V8_DEPRECATION_WARNINGS;V8_IMMINENT_DEPRECATION_WARNINGS;NODE_ENGINE="chakracore";NODE_ENGINE_CHAKRACORE;WIN32;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE;_HAS_EXCEPTIONS=0;BUILDING_V8_SHARED=1;BUILDING_UV_SHARED=1;OPENSSL_THREADS;NODE_ARCH="x64";NODE_WANT_INTERNALS=1;V8_DEPRECATION_WARNINGS=1;NODE_OPENSSL_SYSTEM_CERT_PATH="";HAVE_INSPECTOR=1;HAVE_ETW=1;FD_SETSIZE=1024;NODE_PLATFORM="win32";NOMINMAX;_UNICODE=1;NODE_USE_V8_PLATFORM=1;NODE_HAVE_I18N_SUPPORT=1;NODE_HAVE_SMALL_ICU=1;HAVE_OPENSSL=1;UCONFIG_NO_SERVICE=1;U_ENABLE_DYLOAD=0;U_STATIC_IMPLEMENTATION=1;U_HAVE_STD_STRING=1;UCONFIG_NO_BREAK_ITERATION=0;BUILDING_CHAKRASHIM=1;HTTP_PARSER_STRICT=0;NGHTTP2_STATICLIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <RuntimeTypeInfo>false</RuntimeTypeInfo>
       <StringPooling>true</StringPooling>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <TreatWarningAsError>false</TreatWarningAsError>
       <WarningLevel>Level3</WarningLevel>
-      <WholeProgramOptimization>true</WholeProgramOptimization>
+      <WholeProgramOptimization>false</WholeProgramOptimization>
     </ClCompile>
     <Lib>
-      <AdditionalOptions>/LTCG:INCREMENTAL %(AdditionalOptions)</AdditionalOptions>
+      <OutputFile>$(OutDir)lib\node$(TargetExt)</OutputFile>
     </Lib>
     <Link>
-      <AdditionalDependencies>dbghelp.lib;chakracore.lib;ole32.lib;version.lib;AdvAPI32.lib;User32.lib;iphlpapi.lib;psapi.lib;shell32.lib;userenv.lib;ws2_32.lib;gdi32.lib;advapi32.lib;crypt32.lib;user32.lib</AdditionalDependencies>
+      <AdditionalDependencies>psapi.lib;dbghelp.lib;chakracore.lib;ole32.lib;version.lib</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalOptions>/WHOLEARCHIVE:zlib.lib /WHOLEARCHIVE:libuv.lib /WHOLEARCHIVE:openssl.lib /LTCG:INCREMENTAL %(AdditionalOptions)</AdditionalOptions>
       <AllowIsolation>true</AllowIsolation>
       <DataExecutionPrevention>true</DataExecutionPrevention>
-      <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <GenerateMapFile>true</GenerateMapFile>
       <MapExports>true</MapExports>
-      <ModuleDefinitionFile>$(OutDir)obj\global_intermediate\openssl.def</ModuleDefinitionFile>
-      <OptimizeReferences>true</OptimizeReferences>
-      <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
       <RandomizedBaseAddress>true</RandomizedBaseAddress>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <TargetMachine>MachineX64</TargetMachine>
     </Link>
+    <Manifest>
+      <AdditionalManifestFiles>src/res/node.exe.extra.manifest</AdditionalManifestFiles>
+    </Manifest>
     <ResourceCompile>
       <AdditionalIncludeDirectories>src;$(OutDir)obj\global_intermediate;$(OutDir)obj\global_intermediate\include;$(OutDir)obj\global_intermediate\src;tools\msvs\genfiles;deps\chakrashim;deps\icu-small\source\i18n;deps\icu-small\source\common;deps\chakrashim\include;deps\zlib;deps\http_parser;deps\cares\include;deps\uv\include;deps\nghttp2\lib\includes;deps\openssl\openssl\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>V8_DEPRECATION_WARNINGS;V8_IMMINENT_DEPRECATION_WARNINGS;NODE_ENGINE="chakracore";NODE_ENGINE_CHAKRACORE;WIN32;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE;_HAS_EXCEPTIONS=0;BUILDING_V8_SHARED=1;BUILDING_UV_SHARED=1;OPENSSL_THREADS;NODE_ARCH="x64";NODE_WANT_INTERNALS=1;V8_DEPRECATION_WARNINGS=1;NODE_OPENSSL_SYSTEM_CERT_PATH="";HAVE_INSPECTOR=1;HAVE_ETW=1;NODE_SHARED_MODE;FD_SETSIZE=1024;NODE_PLATFORM="win32";NOMINMAX;_UNICODE=1;NODE_USE_V8_PLATFORM=1;NODE_HAVE_I18N_SUPPORT=1;NODE_HAVE_SMALL_ICU=1;HAVE_OPENSSL=1;UCONFIG_NO_SERVICE=1;U_ENABLE_DYLOAD=0;U_STATIC_IMPLEMENTATION=1;U_HAVE_STD_STRING=1;UCONFIG_NO_BREAK_ITERATION=0;BUILDING_CHAKRASHIM=1;HTTP_PARSER_STRICT=0;NGHTTP2_STATICLIB;%(PreprocessorDefinitions);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>V8_DEPRECATION_WARNINGS;V8_IMMINENT_DEPRECATION_WARNINGS;NODE_ENGINE="chakracore";NODE_ENGINE_CHAKRACORE;WIN32;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE;_HAS_EXCEPTIONS=0;BUILDING_V8_SHARED=1;BUILDING_UV_SHARED=1;OPENSSL_THREADS;NODE_ARCH="x64";NODE_WANT_INTERNALS=1;V8_DEPRECATION_WARNINGS=1;NODE_OPENSSL_SYSTEM_CERT_PATH="";HAVE_INSPECTOR=1;HAVE_ETW=1;FD_SETSIZE=1024;NODE_PLATFORM="win32";NOMINMAX;_UNICODE=1;NODE_USE_V8_PLATFORM=1;NODE_HAVE_I18N_SUPPORT=1;NODE_HAVE_SMALL_ICU=1;HAVE_OPENSSL=1;UCONFIG_NO_SERVICE=1;U_ENABLE_DYLOAD=0;U_STATIC_IMPLEMENTATION=1;U_HAVE_STD_STRING=1;UCONFIG_NO_BREAK_ITERATION=0;BUILDING_CHAKRASHIM=1;HTTP_PARSER_STRICT=0;NGHTTP2_STATICLIB;%(PreprocessorDefinitions);%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -674,7 +675,6 @@
       <ExcludedFromBuild>true</ExcludedFromBuild>
     </None>
     <None Include="common.gypi" />
-    <None Include="$(OutDir)obj\global_intermediate\openssl.def" />
     <None Include="node.gyp" />
     <None Include="tools\check_macros.py">
       <ExcludedFromBuild>true</ExcludedFromBuild>
@@ -757,6 +757,7 @@
     <None Include="deps\openssl\openssl\util\libssl.num">
       <ExcludedFromBuild>true</ExcludedFromBuild>
     </None>
+    <None Include="$(OutDir)obj\global_intermediate\openssl.def" />
     <None Include="config.gypi">
       <ExcludedFromBuild>true</ExcludedFromBuild>
     </None>
@@ -959,9 +960,6 @@
     <ClCompile Include="$(OutDir)obj\global_intermediate\src\node\inspector\protocol\NodeTracing.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="tools\msvs\genfiles\node_etw_provider.rc" />
-  </ItemGroup>
-  <ItemGroup>
     <CustomBuild Include="lib\internal\per_context.js">
       <FileType>Document</FileType>
       <Command>call call python "tools\js2c.py" "$(OutDir)obj\global_intermediate\node_javascript.cc" "lib\internal\per_context.js" "lib\internal\bootstrap\cache.js" "lib\internal\bootstrap\loaders.js" "lib\internal\bootstrap\node.js" "lib\async_hooks.js" "lib\assert.js" "lib\buffer.js" "lib\child_process.js" "lib\console.js" "lib\constants.js" "lib\crypto.js" "lib\cluster.js" "lib\dgram.js" "lib\dns.js" "lib\domain.js" "lib\events.js" "lib\fs.js" "lib\http.js" "lib\http2.js" "lib\_http_agent.js" "lib\_http_client.js" "lib\_http_common.js" "lib\_http_incoming.js" "lib\_http_outgoing.js" "lib\_http_server.js" "lib\https.js" "lib\inspector.js" "lib\module.js" "lib\net.js" "lib\os.js" "lib\path.js" "lib\perf_hooks.js" "lib\process.js" "lib\punycode.js" "lib\querystring.js" "lib\readline.js" "lib\repl.js" "lib\stream.js" "lib\_stream_readable.js" "lib\_stream_writable.js" "lib\_stream_duplex.js" "lib\_stream_transform.js" "lib\_stream_passthrough.js" "lib\_stream_wrap.js" "lib\string_decoder.js" "lib\sys.js" "lib\timers.js" "lib\tls.js" "lib\_tls_common.js" "lib\_tls_wrap.js" "lib\trace_events.js" "lib\trace_mgr.js" "lib\tty.js" "lib\url.js" "lib\util.js" "lib\v8.js" "lib\vm.js" "lib\worker_threads.js" "lib\zlib.js" "lib\internal\assert.js" "lib\internal\async_hooks.js" "lib\internal\bash_completion.js" "lib\internal\buffer.js" "lib\internal\cli_table.js" "lib\internal\child_process.js" "lib\internal\cluster\child.js" "lib\internal\cluster\master.js" "lib\internal\cluster\round_robin_handle.js" "lib\internal\cluster\shared_handle.js" "lib\internal\cluster\utils.js" "lib\internal\cluster\worker.js" "lib\internal\console\constructor.js" "lib\internal\console\global.js" "lib\internal\console\inspector.js" "lib\internal\crypto\certificate.js" "lib\internal\crypto\cipher.js" "lib\internal\crypto\diffiehellman.js" "lib\internal\crypto\hash.js" "lib\internal\crypto\keygen.js" "lib\internal\crypto\pbkdf2.js" "lib\internal\crypto\random.js" "lib\internal\crypto\scrypt.js" "lib\internal\crypto\sig.js" "lib\internal\crypto\util.js" "lib\internal\constants.js" "lib\internal\dgram.js" "lib\internal\dns\promises.js" "lib\internal\dns\utils.js" "lib\internal\domexception.js" "lib\internal\encoding.js" "lib\internal\errors.js" "lib\internal\error-serdes.js" "lib\internal\fixed_queue.js" "lib\internal\freelist.js" "lib\internal\fs\promises.js" "lib\internal\fs\read_file_context.js" "lib\internal\fs\streams.js" "lib\internal\fs\sync_write_stream.js" "lib\internal\fs\utils.js" "lib\internal\fs\watchers.js" "lib\internal\http.js" "lib\internal\inspector_async_hook.js" "lib\internal\linkedlist.js" "lib\internal\modules\cjs\helpers.js" "lib\internal\modules\cjs\loader.js" "lib\internal\modules\esm\loader.js" "lib\internal\modules\esm\create_dynamic_module.js" "lib\internal\modules\esm\default_resolve.js" "lib\internal\modules\esm\module_job.js" "lib\internal\modules\esm\module_map.js" "lib\internal\modules\esm\translators.js" "lib\internal\safe_globals.js" "lib\internal\net.js" "lib\internal\options.js" "lib\internal\print_help.js" "lib\internal\priority_queue.js" "lib\internal\process\esm_loader.js" "lib\internal\process\main_thread_only.js" "lib\internal\process\next_tick.js" "lib\internal\process\per_thread.js" "lib\internal\process\promises.js" "lib\internal\process\stdio.js" "lib\internal\process\warning.js" "lib\internal\process\worker_thread_only.js" "lib\internal\querystring.js" "lib\internal\process\write-coverage.js" "lib\internal\process\coverage.js" "lib\internal\queue_microtask.js" "lib\internal\readline.js" "lib\internal\repl.js" "lib\internal\repl\await.js" "lib\internal\repl\recoverable.js" "lib\internal\socket_list.js" "lib\internal\test\binding.js" "lib\internal\test\heap.js" "lib\internal\test\unicode.js" "lib\internal\timers.js" "lib\internal\tls.js" "lib\internal\trace_events_async_hooks.js" "lib\internal\tty.js" "lib\internal\url.js" "lib\internal\util.js" "lib\internal\util\comparisons.js" "lib\internal\util\inspect.js" "lib\internal\util\inspector.js" "lib\internal\util\types.js" "lib\internal\http2\core.js" "lib\internal\http2\compat.js" "lib\internal\http2\util.js" "lib\internal\v8_prof_polyfill.js" "lib\internal\v8_prof_processor.js" "lib\internal\validators.js" "lib\internal\stream_base_commons.js" "lib\internal\vm\source_text_module.js" "lib\internal\worker.js" "lib\internal\streams\lazy_transform.js" "lib\internal\streams\async_iterator.js" "lib\internal\streams\buffer_list.js" "lib\internal\streams\duplexpair.js" "lib\internal\streams\legacy.js" "lib\internal\streams\destroy.js" "lib\internal\streams\state.js" "lib\internal\streams\pipeline.js" "lib\internal\streams\end-of-stream.js" "lib\internal\wrap_js_stream.js" "deps\v8\tools\splaytree.js" "deps\v8\tools\codemap.js" "deps\v8\tools\consarray.js" "deps\v8\tools\csvparser.js" "deps\v8\tools\profile.js" "deps\v8\tools\profile_view.js" "deps\v8\tools\logreader.js" "deps\v8\tools\arguments.js" "deps\v8\tools\tickprocessor.js" "deps\v8\tools\SourceMap.js" "deps\v8\tools\tickprocessor-driver.js" "deps\node-inspect\lib\_inspect.js" "deps\node-inspect\lib\internal\inspect_client.js" "deps\node-inspect\lib\internal\inspect_repl.js" "deps\acorn\dist\acorn.js" "deps\acorn\dist\walk.js" "config.gypi" "tools\check_macros.py" "tools\nodcheck_macros.py"
@@ -1028,10 +1026,6 @@ if %errorlevel% neq 0 exit /b %errorlevel%</Command>
       <Project>{F6F4AF82-6B99-6964-D7F3-CF38A17D3F8B}</Project>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
-    <ProjectReference Include="tools\icu\icui18n.vcxproj">
-      <Project>{DA8ED0C8-CD96-7F39-8BFC-C647C8C6E3FE}</Project>
-      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
-    </ProjectReference>
     <ProjectReference Include="tools\icu\icuuc.vcxproj">
       <Project>{6FEB5F0A-E6B2-54BE-BBB8-95D0237DA4D7}</Project>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
@@ -1040,73 +1034,8 @@ if %errorlevel% neq 0 exit /b %errorlevel%</Command>
       <Project>{FEADCB9B-A88E-152B-3F1D-C31A8E9D5C7D}</Project>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
-    <ProjectReference Include="deps\chakrashim\chakrashim.vcxproj">
-      <Project>{B28E5F17-2109-3CF3-62AA-711105ACD59E}</Project>
-      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
-      <UseLibraryDependencyInputs>true</UseLibraryDependencyInputs>
-    </ProjectReference>
-    <ProjectReference Include="deps\zlib\zlib.vcxproj">
-      <Project>{7FF6F247-3828-69AF-7EDB-FB0A9FF393E1}</Project>
-      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
-    </ProjectReference>
-    <ProjectReference Include="deps\http_parser\http_parser.vcxproj">
-      <Project>{3D75A4D7-C52C-EA52-8959-BDF659A0ED66}</Project>
-      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
-    </ProjectReference>
-    <ProjectReference Include="deps\cares\cares.vcxproj">
-      <Project>{74CF319D-6651-E4ED-35FD-B82D47DC2516}</Project>
-      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
-    </ProjectReference>
-    <ProjectReference Include="deps\uv\libuv.vcxproj">
-      <Project>{603C6853-166F-A229-0CE7-B001CAF96C76}</Project>
-      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
-    </ProjectReference>
-    <ProjectReference Include="deps\nghttp2\nghttp2.vcxproj">
-      <Project>{43081741-32EC-9436-5F9B-8A7353222B0B}</Project>
-      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
-    </ProjectReference>
-    <ProjectReference Include="deps\openssl\openssl.vcxproj">
-      <Project>{5C6460DB-F7B1-5315-A0DE-79A9DFC525A1}</Project>
-      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
-    </ProjectReference>
     <ProjectReference Include="deps\openssl\openssl-cli.vcxproj">
       <Project>{21D888B2-15AC-898B-EA33-9C73445681C1}</Project>
-      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
-    </ProjectReference>
-    <ProjectReference Include="tools\icu\icuucx.vcxproj">
-      <Project>{7362F535-B75C-DE03-B61F-F3D55ACA6F3A}</Project>
-      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
-    </ProjectReference>
-    <ProjectReference Include="tools\icu\icu_implementation.vcxproj">
-      <Project>{D55221E2-5E95-4477-0DF9-5F0475549667}</Project>
-      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
-    </ProjectReference>
-    <ProjectReference Include="tools\icu\icu_uconfig.vcxproj">
-      <Project>{5D0F9DE8-EFCE-B66B-3E06-BFDD2A61D31C}</Project>
-      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
-    </ProjectReference>
-    <ProjectReference Include="tools\icu\icu_uconfig_target.vcxproj">
-      <Project>{965003B2-25D6-CEB8-6C90-88F0A71606F1}</Project>
-      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
-    </ProjectReference>
-    <ProjectReference Include="tools\icu\icudata.vcxproj">
-      <Project>{F4CAEC9A-07E1-7F49-5630-116B9D21C367}</Project>
-      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
-    </ProjectReference>
-    <ProjectReference Include="tools\icu\icustubdata.vcxproj">
-      <Project>{AC5E0BF8-49FD-27AF-B254-E1CAD9123401}</Project>
-      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
-    </ProjectReference>
-    <ProjectReference Include="deps\chakrashim\chakra_js2c.vcxproj">
-      <Project>{3EFEAF4E-6EA8-2B3D-11E4-BDBD308513A9}</Project>
-      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
-    </ProjectReference>
-    <ProjectReference Include="deps\chakrashim\src\inspector\protocol_generated_sources.vcxproj">
-      <Project>{4A7E5D42-A040-2BBF-A989-D024722DA473}</Project>
-      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
-    </ProjectReference>
-    <ProjectReference Include="deps\chakrashim\src\inspector\protocol_compatibility.vcxproj">
-      <Project>{9153D5EB-3D86-9F03-6933-9EE0932FD937}</Project>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
   </ItemGroup>

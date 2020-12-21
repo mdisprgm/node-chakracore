@@ -1,5 +1,5 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2019
+# Visual Studio 2017
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "openssl", "openssl.vcxproj", "{5C6460DB-F7B1-5315-A0DE-79A9DFC525A1}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "openssl-cli", "openssl-cli.vcxproj", "{21D888B2-15AC-898B-EA33-9C73445681C1}"

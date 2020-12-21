@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" ToolsVersion="16.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|x64">
       <Configuration>Debug</Configuration>
@@ -34,9 +34,8 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
     <ExecutablePath>$(ExecutablePath);$(MSBuildProjectDirectory)\.\bin\;$(MSBuildProjectDirectory)\.\bin\</ExecutablePath>
-    <IntDir>$(Configuration)\obj\$(ProjectName)\</IntDir>
-    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkIncremental>
-    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</LinkIncremental>
+    <IntDir>bin\$(PlatformShortName)\$(Configuration)\obj\$(ProjectName)\</IntDir>
+    <LinkIncremental>true</LinkIncremental>
     <OutDir>$(SolutionDir)bin\$(PlatformShortName)\$(Configuration)\</OutDir>
     <TargetName>$(ProjectName)</TargetName>
     <TargetPath>$(OutDir)lib\$(ProjectName)$(TargetExt)</TargetPath>
@@ -56,7 +55,7 @@
       <Optimization>Disabled</Optimization>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PreprocessorDefinitions>V8_DEPRECATION_WARNINGS;V8_IMMINENT_DEPRECATION_WARNINGS;NODE_ENGINE="chakracore";NODE_ENGINE_CHAKRACORE;WIN32;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE;_HAS_EXCEPTIONS=0;BUILDING_V8_SHARED=1;BUILDING_UV_SHARED=1;OPENSSL_THREADS;U_COMMON_IMPLEMENTATION=1;U_I18N_IMPLEMENTATION=1;U_IO_IMPLEMENTATION=1;U_TOOLUTIL_IMPLEMENTATION=1;U_ATTRIBUTE_DEPRECATED=;_CRT_SECURE_NO_DEPRECATE=;U_STATIC_IMPLEMENTATION=1;UCONFIG_NO_SERVICE=1;U_ENABLE_DYLOAD=0;U_HAVE_STD_STRING=1;UCONFIG_NO_BREAK_ITERATION=0;DEBUG;_DEBUG;V8_ENABLE_CHECKS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <StringPooling>true</StringPooling>
       <SuppressStartupBanner>true</SuppressStartupBanner>
@@ -100,29 +99,25 @@
       <Optimization>Full</Optimization>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PreprocessorDefinitions>V8_DEPRECATION_WARNINGS;V8_IMMINENT_DEPRECATION_WARNINGS;NODE_ENGINE="chakracore";NODE_ENGINE_CHAKRACORE;WIN32;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE;_HAS_EXCEPTIONS=0;BUILDING_V8_SHARED=1;BUILDING_UV_SHARED=1;OPENSSL_THREADS;U_COMMON_IMPLEMENTATION=1;U_I18N_IMPLEMENTATION=1;U_IO_IMPLEMENTATION=1;U_TOOLUTIL_IMPLEMENTATION=1;U_ATTRIBUTE_DEPRECATED=;_CRT_SECURE_NO_DEPRECATE=;U_STATIC_IMPLEMENTATION=1;UCONFIG_NO_SERVICE=1;U_ENABLE_DYLOAD=0;U_HAVE_STD_STRING=1;UCONFIG_NO_BREAK_ITERATION=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <StringPooling>true</StringPooling>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <TreatWarningAsError>false</TreatWarningAsError>
       <WarningLevel>Level3</WarningLevel>
-      <WholeProgramOptimization>true</WholeProgramOptimization>
+      <WholeProgramOptimization>false</WholeProgramOptimization>
     </ClCompile>
     <Lib>
-      <AdditionalOptions>/LTCG:INCREMENTAL %(AdditionalOptions)</AdditionalOptions>
       <OutputFile>$(OutDir)lib\$(ProjectName)$(TargetExt)</OutputFile>
     </Lib>
     <Link>
       <AdditionalDependencies>
       </AdditionalDependencies>
-      <AdditionalOptions>/LTCG:INCREMENTAL %(AdditionalOptions)</AdditionalOptions>
       <AllowIsolation>true</AllowIsolation>
       <DataExecutionPrevention>true</DataExecutionPrevention>
-      <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <GenerateMapFile>true</GenerateMapFile>
       <MapExports>true</MapExports>
-      <OptimizeReferences>true</OptimizeReferences>
       <RandomizedBaseAddress>true</RandomizedBaseAddress>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <TargetMachine>MachineX64</TargetMachine>

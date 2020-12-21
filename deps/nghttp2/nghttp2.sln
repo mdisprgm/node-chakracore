@@ -1,5 +1,5 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2019
+# Visual Studio 2017
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "nghttp2", "nghttp2.vcxproj", "{43081741-32EC-9436-5F9B-8A7353222B0B}"
 EndProject
 Global

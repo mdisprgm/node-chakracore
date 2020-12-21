@@ -1,5 +1,5 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2019
+# Visual Studio 2017
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "zlib", "zlib.vcxproj", "{7FF6F247-3828-69AF-7EDB-FB0A9FF393E1}"
 EndProject
 Global
