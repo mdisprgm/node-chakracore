@@ -21,7 +21,6 @@
       '<(SHARED_INTERMEDIATE_DIR)/include/inspector/Debugger.h',
       '<(SHARED_INTERMEDIATE_DIR)/include/inspector/Runtime.h',
       '<(SHARED_INTERMEDIATE_DIR)/include/inspector/Schema.h',
-      '<(SHARED_INTERMEDIATE_DIR)/include/inspector/TimeTravel.h',
     ],
 
     'inspector_all_sources': [

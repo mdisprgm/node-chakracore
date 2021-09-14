@@ -236,97 +236,97 @@
   },
 
   'targets': [
-    {
-      'target_name': '<(node_core_target_name)',
-      'type': 'executable',
-      'sources': [
-        'src/node_main.cc'
-      ],
-      'includes': [
-        'node.gypi'
-      ],
-      'include_dirs': [
-        'src',
-      ],
-
-      # - "C4244: conversion from 'type1' to 'type2', possible loss of data"
-      #   Ususaly safe. Disable for `dep`, enable for `src`
-      'msvs_disabled_warnings!': [4244],
-
-      'conditions': [
-        [ 'node_engine=="v8"', {
-          'include_dirs': [ 'deps/v8/include' ],
-        }],
-        [ 'node_engine=="chakracore"', {
-          'include_dirs': [ 'deps/chakrashim/include' ],
-          'conditions': [
-            [ 'OS!="win" and chakracore_use_lto=="true"', {
-              'ldflags': [ '-flto' ]
-            }],
-            [ 'OS=="win"', {
-              'libraries': [ '-ldbghelp.lib' ],
-            }]
-          ]
-        }],
-        [ 'node_intermediate_lib_type=="static_library" and '
-            'node_shared=="true" and OS=="aix"', {
-          # For AIX, shared lib is linked by static lib and .exp. In the
-          # case here, the executable needs to link to shared lib.
-          # Therefore, use 'node_aix_shared' target to generate the
-          # shared lib and then executable.
-          'dependencies': [ 'node_aix_shared' ],
-        }, {
-          'dependencies': [ '<(node_lib_target_name)' ],
-        }],
-        [ 'node_intermediate_lib_type=="static_library" and '
-            'node_shared=="false"', {
-          'xcode_settings': {
-            'OTHER_LDFLAGS': [
-              '-Wl,-force_load,<(PRODUCT_DIR)/<(STATIC_LIB_PREFIX)'
-                  '<(node_core_target_name)<(STATIC_LIB_SUFFIX)',
-            ],
-          },
-          'msvs_settings': {
-            'VCLinkerTool': {
-              'AdditionalOptions': [
-                '/WHOLEARCHIVE:<(node_core_target_name)<(STATIC_LIB_SUFFIX)',
-              ],
-            },
-          },
-          'conditions': [
-            ['OS!="aix"', {
-              'ldflags': [
-                '-Wl,--whole-archive,<(obj_dir)/<(STATIC_LIB_PREFIX)'
-                    '<(node_core_target_name)<(STATIC_LIB_SUFFIX)',
-                '-Wl,--no-whole-archive',
-              ],
-            }],
-            [ 'OS=="win"', {
-              'sources': [ 'src/res/node.rc' ],
-              'conditions': [
-                [ 'node_use_etw=="true"', {
-                  'sources': [
-                    'tools/msvs/genfiles/node_etw_provider.rc'
-                  ],
-                }],
-              ],
-            }],
-          ],
-        }],
-        [ 'node_shared=="true"', {
-          'xcode_settings': {
-            'OTHER_LDFLAGS': [ '-Wl,-rpath,@loader_path', ],
-          },
-        }],
-        [ 'node_intermediate_lib_type=="shared_library" and OS=="win"', {
-          # On Windows, having the same name for both executable and shared
-          # lib causes filename collision. Need a different PRODUCT_NAME for
-          # the executable and rename it back to node.exe later
-          'product_name': '<(node_core_target_name)-win',
-        }],
-      ],
-    }, # node_core_target_name
-    {
+    # { # bdsx, unuse node.exe
+    #   'target_name': '<(node_core_target_name)',
+    #   'type': 'executable',
+    #   'sources': [
+    #     'src/node_main.cc'
+    #   ],
+    #   'includes': [
+    #     'node.gypi'
+    #   ],
+    #   'include_dirs': [
+    #     'src',
+    #   ],
+    # 
+    #   # - "C4244: conversion from 'type1' to 'type2', possible loss of data"
+    #   #   Ususaly safe. Disable for `dep`, enable for `src`
+    #   'msvs_disabled_warnings!': [4244],
+    # 
+    #   'conditions': [
+    #     [ 'node_engine=="v8"', {
+    #       'include_dirs': [ 'deps/v8/include' ],
+    #     }],
+    #     [ 'node_engine=="chakracore"', {
+    #       'include_dirs': [ 'deps/chakrashim/include' ],
+    #       'conditions': [
+    #         [ 'OS!="win" and chakracore_use_lto=="true"', {
+    #           'ldflags': [ '-flto' ]
+    #         }],
+    #         [ 'OS=="win"', {
+    #           'libraries': [ '-ldbghelp.lib' ],
+    #         }]
+    #       ]
+    #     }],
+    #     [ 'node_intermediate_lib_type=="static_library" and '
+    #         'node_shared=="true" and OS=="aix"', {
+    #       # For AIX, shared lib is linked by static lib and .exp. In the
+    #       # case here, the executable needs to link to shared lib.
+    #       # Therefore, use 'node_aix_shared' target to generate the
+    #       # shared lib and then executable.
+    #       'dependencies': [ 'node_aix_shared' ],
+    #     }, {
+    #       'dependencies': [ '<(node_lib_target_name)' ],
+    #     }],
+    #     [ 'node_intermediate_lib_type=="static_library" and '
+    #         'node_shared=="false"', {
+    #       'xcode_settings': {
+    #         'OTHER_LDFLAGS': [
+    #           '-Wl,-force_load,<(PRODUCT_DIR)/<(STATIC_LIB_PREFIX)'
+    #               '<(node_core_target_name)<(STATIC_LIB_SUFFIX)',
+    #         ],
+    #       },
+    #       'msvs_settings': {
+    #         'VCLinkerTool': {
+    #           'AdditionalOptions': [
+    #             '/WHOLEARCHIVE:<(node_core_target_name)<(STATIC_LIB_SUFFIX)',
+    #           ],
+    #         },
+    #       },
+    #       'conditions': [
+    #         ['OS!="aix"', {
+    #           'ldflags': [
+    #             '-Wl,--whole-archive,<(obj_dir)/<(STATIC_LIB_PREFIX)'
+    #                 '<(node_core_target_name)<(STATIC_LIB_SUFFIX)',
+    #             '-Wl,--no-whole-archive',
+    #           ],
+    #         }],
+    #         [ 'OS=="win"', {
+    #           'sources': [ 'src/res/node.rc' ],
+    #           'conditions': [
+    #             [ 'node_use_etw=="true"', {
+    #               'sources': [
+    #                 'tools/msvs/genfiles/node_etw_provider.rc'
+    #               ],
+    #             }],
+    #           ],
+    #         }],
+    #       ],
+    #     }],
+    #     [ 'node_shared=="true"', {
+    #       'xcode_settings': {
+    #         'OTHER_LDFLAGS': [ '-Wl,-rpath,@loader_path', ],
+    #       },
+    #     }],
+    #     [ 'node_intermediate_lib_type=="shared_library" and OS=="win"', {
+    #       # On Windows, having the same name for both executable and shared
+    #       # lib causes filename collision. Need a different PRODUCT_NAME for
+    #       # the executable and rename it back to node.exe later
+    #       'product_name': '<(node_core_target_name)-win',
+    #     }],
+    #   ],
+    # }, # node_core_target_name
+    { # lib
       'target_name': '<(node_lib_target_name)',
       'type': '<(node_intermediate_lib_type)',
       'product_name': '<(node_core_target_name)',
@@ -890,130 +890,130 @@
         } ],
       ]
     }, # specialize_node_d
-    {
-      # When using shared lib to build executable in Windows, in order to avoid
-      # filename collision, the executable name is node-win.exe. Need to rename
-      # it back to node.exe
-      'target_name': 'rename_node_bin_win',
-      'type': 'none',
-      'dependencies': [
-        '<(node_core_target_name)',
-      ],
-      'conditions': [
-        [ 'OS=="win" and node_intermediate_lib_type=="shared_library"', {
-          'actions': [
-            {
-              'action_name': 'rename_node_bin_win',
-              'inputs': [
-                '<(PRODUCT_DIR)/<(node_core_target_name)-win.exe'
-              ],
-              'outputs': [
-                '<(PRODUCT_DIR)/<(node_core_target_name).exe',
-              ],
-              'action': [
-                'mv', '<@(_inputs)', '<@(_outputs)',
-              ],
-            },
-          ],
-        } ],
-      ]
-    }, # rename_node_bin_win
-    {
-      'target_name': 'cctest',
-      'type': 'executable',
-
-      'dependencies': [
-        '<(node_lib_target_name)',
-        'rename_node_bin_win',
-        'deps/gtest/gtest.gyp:gtest',
-        'node_dtrace_header',
-        'node_dtrace_ustack',
-        'node_dtrace_provider',
-      ],
-
-      'includes': [
-        'node.gypi'
-      ],
-
-      'include_dirs': [
-        'src',
-        'tools/msvs/genfiles',
-        'deps/cares/include',
-        'deps/uv/include',
-        '<(SHARED_INTERMEDIATE_DIR)', # for node_natives.h
-      ],
-
-      'defines': [ 'NODE_WANT_INTERNALS=1' ],
-
-      'sources': [
-        'test/cctest/node_test_fixture.cc',
-        'test/cctest/test_aliased_buffer.cc',
-        'test/cctest/test_base64.cc',
-        'test/cctest/test_node_postmortem_metadata.cc',
-        'test/cctest/test_environment.cc',
-        'test/cctest/test_platform.cc',
-        'test/cctest/test_traced_value.cc',
-        'test/cctest/test_util.cc',
-        'test/cctest/test_url.cc'
-      ],
-
-      'conditions': [
-        [ 'node_engine=="v8"', {
-          'include_dirs': [
-            'deps/v8/include'
-          ],
-        }],
-        ['node_engine=="chakracore"', {
-          'include_dirs': [
-            'deps/chakrashim/include'
-          ],
-          'conditions': [
-            [ 'OS!="win" and chakracore_use_lto=="true"', {
-              'ldflags': [
-                '-flto',
-              ],
-            }],
-          ],
-        }],
-
-        [ 'node_use_openssl=="true"', {
-          'defines': [
-            'HAVE_OPENSSL=1',
-          ],
-        }],
-        ['v8_enable_inspector==1', {
-          'sources': [
-            'test/cctest/test_inspector_socket.cc',
-            'test/cctest/test_inspector_socket_server.cc'
-          ],
-          'defines': [
-            'HAVE_INSPECTOR=1',
-          ],
-        }, {
-          'defines': [ 'HAVE_INSPECTOR=0' ]
-        }],
-        [ 'OS=="win" and node_target_type!="static_library"', {
-          'conditions': [
-            # this is only necessary for chakra on windows because chakra is dynamically linked on windows
-            [ 'node_engine=="chakracore"', {
-              'libraries': [ '-ldbghelp.lib' ],
-            }],
-          ],
-        }],
-        ['OS=="solaris"', {
-          'ldflags': [ '-I<(SHARED_INTERMEDIATE_DIR)' ]
-        }],
-        # Skip cctest while building shared lib node for Windows
-        [ 'OS=="win" and node_shared=="true"', {
-          'type': 'none',
-        }],
-        [ 'node_shared=="true"', {
-          'xcode_settings': {
-            'OTHER_LDFLAGS': [ '-Wl,-rpath,@loader_path', ],
-          },
-        }],
-      ],
-    }, # cctest
+    # { # bdsx, unuse
+    #   # When using shared lib to build executable in Windows, in order to avoid
+    #   # filename collision, the executable name is node-win.exe. Need to rename
+    #   # it back to node.exe
+    #   'target_name': 'rename_node_bin_win',
+    #   'type': 'none',
+    #   'dependencies': [
+    #     '<(node_core_target_name)',
+    #   ],
+    #   'conditions': [
+    #     [ 'OS=="win" and node_intermediate_lib_type=="shared_library"', {
+    #       'actions': [
+    #         {
+    #           'action_name': 'rename_node_bin_win',
+    #           'inputs': [
+    #             '<(PRODUCT_DIR)/<(node_core_target_name)-win.exe'
+    #           ],
+    #           'outputs': [
+    #             '<(PRODUCT_DIR)/<(node_core_target_name).exe',
+    #           ],
+    #           'action': [
+    #             'mv', '<@(_inputs)', '<@(_outputs)',
+    #           ],
+    #         },
+    #       ],
+    #     } ],
+    #   ]
+    # }, # rename_node_bin_win
+    # { # bdsx, unuse
+    #   'target_name': 'cctest',
+    #   'type': 'executable',
+    # 
+    #   'dependencies': [
+    #     '<(node_lib_target_name)',
+    #     'rename_node_bin_win',
+    #     'deps/gtest/gtest.gyp:gtest',
+    #     'node_dtrace_header',
+    #     'node_dtrace_ustack',
+    #     'node_dtrace_provider',
+    #   ],
+    # 
+    #   'includes': [
+    #     'node.gypi'
+    #   ],
+    # 
+    #   'include_dirs': [
+    #     'src',
+    #     'tools/msvs/genfiles',
+    #     'deps/cares/include',
+    #     'deps/uv/include',
+    #     '<(SHARED_INTERMEDIATE_DIR)', # for node_natives.h
+    #   ],
+    # 
+    #   'defines': [ 'NODE_WANT_INTERNALS=1' ],
+    # 
+    #   'sources': [
+    #     'test/cctest/node_test_fixture.cc',
+    #     'test/cctest/test_aliased_buffer.cc',
+    #     'test/cctest/test_base64.cc',
+    #     'test/cctest/test_node_postmortem_metadata.cc',
+    #     'test/cctest/test_environment.cc',
+    #     'test/cctest/test_platform.cc',
+    #     'test/cctest/test_traced_value.cc',
+    #     'test/cctest/test_util.cc',
+    #     'test/cctest/test_url.cc'
+    #   ],
+    # 
+    #   'conditions': [
+    #     [ 'node_engine=="v8"', {
+    #       'include_dirs': [
+    #         'deps/v8/include'
+    #       ],
+    #     }],
+    #     ['node_engine=="chakracore"', {
+    #       'include_dirs': [
+    #         'deps/chakrashim/include'
+    #       ],
+    #       'conditions': [
+    #         [ 'OS!="win" and chakracore_use_lto=="true"', {
+    #           'ldflags': [
+    #             '-flto',
+    #           ],
+    #         }],
+    #       ],
+    #     }],
+    # 
+    #     [ 'node_use_openssl=="true"', {
+    #       'defines': [
+    #         'HAVE_OPENSSL=1',
+    #       ],
+    #     }],
+    #     ['v8_enable_inspector==1', {
+    #       'sources': [
+    #         'test/cctest/test_inspector_socket.cc',
+    #         'test/cctest/test_inspector_socket_server.cc'
+    #       ],
+    #       'defines': [
+    #         'HAVE_INSPECTOR=1',
+    #       ],
+    #     }, {
+    #       'defines': [ 'HAVE_INSPECTOR=0' ]
+    #     }],
+    #     [ 'OS=="win" and node_target_type!="static_library"', {
+    #       'conditions': [
+    #         # this is only necessary for chakra on windows because chakra is dynamically linked on windows
+    #         [ 'node_engine=="chakracore"', {
+    #           'libraries': [ '-ldbghelp.lib' ],
+    #         }],
+    #       ],
+    #     }],
+    #     ['OS=="solaris"', {
+    #       'ldflags': [ '-I<(SHARED_INTERMEDIATE_DIR)' ]
+    #     }],
+    #     # Skip cctest while building shared lib node for Windows
+    #     [ 'OS=="win" and node_shared=="true"', {
+    #       'type': 'none',
+    #     }],
+    #     [ 'node_shared=="true"', {
+    #       'xcode_settings': {
+    #         'OTHER_LDFLAGS': [ '-Wl,-rpath,@loader_path', ],
+    #       },
+    #     }],
+    #   ],
+    # }, # cctest
   ], # end targets
 
   'conditions': [
