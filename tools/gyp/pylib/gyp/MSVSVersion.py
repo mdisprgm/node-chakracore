@@ -257,6 +257,16 @@ def _CreateVersion(name, path, sdk_based=False):
   if path:
     path = os.path.normpath(path)
   versions = {
+      '2022': VisualStudioVersion('2022',
+                                  'Visual Studio 2022',
+                                  solution_version='12.00',
+                                  project_version='16.0',
+                                  flat_sln=False,
+                                  uses_vcxproj=True,
+                                  path=path,
+                                  sdk_based=sdk_based,
+                                  default_toolset='v143',
+                                  compatible_sdks=['v10.0']),
       '2019': VisualStudioVersion('2019',
                                   'Visual Studio 2019',
                                   solution_version='12.00',
@@ -398,6 +408,7 @@ def _DetectVisualStudioVersions(versions_to_check, force_express):
       2015    - Visual Studio 2015 (14)
       2017    - Visual Studio 2017 (15)
       2019    - Visual Studio 2019 (16)
+      2022    - Visual Studio 2022 (17)
     Where (e) is e for express editions of MSVS and blank otherwise.
   """
   version_to_year = {
@@ -408,7 +419,8 @@ def _DetectVisualStudioVersions(versions_to_check, force_express):
       '12.0': '2013',
       '14.0': '2015',
       '15.0': '2017',
-      '16.0': '2019'
+      '16.0': '2019',
+      '17.0': '2022'
   }
   versions = []
   for version in versions_to_check:
@@ -447,7 +459,10 @@ def _DetectVisualStudioVersions(versions_to_check, force_express):
       if not path:
         continue
       path = _ConvertToCygpath(path)
-      if version == '16.0':
+      if version == '17.0':
+          if os.path.exists(path):
+              versions.append(_CreateVersion('2022', path))
+      elif version == '16.0':
           if os.path.exists(path):
               versions.append(_CreateVersion('2019', path))
       elif version == '15.0':
@@ -486,6 +501,7 @@ def SelectVisualStudioVersion(version='auto', allow_fallback=True):
     '2015': ('14.0',),
     '2017': ('15.0',),
     '2019': ('16.0',),
+    '2022': ('17.0',),
   }
   override_path = os.environ.get('GYP_MSVS_OVERRIDE_PATH')
   if override_path:

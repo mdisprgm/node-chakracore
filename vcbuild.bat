@@ -73,6 +73,7 @@ if /i "%1"=="x64"           set target_arch=x64&goto arg-ok
 if /i "%1"=="arm"           set target_arch=arm&goto arg-ok
 if /i "%1"=="vs2017"        set target_env=vs2017&goto arg-ok
 if /i "%1"=="vs2019"        set target_env=vs2019&goto arg-ok
+if /i "%1"=="vs2022"        set target_env=vs2022&goto arg-ok
 if /i "%1"=="noprojgen"     set noprojgen=1&goto arg-ok
 if /i "%1"=="projgen"       set projgen=1&goto arg-ok
 if /i "%1"=="nobuild"       set nobuild=1&goto arg-ok
@@ -242,6 +243,7 @@ if %target_arch%==x64 if %msvs_host_arch%==amd64 set vcvarsall_arg=amd64
 @rem also if both are x86
 if %target_arch%==x86 if %msvs_host_arch%==x86 set vcvarsall_arg=x86
 
+if defined target_env if "%target_env%" == "vs2022" goto vs-set-2022
 if defined target_env if "%target_env%" == "vs2019" goto vs-set-2019
 @rem Look for Visual Studio 2017
 :vs-set-2017
@@ -275,6 +277,39 @@ if errorlevel 1 goto msbuild-not-found
 echo Found MSVS version %VisualStudioVersion%
 set GYP_MSVS_VERSION=2017
 set PLATFORM_TOOLSET=v141
+goto msbuild-found
+
+@rem Look for Visual Studio 2022
+:vs-set-2022
+echo Looking for Visual Studio 2022
+call tools\msvs\vswhere_usability_wrapper.cmd
+if "_%VCINSTALLDIR%_" == "__" goto msbuild-not-found
+if defined msi (
+  echo Looking for WiX installation for Visual Studio 2022...
+  if not exist "%WIX%\SDK\VS2022" (
+    echo Failed to find WiX install for Visual Studio 2022
+    echo VS2022 support for WiX is only present starting at version 3.11
+    goto msbuild-not-found
+  )
+  if not exist "%VCINSTALLDIR%\..\MSBuild\Microsoft\WiX" (
+    echo Failed to find the Wix Toolset Visual Studio 2022 Extension
+    goto msbuild-not-found
+  )
+)
+@rem check if VS2022 is already setup, and for the requested arch
+if "_%VisualStudioVersion%_" == "_17.0_" if "_%VSCMD_ARG_TGT_ARCH%_"=="_%target_arch%_" goto found_vs2022
+@rem need to clear VSINSTALLDIR for vcvarsall to work as expected
+set "VSINSTALLDIR="
+@rem prevent VsDevCmd.bat from changing the current working directory
+set "VSCMD_START_DIR=%CD%"
+set vcvars_call="%VCINSTALLDIR%\Auxiliary\Build\vcvarsall.bat" %vcvarsall_arg%
+echo calling: %vcvars_call%
+call %vcvars_call%
+goto found_vs2022
+:found_vs2022
+echo Found MSVS version %VisualStudioVersion%
+set GYP_MSVS_VERSION=2022
+set PLATFORM_TOOLSET=v143
 goto msbuild-found
 
 @rem Look for Visual Studio 2019
@@ -325,18 +360,21 @@ goto install-doctools
 set project_generated=
 :project-gen
 @rem Skip project generation if requested.
+set configure_stamp=%configure_flags%
 if defined noprojgen goto msbuild
 if defined projgen goto run-configure
 if not exist node.sln goto run-configure
 if not exist .gyp_configure_stamp goto run-configure
-echo %configure_flags% > .tmp_gyp_configure_stamp
+if defined target_env       set configure_stamp=%configure_stamp% --%target_env%
+
+echo %configure_stamp% > .tmp_gyp_configure_stamp
 where /R . /T *.gyp? >> .tmp_gyp_configure_stamp
 fc .gyp_configure_stamp .tmp_gyp_configure_stamp >NUL 2>&1
 if errorlevel 1 goto run-configure
 
 :skip-configure
 del .tmp_gyp_configure_stamp 2> NUL
-echo Reusing solution generated with %configure_flags%
+echo Reusing solution generated with %configure_stamp%
 goto msbuild
 
 :run-configure
@@ -344,13 +382,13 @@ del .tmp_gyp_configure_stamp 2> NUL
 del .gyp_configure_stamp 2> NUL
 @rem Generate the VS project.
 echo configure %configure_flags% --engine=%engine%
-echo %configure_flags%> .used_configure_flags
-python configure %configure_flags% --engine=%engine%
+echo %configure_stamp%> .used_configure_flags
+python configure %configure_stamp% --engine=%engine%
 if errorlevel 1 goto create-msvs-files-failed
 if not exist node.sln goto create-msvs-files-failed
 set project_generated=1
 echo Project files generated.
-echo %configure_flags% > .gyp_configure_stamp
+echo %configure_stamp% > .gyp_configure_stamp
 where /R . /T *.gyp? >> .gyp_configure_stamp
 
 :msbuild
