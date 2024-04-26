@@ -1,5 +1,6 @@
 //-------------------------------------------------------------------------------------------------------
 // Copyright (C) Microsoft. All rights reserved.
+// Copyright (c) ChakraCore Project Contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
 //-------------------------------------------------------------------------------------------------------
 
@@ -106,11 +107,11 @@ var tests = [
             assert.isTrue(typedArrayPrototype === Float32Array.prototype.__proto__, "All TypedArray prototypes have their [[prototype]] slot set to the %TypedArrayPrototype% intrinsic");
             assert.isTrue(typedArrayPrototype === Float64Array.prototype.__proto__, "All TypedArray prototypes have their [[prototype]] slot set to the %TypedArrayPrototype% intrinsic");
 
-            verifyTypedArrayPrototypePropertyAccessor(typedArrayPrototype, "buffer", "%TypedArrayPrototype%.buffer", "get buffer");
-            verifyTypedArrayPrototypePropertyAccessor(typedArrayPrototype, "byteLength", "%TypedArrayPrototype%.byteLength", "get byteLength");
-            verifyTypedArrayPrototypePropertyAccessor(typedArrayPrototype, "byteOffset", "%TypedArrayPrototype%.byteOffset", "get byteOffset");
-            verifyTypedArrayPrototypePropertyAccessor(typedArrayPrototype, "length", "%TypedArrayPrototype%.length", "get length");
-            verifyTypedArrayPrototypePropertyAccessor(typedArrayPrototype, Symbol.toStringTag, "%TypedArrayPrototype%[@@toStringTag]", "get [Symbol.toStringTag]");
+            verifyTypedArrayPrototypePropertyAccessor(typedArrayPrototype, "buffer", "%TypedArrayPrototype%.buffer", "function get buffer() { [native code] }");
+            verifyTypedArrayPrototypePropertyAccessor(typedArrayPrototype, "byteLength", "%TypedArrayPrototype%.byteLength", "function get byteLength() { [native code] }");
+            verifyTypedArrayPrototypePropertyAccessor(typedArrayPrototype, "byteOffset", "%TypedArrayPrototype%.byteOffset", "function get byteOffset() { [native code] }");
+            verifyTypedArrayPrototypePropertyAccessor(typedArrayPrototype, "length", "%TypedArrayPrototype%.length", "function get length() { [native code] }");
+            verifyTypedArrayPrototypePropertyAccessor(typedArrayPrototype, Symbol.toStringTag, "%TypedArrayPrototype%[@@toStringTag]", "function get [Symbol.toStringTag]() { [native code] }");
 
             verifyTypedArrayPrototypePropertyFunction(typedArrayPrototype, "set", 2, "%TypedArrayPrototype%.set");
             verifyTypedArrayPrototypePropertyFunction(typedArrayPrototype, "subarray", 2, "%TypedArrayPrototype%.subarray");
@@ -1485,17 +1486,12 @@ var tests = [
                 return undefined;
             }
 
+            assert.areEqual([1,2,3,4,5,6,7,8,9,10], getTypedArray(10).sort(), "%TypedArrayPrototype%.sort basic behavior with no sort callback");
             assert.areEqual([1,2,3,4,5,6,7,8,9,10], getTypedArray(10).sort(sortCallback), "%TypedArrayPrototype%.sort basic behavior with a non-lying sort callback");
             assert.areEqual([10,9,8,7,6,5,4,3,2,1], getTypedArray(10).sort(sortCallbackReverse), "%TypedArrayPrototype%.sort with a sort callback function which reverses elements");
             assert.areEqual([5,1,2,3,4,6,7,8,9,10], getTypedArray(10).sort(sortCallbackHate5), "%TypedArrayPrototype%.sort basic behavior with a lying sort callback which hates the number 5");
 
-            // we have a consistent qsort_r impl. on xplat.
-            if (WScript.Platform.OS == "win32") { // Windows
-                assert.areEqual([9,8,7,2,10,5,4,3,1,6], getTypedArray(10).sort(sortCallbackMalformed), "%TypedArrayPrototype%.sort basic behavior with a sort callback which returns random values");
-            } else { // xplat
-                assert.areEqual([2,9,10,8,7,5,4,3,6,1], getTypedArray(10).sort(sortCallbackMalformed), "%TypedArrayPrototype%.sort basic behavior with a sort callback which returns random values");
-            }
-
+            assert.areEqual([2,10,9,8,7,6,5,4,3,1], getTypedArray(10).sort(sortCallbackMalformed), "%TypedArrayPrototype%.sort basic behavior with a sort callback which returns random values");
             assert.throws(function() { sort.call(); }, TypeError, "Calling %TypedArrayPrototype%.sort with no this throws TypeError", "'this' is not a typed array object");
             assert.throws(function() { sort.call(undefined); }, TypeError, "Calling %TypedArrayPrototype%.sort with undefined this throws TypeError", "'this' is not a typed array object");
             assert.throws(function() { sort.call('string'); }, TypeError, "Calling %TypedArrayPrototype%.sort with non-object this throws TypeError", "'this' is not a typed array object");

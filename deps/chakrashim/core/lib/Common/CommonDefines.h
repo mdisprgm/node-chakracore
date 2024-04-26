@@ -1,5 +1,6 @@
 //-------------------------------------------------------------------------------------------------------
 // Copyright (C) Microsoft. All rights reserved.
+// Copyright (c) 2021 ChakraCore Project Contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
 //-------------------------------------------------------------------------------------------------------
 #pragma once
@@ -114,30 +115,12 @@
 #define ENABLE_UNICODE_API 1                        // Enable use of Unicode-related APIs
 #endif
 
-// Normalize ICU_VERSION for non-Kit ICU
-#if defined(HAS_ICU) && !defined(ICU_VERSION) && !defined(WINDOWS10_ICU)
-#include "unicode/uvernum.h"
-#define ICU_VERSION U_ICU_VERSION_MAJOR_NUM
-#endif
-
-// Make non-Windows Kit ICU look and act like Windows Kit ICU for better compat
-#if defined(HAS_ICU) && !defined(WINDOWS10_ICU)
-#define U_SHOW_CPLUSPLUS_API 0
-// ICU 55 (Ubuntu 16.04 system default) has uloc_toUnicodeLocale* marked as draft, which is required for Intl
-#if ICU_VERSION > 56
-#define U_DEFAULT_SHOW_DRAFT 0
-#define U_HIDE_DRAFT_API 1
-#endif
-#define U_HIDE_DEPRECATED_API 1
-#define U_HIDE_OBSOLETE_API 1
-#define U_HIDE_INTERNAL_API 1
-#endif
-
 // Language features
 #if !defined(CHAKRACORE_LITE) && (defined(_WIN32) || defined(INTL_ICU))
 #define ENABLE_INTL_OBJECT                          // Intl support
-#define ENABLE_JS_BUILTINS                          // Built In functions support
 #endif
+
+#define ENABLE_JS_BUILTINS                          // Built In functions support
 
 #if defined(_WIN32) && !defined(HAS_ICU)
 #define INTL_WINGLOB 1
@@ -272,6 +255,8 @@
 
 // JIT features
 
+#define ENABLE_SPECTRE_RUNTIME_MITIGATIONS
+
 #if DISABLE_JIT
 #define ENABLE_NATIVE_CODEGEN 0
 #define ENABLE_PROFILE_INFO 0
@@ -345,12 +330,10 @@
 #endif
 
 #ifdef NTBUILD
-#define ENABLE_PROJECTION
 #define ENABLE_FOUNDATION_OBJECT
-#define ENABLE_EXPERIMENTAL_FLAGS
 #define ENABLE_WININET_PROFILE_DATA_CACHE
+#define ENABLE_COMPRESSION_UTILITIES
 #define ENABLE_BASIC_TELEMETRY
-#define ENABLE_DOM_FAST_PATH
 #define EDIT_AND_CONTINUE
 #define ENABLE_JIT_CLAMP
 #define ENABLE_SCRIPT_PROFILING
@@ -396,11 +379,7 @@
 #define RUNTIME_DATA_COLLECTION
 #define SECURITY_TESTING
 
-// xplat-todo: Temporarily disable profile output on non-Win32 builds
-#ifdef _WIN32
 #define PROFILE_EXEC
-#endif
-
 #define BGJIT_STATS
 #define REJIT_STATS
 #define PERF_HINT
@@ -607,7 +586,6 @@
 #define CHECK_MEMORY_LEAK
 #define LEAK_REPORT
 
-#define PROJECTION_METADATA_TRACE
 #define ERROR_TRACE
 #define DEBUGGER_TRACE
 

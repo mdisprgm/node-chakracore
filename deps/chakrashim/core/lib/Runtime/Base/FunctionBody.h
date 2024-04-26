@@ -222,7 +222,7 @@ namespace Js
     // main and JIT threads.
     class EntryPointInfo : public ProxyEntryPointInfo
     {
-
+        
     private:
         enum State : BYTE
         {
@@ -571,14 +571,19 @@ namespace Js
         void ResetOnLazyBailoutFailure();
         void OnNativeCodeInstallFailure();
         virtual void ResetOnNativeCodeInstallFailure() = 0;
-
-        void FreeJitTransferData();
-        bool ClearEquivalentTypeCaches();
+               
+        void FreeJitTransferData();        
+        bool ClearEquivalentTypeCaches();        
 
         virtual void Invalidate(bool prolongEntryPoint) { Assert(false); }
         InlineeFrameRecord* FindInlineeFrame(void* returnAddress);
         bool HasInlinees();
-        void DoLazyBailout(BYTE** addressOfReturnAddress, Js::FunctionBody* functionBody, const PropertyRecord* propertyRecord);
+
+#if DBG
+        void DoLazyBailout(BYTE **addressOfInstructionPointer, BYTE *framePointer, Js::FunctionBody *functionBody, const PropertyRecord *propertyRecord);
+#else
+        void DoLazyBailout(BYTE **addressOfInstructionPointer, BYTE *framePointer);
+#endif
 
         void CleanupNativeCode(ScriptContext * scriptContext);
 #if DBG_DUMP
@@ -637,7 +642,7 @@ namespace Js
         virtual void Expire() override;
         virtual void EnterExpirableCollectMode() override;
         virtual void ResetOnNativeCodeInstallFailure() override;
-        static const uint8 GetDecrCallCountPerBailout()
+        static uint8 GetDecrCallCountPerBailout()
         {
             return (uint8)CONFIG_FLAG(CallsToBailoutsRatioForRejit) + 1;
         }
@@ -675,7 +680,7 @@ namespace Js
 
 #if ENABLE_NATIVE_CODEGEN
         virtual void ResetOnNativeCodeInstallFailure() override;
-        static const uint8 GetDecrLoopCountPerBailout()
+        static uint8 GetDecrLoopCountPerBailout()
         {
             return (uint8)CONFIG_FLAG(LoopIterationsToBailoutsRatioForRejit) + 1;
         }
@@ -730,8 +735,8 @@ namespace Js
 #endif
         static const uint NoLoop = (uint)-1;
 
-        static const uint GetOffsetOfProfiledLoopCounter() { return offsetof(LoopHeader, profiledLoopCounter); }
-        static const uint GetOffsetOfInterpretCount() { return offsetof(LoopHeader, interpretCount); }
+        static uint GetOffsetOfProfiledLoopCounter() { return offsetof(LoopHeader, profiledLoopCounter); }
+        static uint GetOffsetOfInterpretCount() { return offsetof(LoopHeader, interpretCount); }
 
         bool Contains(Js::LoopHeader * loopHeader) const
         {
@@ -849,6 +854,12 @@ namespace Js
     typedef Field(FunctionInfo*)* FunctionInfoArray;
     typedef Field(FunctionInfo*)* FunctionInfoPtrPtr;
 
+    struct PrintOffsets
+    {
+        uint cbStartPrintOffset;
+        uint cbEndPrintOffset;
+    };
+
     //
     // FunctionProxy represents a user defined function
     // This could be either from a source file or the byte code cache
@@ -896,7 +907,11 @@ namespace Js
 #if ENABLE_PROFILE_INFO
             CallbackArgOutInfoList = 25,
 #endif
-
+#if ENABLE_NATIVE_CODEGEN
+            CodeGenCallApplyTargetRuntimeData = 26,
+            CallSiteToCallApplyCallSiteArray = 27,
+#endif
+            PrintOffsets = 28,
             Max,
             Invalid = 0xff
         };
@@ -941,6 +956,11 @@ namespace Js
 #if ENABLE_PROFILE_INFO
         AuxPointerTypeEntry(AuxPointerType::CallbackArgOutInfoList, CallbackInfoList*);
 #endif
+#if ENABLE_NATIVE_CODEGEN
+        AuxPointerTypeEntry(AuxPointerType::CodeGenCallApplyTargetRuntimeData, Field(FunctionCodeGenRuntimeData*)*);
+        AuxPointerTypeEntry(AuxPointerType::CallSiteToCallApplyCallSiteArray, ProfileId*);
+#endif
+        AuxPointerTypeEntry(AuxPointerType::PrintOffsets, PrintOffsets*);
 #undef AuxPointerTypeEntry
 
         typedef AuxPtrs<FunctionProxy, AuxPointerType> AuxPtrsT;
@@ -981,7 +1001,7 @@ namespace Js
 
         virtual void Mark(Recycler *recycler) override { AssertMsg(false, "Mark called on object that isn't TrackableObject"); }
 
-        static const uint GetOffsetOfFunctionInfo() { return offsetof(FunctionProxy, functionInfo); }
+        static uint GetOffsetOfFunctionInfo() { return offsetof(FunctionProxy, functionInfo); }
         FunctionInfo * GetFunctionInfo() const
         {
             return this->functionInfo;
@@ -1022,6 +1042,7 @@ namespace Js
         void SetEnclosedByGlobalFunc();
         bool CanBeDeferred() const;
         BOOL IsDeferredDeserializeFunction() const;
+        BOOL HasParseableInfo() const;
         BOOL IsDeferredParseFunction() const;
         FunctionInfo::Attributes GetAttributes() const;
         void SetAttributes(FunctionInfo::Attributes attributes);
@@ -1057,6 +1078,10 @@ namespace Js
         ScriptFunctionType * EnsureDeferredPrototypeType();
         ScriptFunctionType * GetUndeferredFunctionType() const;
         void SetUndeferredFunctionType(ScriptFunctionType * type);
+        ScriptFunctionType * GetCrossSiteDeferredFunctionType() const;
+        void SetCrossSiteDeferredFunctionType(ScriptFunctionType * type);
+        ScriptFunctionType * GetCrossSiteUndeferredFunctionType() const;
+        void SetCrossSiteUndeferredFunctionType(ScriptFunctionType * type);
         JavascriptMethod GetDirectEntryPoint(ProxyEntryPointInfo* entryPoint) const;
 
         // Function object type list methods
@@ -1300,6 +1325,13 @@ namespace Js
         Assert(GetFunctionInfo());
         Assert(GetFunctionInfo()->GetFunctionProxy() == this);
         return GetFunctionInfo()->IsDeferredDeserializeFunction();
+    }
+
+    inline BOOL FunctionProxy::HasParseableInfo() const
+    {
+        Assert(GetFunctionInfo());
+        Assert(GetFunctionInfo()->GetFunctionProxy() == this);
+        return GetFunctionInfo()->HasParseableInfo();
     }
 
     inline BOOL FunctionProxy::IsDeferredParseFunction() const
@@ -1578,6 +1610,11 @@ namespace Js
         uint32 GetGrfscr() const;
         void SetGrfscr(uint32 grfscr);
 
+        ScriptFunctionType * GetCrossSiteDeferredFunctionType() const { return crossSiteDeferredFunctionType; }
+        void SetCrossSiteDeferredFunctionType(ScriptFunctionType * type) { Assert(!crossSiteDeferredFunctionType); crossSiteDeferredFunctionType = type; }
+        ScriptFunctionType * GetCrossSiteUndeferredFunctionType() const { return crossSiteUndeferredFunctionType; }
+        void SetCrossSiteUndeferredFunctionType(ScriptFunctionType * type) { Assert(!crossSiteUndeferredFunctionType); crossSiteUndeferredFunctionType = type; }
+
         ///----------------------------------------------------------------------------
         ///
         /// ParseableFunctionInfo::GetInParamsCount
@@ -1625,6 +1662,7 @@ namespace Js
 
         uint LengthInBytes() const { return m_cbLength; }
         uint StartOffset() const;
+        uint PrintableStartOffset() const;
         ULONG GetLineNumber() const;
         ULONG GetColumnNumber() const;
         template <class T>
@@ -1636,6 +1674,7 @@ namespace Js
         ULONG GetRelativeColumnNumber() const { return m_columnNumber; }
         uint GetSourceIndex() const;
         LPCUTF8 GetSource(const  char16* reason = nullptr) const;
+        LPCUTF8 GetToStringSource(const  char16* reason = nullptr) const;
         charcount_t LengthInChars() const { return m_cchLength; }
         charcount_t StartInDocument() const;
         bool IsEval() const { return m_isEval; }
@@ -1740,6 +1779,8 @@ namespace Js
         void BuildDeferredStubs(ParseNodeFnc* pnodeFnc);
         DeferredFunctionStub *GetDeferredStubs() const { return this->GetAuxPtr<AuxPointerType::DeferredStubs>(); }
         void SetDeferredStubs(DeferredFunctionStub *stub) { this->SetAuxPtr<AuxPointerType::DeferredStubs>(stub); }
+        PrintOffsets* GetPrintOffsets() const { return this->GetAuxPtr<AuxPointerType::PrintOffsets>(); }
+        void SetPrintOffsets(PrintOffsets* offsets) { this->SetAuxPtr<AuxPointerType::PrintOffsets>(offsets); }
         void RegisterFuncToDiag(ScriptContext * scriptContext, char16 const * pszTitle);
         bool IsES6ModuleCode() const;
     private:
@@ -1794,19 +1835,22 @@ namespace Js
         // yet, leaving this here for now. We can look at optimizing the function info and function proxy structures some
         // more and also fix our thunks to handle 8 bit offsets
 
-        FieldWithBarrier(bool) m_utf8SourceHasBeenSet;          // start of UTF8-encoded source
-        FieldWithBarrier(uint) m_sourceIndex;             // index into the scriptContext's list of saved sources
-#if DYNAMIC_INTERPRETER_THUNK
-        FieldNoBarrier(void*) m_dynamicInterpreterThunk;  // Unique 'thunk' for every interpreted function - used for ETW symbol decoding.
-#endif
-        FieldWithBarrier(uint) m_cbStartOffset;         // pUtf8Source is this many bytes from the start of the scriptContext's source buffer.
-
-        // This is generally the same as m_cchStartOffset unless the buffer has a BOM
+        FieldWithBarrier(bool) m_utf8SourceHasBeenSet : 1;          // start of UTF8-encoded source
 
 #define DEFINE_PARSEABLE_FUNCTION_INFO_FIELDS 1
 #define DECLARE_TAG_FIELD(type, name, serializableType) Field(type) name
 #define CURRENT_ACCESS_MODIFIER protected:
 #include "SerializableFunctionFields.h"
+
+        FieldWithBarrier(uint) m_sourceIndex;             // index into the scriptContext's list of saved sources
+#if DYNAMIC_INTERPRETER_THUNK
+        FieldNoBarrier(void*) m_dynamicInterpreterThunk;  // Unique 'thunk' for every interpreted function - used for ETW symbol decoding.
+#endif
+        FieldWithBarrier(ScriptFunctionType*) crossSiteDeferredFunctionType;
+        FieldWithBarrier(ScriptFunctionType*) crossSiteUndeferredFunctionType;
+
+        FieldWithBarrier(uint) m_cbStartOffset;         // pUtf8Source is this many bytes from the start of the scriptContext's source buffer.
+                                                        // This is generally the same as m_cchStartOffset unless the buffer has a BOM or other non-ascii characters
 
         FieldWithBarrier(ULONG) m_lineNumber;
         FieldWithBarrier(ULONG) m_columnNumber;
@@ -1893,16 +1937,17 @@ namespace Js
                 ObjLiteralCount                         = 15,
                 LiteralRegexCount                       = 16,
                 InnerScopeCount                         = 17,
+                ProfiledCallApplyCallSiteCount          = 18,
 
                 // Following counters uses ((uint32)-1) as default value
-                LocalClosureRegister                    = 18,
-                ParamClosureRegister                    = 19,
-                LocalFrameDisplayRegister               = 20,
-                EnvRegister                             = 21,
-                ThisRegisterForEventHandler             = 22,
-                FirstInnerScopeRegister                 = 23,
-                FuncExprScopeRegister                   = 24,
-                FirstTmpRegister                        = 25,
+                LocalClosureRegister                    = 19,
+                ParamClosureRegister                    = 20,
+                LocalFrameDisplayRegister               = 21,
+                EnvRegister                             = 22,
+                ThisRegisterForEventHandler             = 23,
+                FirstInnerScopeRegister                 = 24,
+                FuncExprScopeRegister                   = 25,
+                FirstTmpRegister                        = 26,
 
                 Max
             };
@@ -2224,7 +2269,7 @@ namespace Js
 #if DYNAMIC_INTERPRETER_THUNK
         void GenerateDynamicInterpreterThunk();
 #endif
-
+      
         Js::JavascriptMethod GetEntryPoint(ProxyEntryPointInfo* entryPoint) const { return entryPoint->jsMethod; }
         void CaptureDynamicProfileState(FunctionEntryPointInfo* entryPointInfo);
 #if ENABLE_DEBUG_CONFIG_OPTIONS
@@ -2377,7 +2422,7 @@ namespace Js
         }
 #endif
 
-        const bool GetIsAsmJsFunction() const
+        bool GetIsAsmJsFunction() const
         {
             return m_isAsmJsFunction;
         }
@@ -2574,6 +2619,11 @@ namespace Js
         Field(FunctionCodeGenRuntimeData*)* GetCodeGenCallbackRuntimeDataWithLock() const { return this->GetAuxPtrWithLock<AuxPointerType::CodeGenCallbackRuntimeData>(); }
         void SetCodeGenCallbackRuntimeData(FunctionCodeGenRuntimeData** codeGenArgumentRuntimeData) { this->SetAuxPtr<AuxPointerType::CodeGenCallbackRuntimeData>(codeGenArgumentRuntimeData); }
 
+#if ENABLE_NATIVE_CODEGEN
+        Field(FunctionCodeGenRuntimeData*)* GetCodeGenCallApplyTargetRuntimeData() const { return this->GetAuxPtr<AuxPointerType::CodeGenCallApplyTargetRuntimeData>(); }
+        Field(FunctionCodeGenRuntimeData*)* GetCodeGenCallApplyTargetRuntimeDataWithLock() const { return this->GetAuxPtrWithLock<AuxPointerType::CodeGenCallApplyTargetRuntimeData>(); }
+#endif
+
         template <typename TStatementMapList>
         static StatementMap * GetNextNonSubexpressionStatementMap(TStatementMapList *statementMapList, int & startingAtIndex);
         static StatementMap * GetPrevNonSubexpressionStatementMap(StatementMapList *statementMapList, int & startingAtIndex);
@@ -2750,6 +2800,9 @@ namespace Js
         bool AllocProfiledCallSiteId(ProfileId* profileId) { if (this->profiledCallSiteCount != Constants::NoProfileId) { *profileId = this->profiledCallSiteCount++; return true; } return false; }
         ProfileId GetProfiledCallSiteCount() const { return this->profiledCallSiteCount; }
         void SetProfiledCallSiteCount(ProfileId callSiteId)  { this->profiledCallSiteCount = callSiteId; }
+
+        ProfileId GetProfiledCallApplyCallSiteCount() const { return (ProfileId)this->GetCountField(CounterFields::ProfiledCallApplyCallSiteCount); }
+        void SetProfiledCallApplyCallSiteCount(ProfileId count) { SetCountField(CounterFields::ProfiledCallApplyCallSiteCount, count); }
 
         bool AllocProfiledArrayCallSiteId(ProfileId* profileId) { if (this->profiledArrayCallSiteCount != Constants::NoProfileId) { *profileId = this->profiledArrayCallSiteCount++; return true; } return false; }
         ProfileId GetProfiledArrayCallSiteCount() const { return this->profiledArrayCallSiteCount; }
@@ -2965,6 +3018,7 @@ namespace Js
         void RecordFalseObject(RegSlot location);
         void RecordIntConstant(RegSlot location, unsigned int val);
         void RecordStrConstant(RegSlot location, LPCOLESTR psz, uint32 cch, bool forcePropertyString);
+        void RecordBigIntConstant(RegSlot location, LPCOLESTR psz, uint32 cch, bool isNegative);
         void RecordFloatConstant(RegSlot location, double d);
         void RecordNullDisplayConstant(RegSlot location);
         void RecordStrictNullDisplayConstant(RegSlot location);
@@ -3103,12 +3157,21 @@ namespace Js
         Js::AuxArray<uint32> * GetSlotIdInCachedScopeToNestedIndexArrayWithLock() const { return this->GetAuxPtrWithLock<AuxPointerType::SlotIdInCachedScopeToNestedIndexArray>(); }
         Js::AuxArray<uint32> * AllocateSlotIdInCachedScopeToNestedIndexArray(uint32 slotCount);
 
+#if ENABLE_NATIVE_CODEGEN
+        ProfileId* GetCallSiteToCallApplyCallSiteArray() const { return this->GetAuxPtr<AuxPointerType::CallSiteToCallApplyCallSiteArray>(); }
+        ProfileId* GetCallSiteToCallApplyCallSiteArrayWithLock() const { return this->GetAuxPtrWithLock<AuxPointerType::CallSiteToCallApplyCallSiteArray>(); }
+        ProfileId* CreateCallSiteToCallApplyCallSiteArray();
+#endif
+
     private:
         void ResetLiteralRegexes();
         void ResetObjectLiteralTypes();
         void SetObjectLiteralTypes(DynamicType** objLiteralTypes) { this->SetAuxPtr<AuxPointerType::ObjLiteralTypes>(objLiteralTypes); };
         void SetSlotIdInCachedScopeToNestedIndexArray(Js::AuxArray<uint32> * slotIdInCachedScopeToNestedIndexArray) { this->SetAuxPtr<AuxPointerType::SlotIdInCachedScopeToNestedIndexArray>(slotIdInCachedScopeToNestedIndexArray); }
         void ResetSlotIdInCachedScopeToNestedIndexArray() { SetSlotIdInCachedScopeToNestedIndexArray(nullptr); }
+#if ENABLE_NATIVE_CODEGEN
+        void SetCallSiteToCallApplyCallSiteArray(ProfileId* mapping) { this->SetAuxPtr<AuxPointerType::CallSiteToCallApplyCallSiteArray>(mapping); }
+#endif
     public:
 
         void ResetByteCodeGenState();
@@ -3128,15 +3191,23 @@ namespace Js
             Recycler *const recycler,
             __in_range(0, profiledCallSiteCount - 1) const ProfileId profiledCallSiteId,
             FunctionBody *const inlinee);
+        
         const FunctionCodeGenRuntimeData *GetLdFldInlineeCodeGenRuntimeData(const InlineCacheIndex inlineCacheIndex) const;
         FunctionCodeGenRuntimeData *EnsureLdFldInlineeCodeGenRuntimeData(
             Recycler *const recycler,
             const InlineCacheIndex inlineCacheIndex,
             FunctionBody *const inlinee);
+        
         const FunctionCodeGenRuntimeData * GetCallbackInlineeCodeGenRuntimeData(const ProfileId profiledCallSiteId) const;
         FunctionCodeGenRuntimeData * EnsureCallbackInlineeCodeGenRuntimeData(
             Recycler *const recycler,
             __in_range(0, profiledCallSiteCount - 1) const ProfileId profiledCallSiteId,
+            FunctionBody *const inlinee);
+
+        const FunctionCodeGenRuntimeData * GetCallApplyTargetInlineeCodeGenRuntimeData(const ProfileId callApplyCallSiteId) const;
+        FunctionCodeGenRuntimeData * EnsureCallApplyTargetInlineeCodeGenRuntimeData(
+            Recycler *const recycler,
+            const ProfileId callApplyCallSiteId,
             FunctionBody *const inlinee);
 
         void LoadDynamicProfileInfo();
@@ -3345,10 +3416,9 @@ namespace Js
             return IsJitLoopBodyPhaseForced() && !this->GetHasTry();
         }
 
-        bool IsGeneratorAndJitIsDisabled()
-        {
-            return this->IsCoroutine() && !(CONFIG_ISENABLED(Js::JitES6GeneratorsFlag) && !this->GetHasTry());
-        }
+        bool SkipAutoProfileForCoroutine() const;
+
+        bool IsGeneratorAndJitIsDisabled() const;
 
         FunctionBodyFlags * GetAddressOfFlags() { return &this->flags; }
         Js::RegSlot GetRestParamRegSlot();

@@ -1,5 +1,6 @@
 //-------------------------------------------------------------------------------------------------------
 // Copyright (C) Microsoft. All rights reserved.
+// Copyright (c) 2021 ChakraCore Project Contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
 //-------------------------------------------------------------------------------------------------------
 #pragma once
@@ -119,11 +120,11 @@ public:
         Js::RegSlot returnValueRegSlot = Js::Constants::NoRegister, const bool isInlinedConstructor = false,
         Js::ProfileId callSiteIdInParentFunc = UINT16_MAX, bool isGetterSetter = false);
 public:
-    void * const GetCodeGenAllocators()
+    void * GetCodeGenAllocators()
     {
         return this->GetTopFunc()->m_codeGenAllocators;
     }
-    InProcCodeGenAllocators * const GetInProcCodeGenAllocators()
+    InProcCodeGenAllocators * GetInProcCodeGenAllocators()
     {
         Assert(!JITManager::GetJITManager()->IsJITServer());
         return reinterpret_cast<InProcCodeGenAllocators*>(this->GetTopFunc()->m_codeGenAllocators);
@@ -205,7 +206,8 @@ public:
         return
             !PHASE_OFF(Js::GlobOptPhase, this) && !IsSimpleJit() &&
             (!GetTopFunc()->HasTry() || GetTopFunc()->CanOptimizeTryCatch()) &&
-            (!GetTopFunc()->HasFinally() || GetTopFunc()->CanOptimizeTryFinally());
+            (!GetTopFunc()->HasFinally() || GetTopFunc()->CanOptimizeTryFinally()) &&
+            (!GetTopFunc()->GetJITFunctionBody()->IsCoroutine() || !PHASE_OFF(Js::GeneratorGlobOptPhase, this));
     }
 
     bool DoInline() const
@@ -274,7 +276,7 @@ public:
         return &m_output;
     }
 
-    const JITTimeFunctionBody * const GetJITFunctionBody() const
+    const JITTimeFunctionBody * GetJITFunctionBody() const
     {
         return m_workItem->GetJITFunctionBody();
     }
@@ -327,8 +329,6 @@ public:
 #ifdef MD_GROW_LOCALS_AREA_UP
     void AjustLocalVarSlotOffset();
 #endif
-
-    bool DoGlobOptsForGeneratorFunc() const;
 
     static int32 AdjustOffsetValue(int32 offset);
 
@@ -416,31 +416,8 @@ static const unsigned __int64 c_debugFillPattern8 = 0xcececececececece;
         return !GetHasCalls() && !GetHasImplicitCalls();
     }
 
-    StackSym *EnsureLoopParamSym();
-
     void UpdateForInLoopMaxDepth(uint forInLoopMaxDepth);
     int GetForInEnumeratorArrayOffset() const;
-
-    StackSym *GetFuncObjSym() const { return m_funcObjSym; }
-    void SetFuncObjSym(StackSym *sym) { m_funcObjSym = sym; }
-
-    StackSym *GetJavascriptLibrarySym() const { return m_javascriptLibrarySym; }
-    void SetJavascriptLibrarySym(StackSym *sym) { m_javascriptLibrarySym = sym; }
-
-    StackSym *GetScriptContextSym() const { return m_scriptContextSym; }
-    void SetScriptContextSym(StackSym *sym) { m_scriptContextSym = sym; }
-
-    StackSym *GetFunctionBodySym() const { return m_functionBodySym; }
-    void SetFunctionBodySym(StackSym *sym) { m_functionBodySym = sym; }
-
-    StackSym *GetLocalClosureSym() const { return m_localClosureSym; }
-    void SetLocalClosureSym(StackSym *sym) { m_localClosureSym = sym; }
-
-    StackSym *GetParamClosureSym() const { return m_paramClosureSym; }
-    void SetParamClosureSym(StackSym *sym) { m_paramClosureSym = sym; }
-
-    StackSym *GetLocalFrameDisplaySym() const { return m_localFrameDisplaySym; }
-    void SetLocalFrameDisplaySym(StackSym *sym) { m_localFrameDisplaySym = sym; }
 
     intptr_t GetJittedLoopIterationsSinceLastBailoutAddress() const;
     void EnsurePinnedTypeRefs();
@@ -511,10 +488,15 @@ static const unsigned __int64 c_debugFillPattern8 = 0xcececececececece;
         return m_inlineeFrameStartSym != nullptr;
     }
 
-    void SetInlineeFrameStartSym(StackSym *sym)
+    void SetInlineeStart(IR::Instr *inlineeStartInstr)
     {
-        Assert(m_inlineeFrameStartSym == nullptr);
-        m_inlineeFrameStartSym = sym;
+        Assert(inlineeStart == nullptr);
+        inlineeStart = inlineeStartInstr;
+    }
+
+    IR::Instr* GetInlineeStart()
+    {
+        return inlineeStart;
     }
 
     IR::SymOpnd *GetInlineeArgCountSlotOpnd()
@@ -655,7 +637,6 @@ public:
     PropertyIdSet lazyBailoutProperties;
     bool anyPropertyMayBeWrittenTo;
 
-    SlotArrayCheckTable *slotArrayCheckTable;
     FrameDisplayCheckTable *frameDisplayCheckTable;
 
     IR::Instr *         m_headInstr;
@@ -669,16 +650,7 @@ public:
 #endif
 
     SymTable *          m_symTable;
-    StackSym *          m_loopParamSym;
-    StackSym *          m_funcObjSym;
-    StackSym *          m_javascriptLibrarySym;
-    StackSym *          m_scriptContextSym;
-    StackSym *          m_functionBodySym;
-    StackSym *          m_localClosureSym;
-    StackSym *          m_paramClosureSym;
-    StackSym *          m_localFrameDisplaySym;
-    StackSym *          m_bailoutReturnValueSym;
-    StackSym *          m_hasBailedOutSym;
+
     uint                m_forInLoopMaxDepth;
     uint                m_forInLoopBaseDepth;
     int32               m_forInEnumeratorArrayOffset;
@@ -712,16 +684,19 @@ public:
     FlowGraph *         m_fg;
     unsigned int        m_labelCount;
     BitVector           m_regsUsed;
-    StackSym *          tempSymDouble;
-    StackSym *          tempSymBool;
     uint32              loopCount;
+    uint32              unoptimizableArgumentsObjReference;
+    uint32              unoptimizableArgumentsObjReferenceInInlinees;
     Js::ProfileId       callSiteIdInParentFunc;
+    InlineeFrameInfo*   cachedInlineeFrameInfo;
     bool                m_hasCalls: 1; // This is more accurate compared to m_isLeaf
     bool                m_hasInlineArgsOpt : 1;
+    bool                m_hasInlineOverheadRemoved : 1;
     bool                m_doFastPaths : 1;
     bool                hasBailout: 1;
     bool                hasBailoutInEHRegion : 1;
     bool                hasStackArgs: 1;
+    bool                hasArgLenAndConstOpt : 1;
     bool                hasImplicitParamLoad : 1; // True if there is a load of CallInfo, FunctionObject
     bool                hasThrow : 1;
     bool                hasUnoptimizedArgumentsAccess : 1; // True if there are any arguments access beyond the simple case of this.apply pattern
@@ -741,7 +716,6 @@ public:
     bool                isPostPeeps:1;
     bool                isPostLayout:1;
     bool                isPostFinalLower:1;
-
     struct InstrByteCodeRegisterUses
     {
         Js::OpCode capturingOpCode;
@@ -843,6 +817,7 @@ public:
                         {
                             curFunc->m_canDoInlineArgsOpt = false;
                             curFunc->m_hasInlineArgsOpt = false;
+                            curFunc->frameInfo = nullptr;
                             curFunc = curFunc->GetParentFunc();
                         }
     }
@@ -981,7 +956,6 @@ public:
     void MarkConstantAddressSyms(BVSparse<JitArenaAllocator> * bv);
     void DisableConstandAddressLoadHoist() { canHoistConstantAddressLoad = false; }
 
-    void AddSlotArrayCheck(IR::SymOpnd *fieldOpnd);
     void AddFrameDisplayCheck(IR::SymOpnd *fieldOpnd, uint32 slotId = (uint32)-1);
 
     void EnsureStackArgWithFormalsTracker();
@@ -993,8 +967,6 @@ public:
     StackSym* GetStackSymForFormal(Js::ArgSlot formalsIndex);
     bool HasStackSymForFormal(Js::ArgSlot formalsIndex);
 
-    void SetScopeObjSym(StackSym * sym);
-    StackSym * GetScopeObjSym();
     bool IsTrackCompoundedIntOverflowDisabled() const;
     bool IsMemOpDisabled() const;
     bool IsArrayCheckHoistDisabled() const;
@@ -1026,12 +998,9 @@ public:
 
     uint32 m_inlineeId;
 
-    IR::LabelInstr *    m_bailOutNoSaveLabel;
+    IR::Instr *    m_bailOutForElidedYieldInsertionPoint;
 
-    StackSym * GetNativeCodeDataSym() const;
-    void SetNativeCodeDataSym(StackSym * sym);
 private:
-
     Js::EntryPointInfo* m_entryPointInfo; // for in-proc JIT only
 
     JITOutput m_output;
@@ -1040,7 +1009,7 @@ private:
 #endif
     Func * const        topFunc;
     Func * const        parentFunc;
-    StackSym *          m_inlineeFrameStartSym;
+    IR::Instr *         inlineeStart;
     uint                maxInlineeArgOutSize;
     const bool          m_isBackgroundJIT;
     bool                hasInstrNumber;
@@ -1066,11 +1035,9 @@ private:
     YieldOffsetResumeLabelList * m_yieldOffsetResumeLabelList;
     StackArgWithFormalsTracker * stackArgWithFormalsTracker;
     ObjTypeSpecFldInfo ** m_globalObjTypeSpecFldInfoArray;
-    StackSym *CreateInlineeStackSym();
     IR::SymOpnd *GetInlineeOpndAtOffset(int32 offset);
     bool HasLocalVarSlotCreated() const { return m_localVarSlotsOffset != Js::Constants::InvalidOffset; }
     void EnsureLocalVarSlots();
-    StackSym * m_nativeCodeDataSym;
     SList<IR::RegOpnd *> constantAddressRegOpnd;
     IR::Instr * lastConstantAddressRegLoadInstr;
     bool canHoistConstantAddressLoad;
@@ -1087,6 +1054,79 @@ private:
 public:
     Lowerer* m_lowerer;
 #endif
+
+private:
+    StackSym* m_localClosureSym;
+    StackSym* m_paramClosureSym;
+    StackSym* m_localFrameDisplaySym;
+    StackSym* m_nativeCodeDataSym;
+    StackSym* m_inlineeFrameStartSym;
+    StackSym* m_loopParamSym;
+    StackSym* m_bailoutReturnValueSym;
+    StackSym* m_hasBailedOutSym;
+    StackSym* m_generatorFrameSym;
+
+public:
+    StackSym* tempSymDouble;
+    StackSym* tempSymBool;
+
+    void SetGeneratorFrameSym(StackSym* sym)
+    {
+        Assert(this->m_generatorFrameSym == nullptr);
+        this->m_generatorFrameSym = sym;
+    }
+
+    StackSym* GetGeneratorFrameSym() const
+    {
+        return this->m_generatorFrameSym;
+    }
+
+    // StackSyms' corresponding getters/setters
+    void SetInlineeFrameStartSym(StackSym* sym)
+    {
+        Assert(m_inlineeFrameStartSym == nullptr);
+        m_inlineeFrameStartSym = sym;
+    }
+
+    StackSym* EnsureHasBailedOutSym();
+    StackSym* GetHasBailedOutSym() const { return m_hasBailedOutSym; }
+
+    StackSym* EnsureBailoutReturnValueSym();
+    StackSym* GetBailoutReturnValueSym() const { return m_bailoutReturnValueSym; }
+
+    StackSym* EnsureLoopParamSym();
+    StackSym* GetLoopParamSym() const { return m_loopParamSym; }
+
+    StackSym* GetLocalClosureSym() const { return m_localClosureSym; }
+    void SetLocalClosureSym(StackSym* sym) { m_localClosureSym = sym; }
+
+    StackSym* GetParamClosureSym() const { return m_paramClosureSym; }
+    void SetParamClosureSym(StackSym* sym) { m_paramClosureSym = sym; }
+
+    StackSym* GetLocalFrameDisplaySym() const { return m_localFrameDisplaySym; }
+    void SetLocalFrameDisplaySym(StackSym* sym) { m_localFrameDisplaySym = sym; }
+
+    void SetScopeObjSym(StackSym* sym);
+    StackSym* GetScopeObjSym();
+
+    StackSym* GetNativeCodeDataSym() const;
+    void SetNativeCodeDataSym(StackSym* sym);
+
+    StackSym* CreateInlineeStackSym();
+
+    // Lazy bailout
+    // The stack sym is used to store the pointer to
+    // the BailOutRecord associated with the lazy bailout point
+private:
+    bool                hasLazyBailOut : 1;
+    StackSym *          m_lazyBailOutRecordSlot;
+
+public:
+    void EnsureLazyBailOutRecordSlot();
+    StackSym *GetLazyBailOutRecordSlot() const;
+    void SetHasLazyBailOut();
+    bool HasLazyBailOut() const;
+    bool ShouldDoLazyBailOut() const;
 };
 
 class AutoCodeGenPhase

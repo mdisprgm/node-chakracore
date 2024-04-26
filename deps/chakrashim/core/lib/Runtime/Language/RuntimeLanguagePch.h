@@ -33,7 +33,10 @@
 #include "Library/ArgumentsObject.h"
 
 #include "Types/TypePropertyCache.h"
-#include "Library/JavascriptVariantDate.h"
+#include "Library/JavascriptAsyncFromSyncIterator.h"
+#ifdef _CHAKRACOREBUILD
+#include "Library/CustomExternalWrapperObject.h"
+#endif
 #include "Library/JavascriptProxy.h"
 #include "Library/JavascriptSymbolObject.h"
 #include "Library/JavascriptGenerator.h"

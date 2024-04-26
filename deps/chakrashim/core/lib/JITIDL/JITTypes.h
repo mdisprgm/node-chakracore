@@ -12,14 +12,6 @@ import "wtypes.idl";
 #include "sdkddkver.h"
 #endif
 
-
-#if defined(WINVER) && WINVER >= _WIN32_WINNT_WINBLUE // on 8.1+, RPC can marshal process handle for us
-#ifdef __midl
-cpp_quote("#define USE_RPC_HANDLE_MARSHALLING 1")
-#endif
-#define USE_RPC_HANDLE_MARSHALLING 1
-#endif
-
 #if defined(TARGET_32)
 #ifdef __midl
 #define CHAKRA_WB_PTR int
@@ -78,7 +70,7 @@ typedef unsigned char boolean;
 #define __JITTypes_h__
 
 // TODO: OOP JIT, how do we make this better?
-const int VTABLE_COUNT = 51;
+const int VTABLE_COUNT = 60;
 const int EQUIVALENT_TYPE_CACHE_SIZE = 8;
 
 typedef IDL_DEF([context_handle]) void * PTHREADCONTEXT_HANDLE;
@@ -232,6 +224,17 @@ typedef struct CallSiteIDL
     unsigned int functionId;
 } CallSiteIDL;
 
+typedef struct CallApplyCallSiteIDL
+{
+    unsigned short bitFields;
+    unsigned short returnType;
+    unsigned int ldFldInlineCacheId;
+    unsigned int sourceId;
+    unsigned int functionId;
+    unsigned short callSiteId;
+    IDL_PAD2(0)
+} CallApplyCallSiteIDL;
+
 typedef struct ThisIDL
 {
     unsigned short valueType;
@@ -384,6 +387,8 @@ typedef struct ScriptContextDataIDL
     CHAKRA_PTR charStringCacheAddr;
     CHAKRA_PTR libraryAddr;
     CHAKRA_PTR globalObjectAddr;
+    CHAKRA_PTR objectPrototypeAddr;
+    CHAKRA_PTR functionPrototypeAddr;
     CHAKRA_PTR sideEffectsAddr;
     CHAKRA_PTR arraySetElementFastPathVtableAddr;
     CHAKRA_PTR intArraySetElementFastPathVtableAddr;
@@ -557,7 +562,8 @@ typedef struct FunctionBodyDataIDL
     unsigned short inParamCount;
     unsigned short argUsedForBranch;
     unsigned short profiledCallSiteCount;
-    IDL_PAD2(0)
+    unsigned short callSiteToCallApplyCallSiteArrayCount;
+    unsigned short profiledCallApplyCallSiteCount;
     unsigned int funcNumber;
     unsigned int sourceContextId;
     unsigned int nestedCount;
@@ -570,6 +576,7 @@ typedef struct FunctionBodyDataIDL
     unsigned int localFrameDisplayReg;
     unsigned int paramClosureReg;
     unsigned int localClosureReg;
+    unsigned int yieldReg;
     unsigned int envReg;
     unsigned int firstTmpReg;
     unsigned int firstInnerScopeReg;
@@ -623,6 +630,8 @@ typedef struct FunctionBodyDataIDL
 
     IDL_DEF([size_is(functionSlotsInCachedScopeCount)]) unsigned int * slotIdInCachedScopeToNestedIndexArray;
 
+    IDL_DEF([size_is(callSiteToCallApplyCallSiteArrayCount)]) unsigned short * callSiteToCallApplyCallSiteArray;
+
     ProfileDataIDL * profileData;
 
     AsmJsDataIDL * asmJsData;
@@ -667,9 +676,11 @@ typedef struct FunctionJITTimeDataIDL
 
     IDL_DEF([size_is(ldFldInlineeCount)]) struct FunctionJITTimeDataIDL ** ldFldInlinees;
 
-    IDL_DEF([size_is(callbackInlineeCount)]) struct FunctionJITTimeDataIDL ** callbackInlinees;
+    IDL_DEF([size_is(inlineeCount)]) struct FunctionJITTimeDataIDL ** callbackInlinees;
 
-    unsigned int callbackInlineeCount;
+    unsigned int callApplyTargetInlineeCount;
+    IDL_DEF([size_is(callApplyTargetInlineeCount)]) struct FunctionJITTimeDataIDL ** callApplyTargetInlinees;
+
     unsigned int objTypeSpecFldInfoCount;
     IDL_DEF([size_is(objTypeSpecFldInfoCount)]) ObjTypeSpecFldIDL ** objTypeSpecFldInfoArray;
 

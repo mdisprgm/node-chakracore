@@ -65,7 +65,7 @@ namespace Js
         static const charcount_t DIAG_MAX_FUNCTION_STRING = 256;
 
     protected:
-        enum class FunctionKind { Normal, Generator, Async };
+        enum class FunctionKind { Normal, Generator, Async, AsyncGenerator };
         static Var NewInstanceHelper(ScriptContext *scriptContext, RecyclableObject* function, CallInfo callInfo, Js::ArgumentReader& args, FunctionKind functionKind = FunctionKind::Normal);
 
         JavascriptFunction(DynamicType * type);
@@ -86,6 +86,7 @@ namespace Js
             static FunctionInfo SymbolHasInstance;
 
             static FunctionInfo NewAsyncFunctionInstance;
+            static FunctionInfo NewAsyncGeneratorFunctionInstance;
 #ifdef ALLOW_JIT_REPRO
             static FunctionInfo InvokeJit;
 #endif
@@ -104,15 +105,14 @@ namespace Js
         static Var EntryToString(RecyclableObject* function, CallInfo callInfo, ...);
         static Var EntrySymbolHasInstance(RecyclableObject* function, CallInfo callInfo, ...);
 
+        static Var NewAsyncGeneratorFunctionInstance(RecyclableObject* function, CallInfo callInfo, ...);
+        static Var NewAsyncGeneratorFunctionInstanceRestrictedMode(RecyclableObject* function, CallInfo callInfo, ...);
         static Var NewAsyncFunctionInstance(RecyclableObject* function, CallInfo callInfo, ...);
         static Var NewAsyncFunctionInstanceRestrictedMode(RecyclableObject* function, CallInfo callInfo, ...);
 #ifdef ALLOW_JIT_REPRO
         static Var EntryInvokeJit(RecyclableObject* function, CallInfo callInfo, ...);
 #endif
 
-        static bool Is(Var aValue);
-        static JavascriptFunction* FromVar(Var aValue);
-        static JavascriptFunction* UnsafeFromVar(Var aValue);
         Var CallFunction(Arguments args);
         Var CallRootFunction(Arguments args, ScriptContext * scriptContext, bool inScript);
 #ifdef ASMJS_PLAT
@@ -232,6 +232,9 @@ namespace Js
         private:
             static int CallRootEventFilter(int exceptionCode, PEXCEPTION_POINTERS exceptionInfo);
     };
+
+    template <> bool VarIsImpl<JavascriptFunction>(RecyclableObject* obj);
+
 #if ENABLE_NATIVE_CODEGEN && defined(_M_X64)
     class ArrayAccessDecoder
     {

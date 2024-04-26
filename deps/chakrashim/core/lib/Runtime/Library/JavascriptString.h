@@ -1,5 +1,6 @@
 //-------------------------------------------------------------------------------------------------------
 // Copyright (C) Microsoft. All rights reserved.
+// Copyright (c) 2021 ChakraCore Project Contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
 //-------------------------------------------------------------------------------------------------------
 #pragma once
@@ -80,7 +81,7 @@ namespace Js
         virtual void const * GetOriginalStringReference();  // Get the allocated object that owns the original full string buffer
 
 #if ENABLE_TTD
-        //Get the associated property id for this string if there is on (e.g. it is a propertystring otherwise return Js::PropertyIds::_none)
+        //Get the associated property id for this string if there is one (e.g. it is a propertystring otherwise return Js::PropertyIds::_none)
         virtual Js::PropertyId TryGetAssociatedPropertyId() const { return Js::PropertyIds::_none; }
 #endif
 
@@ -133,9 +134,6 @@ namespace Js
         virtual BOOL BufferEquals(__in_ecount(otherLength) LPCWSTR otherBuffer, __in charcount_t otherLength);
         char16* GetNormalizedString(PlatformAgnostic::UnicodeText::NormalizationForm, ArenaAllocator*, charcount_t&);
 
-        static bool Is(Var aValue);
-        static JavascriptString* FromVar(Var aValue);
-        static JavascriptString* UnsafeFromVar(Var aValue);
         static bool Equals(JavascriptString* aLeft, JavascriptString* aRight);
         static bool LessThan(Var aLeft, Var aRight);
         static bool IsNegZero(JavascriptString *string);
@@ -219,6 +217,7 @@ namespace Js
         {
         public:
             static FunctionInfo NewInstance;
+            static FunctionInfo At;
             static FunctionInfo CharAt;
             static FunctionInfo CharCodeAt;
             static FunctionInfo CodePointAt;
@@ -244,7 +243,9 @@ namespace Js
             static FunctionInfo ToUpperCase;
             static FunctionInfo Trim;
             static FunctionInfo TrimLeft;
+            static FunctionInfo TrimStart;
             static FunctionInfo TrimRight;
+            static FunctionInfo TrimEnd;
             static FunctionInfo Repeat;
             static FunctionInfo StartsWith;
             static FunctionInfo EndsWith;
@@ -263,6 +264,7 @@ namespace Js
         };
 
         static Var NewInstance(RecyclableObject* function, CallInfo callInfo, ...);
+        static Var EntryAt(RecyclableObject* function, CallInfo callInfo, ...);
         static Var EntryCharAt(RecyclableObject* function, CallInfo callInfo, ...);
         static Var EntryCharCodeAt(RecyclableObject* function, CallInfo callInfo, ...);
         static Var EntryCodePointAt(RecyclableObject* function, CallInfo callInfo, ...);
@@ -287,8 +289,8 @@ namespace Js
         static Var EntryToString(RecyclableObject* function, CallInfo callInfo, ...);
         static Var EntryToUpperCase(RecyclableObject* function, CallInfo callInfo, ...);
         static Var EntryTrim(RecyclableObject* function, CallInfo callInfo, ...);
-        static Var EntryTrimLeft(RecyclableObject* function, CallInfo callInfo, ...);
-        static Var EntryTrimRight(RecyclableObject* function, CallInfo callInfo, ...);
+        static Var EntryTrimStart(RecyclableObject* function, CallInfo callInfo, ...);
+        static Var EntryTrimEnd(RecyclableObject* function, CallInfo callInfo, ...);
         static Var EntryRepeat(RecyclableObject* function, CallInfo callInfo, ...);
         static Var EntryStartsWith(RecyclableObject* function, CallInfo callInfo, ...);
         static Var EntryEndsWith(RecyclableObject* function, CallInfo callInfo, ...);
@@ -335,7 +337,7 @@ namespace Js
         static Var StringBracketHelper(Arguments args, ScriptContext *scriptContext, const char16 (&tag)[N1], const char16 (&prop)[N2]);
 
         static void SearchValueHelper(ScriptContext* scriptContext, Var aValue, JavascriptRegExp ** ppSearchRegEx, JavascriptString ** ppSearchString);
-        static void ReplaceValueHelper(ScriptContext* scriptContext, Var aValue, JavascriptFunction ** ppReplaceFn, JavascriptString ** ppReplaceString);
+        static void ReplaceValueHelper(ScriptContext* scriptContext, Var aValue, RecyclableObject** ppReplaceFn, JavascriptString ** ppReplaceString);
 
         template<bool toUpper>
         static JavascriptString* ToLocaleCaseHelper(JavascriptString* thisObj);
@@ -355,6 +357,8 @@ namespace Js
         template<int argCount> // The count is excluding 'this'
         static Var CallRegExFunction(RecyclableObject* fnObj, Var regExp, Arguments& args, ScriptContext *scriptContext);
     };
+
+    template <> bool VarIsImpl<JavascriptString>(RecyclableObject* obj);
 
     template<>
     struct PropertyRecordStringHashComparer<JavascriptString *>

@@ -216,11 +216,13 @@ NESTED_ENTRY _ZN2Js23AsmJsExternalEntryPointEPNS_16RecyclableObjectENS_8CallInfo
         lea  rbp, [rsp]
 
         set_cfa_register rbp, (2*8)     // Set to compute CFA as: rbp + 16 (sizeof: [rbp] [ReturnAddress])
-
+        
         sub rsp, 0x40
 
         mov [rsp + 0x28], r12
+        .cfi_rel_offset r12, -0x18
         mov [rsp + 0x30], r13
+        .cfi_rel_offset r13, -0x10
 
         mov r12, rdi // r12: entryObject
         mov r13, rsi // r13: callInfo
@@ -267,7 +269,9 @@ NESTED_ENTRY _ZN2Js23AsmJsExternalEntryPointEPNS_16RecyclableObjectENS_8CallInfo
         mov rsp, r13 // restore stack pointer
     Epilogue:
         mov r12, [rsp + 0x28]
+        .cfi_restore r12
         mov r13, [rsp + 0x30]
+        .cfi_restore r13
 
         lea  rsp, [rbp]
         pop_nonvol_reg rbp

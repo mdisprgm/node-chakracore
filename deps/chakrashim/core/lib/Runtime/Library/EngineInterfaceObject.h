@@ -1,10 +1,33 @@
 //-------------------------------------------------------------------------------------------------------
 // Copyright (C) Microsoft. All rights reserved.
+// Copyright (c) 2021 ChakraCore Project Contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
 //-------------------------------------------------------------------------------------------------------
 #pragma once
 
-#if defined(ENABLE_INTL_OBJECT) || defined(ENABLE_JS_BUILTINS) || defined(ENABLE_PROJECTION)
+#if defined(ENABLE_INTL_OBJECT) || defined(ENABLE_JS_BUILTINS)
+
+
+#pragma warning(push)
+#pragma warning(disable:4309) // truncation of constant value
+#pragma warning(disable:4838) // conversion from 'int' to 'const char' requires a narrowing conversion
+
+#if DISABLE_JIT
+#if TARGET_64
+#include "InJavascript/JsBuiltIn.nojit.bc.64b.h"
+#else
+#include "InJavascript/JsBuiltIn.nojit.bc.32b.h"
+#endif // TARGET_64
+#else
+#if TARGET_64
+#include "InJavascript/JsBuiltIn.bc.64b.h"
+#else
+#include "InJavascript/JsBuiltIn.bc.32b.h"
+#endif // TARGET_64
+#endif // DISABLE_JIT
+
+#pragma warning(pop)
+
 
 namespace Js
 {
@@ -71,9 +94,6 @@ namespace Js
         void SetEngineExtension(EngineInterfaceExtensionKind extensionKind, EngineExtensionObjectBase* extensionObject);
 
         static EngineInterfaceObject* New(Recycler * recycler, DynamicType * type);
-        static bool Is(Var aValue);
-        static EngineInterfaceObject* FromVar(Var aValue);
-        static EngineInterfaceObject* UnsafeFromVar(Var aValue);
 
 #if ENABLE_TTD
         virtual void MarkVisitKindSpecificPtrs(TTD::SnapshotExtractor* extractor) override;
@@ -88,75 +108,30 @@ namespace Js
 
         static bool __cdecl InitializeCommonNativeInterfaces(DynamicObject* engineInterface, DeferredTypeHandlerBase * typeHandler, DeferredInitializeMode mode);
 
+        static ScriptFunction *CreateLibraryCodeScriptFunction(ScriptFunction *scriptFunction, JavascriptString *displayName, bool isConstructor, bool isJsBuiltIn, bool isPublic);
+
         class EntryInfo
         {
         public:
-            static NoProfileFunctionInfo GetErrorMessage;
-            static NoProfileFunctionInfo LogDebugMessage;
-            static NoProfileFunctionInfo TagPublicLibraryCode;
-            static NoProfileFunctionInfo SetPrototype;
-            static NoProfileFunctionInfo GetArrayLength;
-            static NoProfileFunctionInfo RegexMatch;
-            static NoProfileFunctionInfo CallInstanceFunction;
+            // CallInstanceFunction is still handled specially because it gets special inline treatment from the JIT
+            static FunctionInfo CallInstanceFunction;
 
-#ifndef GlobalBuiltIn
-#define GlobalBuiltIn(global, method) \
-            static NoProfileFunctionInfo BuiltIn_##global##_##method##; \
-
-#define GlobalBuiltInConstructor(global)
-
-#define BuiltInRaiseException(exceptionType, exceptionID) \
-     static NoProfileFunctionInfo BuiltIn_raise##exceptionID;
-
-#define BuiltInRaiseException1(exceptionType, exceptionID) BuiltInRaiseException(exceptionType, exceptionID)
-#define BuiltInRaiseException2(exceptionType, exceptionID) BuiltInRaiseException(exceptionType, exceptionID)
-#define BuiltInRaiseException3(exceptionType, exceptionID) BuiltInRaiseException(exceptionType, exceptionID##_3)
-
+#define BuiltInRaiseException(exceptionType, exceptionID) static NoProfileFunctionInfo BuiltIn_raise##exceptionID;
+#define EngineInterfaceBuiltIn2(propId, nativeMethod) static NoProfileFunctionInfo nativeMethod;
 #include "EngineInterfaceObjectBuiltIns.h"
-
-#undef BuiltInRaiseException
-#undef BuiltInRaiseException1
-#undef BuiltInRaiseException2
-#undef BuiltInRaiseException3
-#undef GlobalBuiltInConstructor
-#undef GlobalBuiltIn
-#endif
         };
 
-        static Var Entry_GetErrorMessage(RecyclableObject *function, CallInfo callInfo, ...);
-        static Var Entry_LogDebugMessage(RecyclableObject *function, CallInfo callInfo, ...);
-        static Var Entry_TagPublicLibraryCode(RecyclableObject *function, CallInfo callInfo, ...);
-        static Var Entry_SetPrototype(RecyclableObject *function, CallInfo callInfo, ...);
-        static Var Entry_GetArrayLength(RecyclableObject *function, CallInfo callInfo, ...);
-        static Var Entry_RegexMatch(RecyclableObject *function, CallInfo callInfo, ...);
         static Var Entry_CallInstanceFunction(RecyclableObject *function, CallInfo callInfo, ...);
-#ifdef ENABLE_PROJECTION
-        static Var EntryPromise_EnqueueTask(RecyclableObject *function, CallInfo callInfo, ...);
-#endif
 
-#ifndef GlobalBuiltIn
-#define GlobalBuiltIn(global, method)
-
-#define GlobalBuiltInConstructor(global)
-
-#define BuiltInRaiseException(exceptionType, exceptionID) \
-        static Var Entry_BuiltIn_raise##exceptionID(RecyclableObject *function, CallInfo callInfo, ...);
-
-#define BuiltInRaiseException1(exceptionType, exceptionID) BuiltInRaiseException(exceptionType, exceptionID)
-#define BuiltInRaiseException2(exceptionType, exceptionID) BuiltInRaiseException(exceptionType, exceptionID)
-#define BuiltInRaiseException3(exceptionType, exceptionID) BuiltInRaiseException(exceptionType, exceptionID##_3)
-
+#define BuiltInRaiseException(exceptionType, exceptionID) static Var Entry_BuiltIn_raise##exceptionID(RecyclableObject *function, CallInfo callInfo, ...);
+#define EngineInterfaceBuiltIn2(propId, nativeMethod) static Var Entry_##nativeMethod(RecyclableObject *function, CallInfo callInfo, ...);
 #include "EngineInterfaceObjectBuiltIns.h"
-
-#undef BuiltInRaiseException
-#undef BuiltInRaiseException1
-#undef BuiltInRaiseException2
-#undef BuiltInRaiseException3
-#undef GlobalBuiltInConstructor
-#undef GlobalBuiltIn
-#endif
-
     };
+
+    template <> inline bool VarIsImpl<EngineInterfaceObject>(RecyclableObject* obj)
+    {
+        return JavascriptOperators::GetTypeId(obj) == TypeIds_EngineInterfaceObject;
+    }
 }
 
-#endif // ENABLE_INTL_OBJECT || ENABLE_JS_BUILTINS || ENABLE_PROJECTION
+#endif // ENABLE_INTL_OBJECT || ENABLE_JS_BUILTINS

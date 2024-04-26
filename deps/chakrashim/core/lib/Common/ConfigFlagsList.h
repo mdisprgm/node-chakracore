@@ -1,7 +1,9 @@
 //-------------------------------------------------------------------------------------------------------
-// Copyright (C) Microsoft. All rights reserved.
+// Copyright (C) Microsoft Corporation and contributors. All rights reserved.
+// Copyright (c) ChakraCore Project Contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
 //-------------------------------------------------------------------------------------------------------
+
 #if defined(PHASE) || defined(PHASE_DEFAULT_ON) || defined(PHASE_DEFAULT_OFF)
 #ifndef PHASE
 #define PHASE(name)
@@ -87,6 +89,7 @@ PHASE(All)
             PHASE(InlineApply)
             PHASE(InlineApplyTarget)
             PHASE(InlineApplyWithoutArrayArg)
+            PHASE(InlineAnyCallApplyTarget)
             PHASE(BailOutOnNotStackArgs)
             PHASE(InlineCall)
             PHASE(InlineCallTarget)
@@ -159,12 +162,14 @@ PHASE(All)
                     PHASE(DepolymorphizeInlinees)
                     PHASE(ReuseAuxSlotPtr)
                     PHASE(PolyEquivTypeGuard)
+                    PHASE(DeadStoreTypeChecksOnStores)
                     #if DBG
                         PHASE(SimulatePolyCacheWithOneTypeForFunction)
                     #endif
                 PHASE(CheckThis)
                 PHASE(StackArgOpt)
                 PHASE(StackArgFormalsOpt)
+                PHASE(StackArgLenConstOpt)
                 PHASE(IndirCopyProp)
                 PHASE(ArrayCheckHoist)
                     PHASE(ArrayMissingValueCheckHoist)
@@ -186,6 +191,7 @@ PHASE(All)
                 PHASE(UseFixedDataProps)
                 PHASE(UseFixedDataPropsInInliner)
                 PHASE(LazyBailout)
+                    PHASE(LazyBailoutOnImplicitCalls)
                     PHASE(LazyFixedDataBailout)
                     PHASE(LazyFixedTypeBailout)
                 PHASE(FixedMethods)
@@ -258,6 +264,7 @@ PHASE(All)
         PHASE(PrologEpilog)
         PHASE(InsertNOPs)
         PHASE(Encoder)
+            PHASE(Assembly)
             PHASE(Emitter)
             PHASE(DebugBreak)
 #if defined(_M_IX86) || defined(_M_X64)
@@ -319,6 +326,8 @@ PHASE(All)
                 PHASE(FinishPartial)
         PHASE(Host)
         PHASE(BailOut)
+        PHASE(BailIn)
+        PHASE(GeneratorGlobOpt)
         PHASE(RegexQc)
         PHASE(RegexOptBT)
         PHASE(InlineCache)
@@ -328,7 +337,6 @@ PHASE(All)
         PHASE(CloneCacheInCollision)
         PHASE(ConstructorCache)
         PHASE(InlineCandidate)
-        PHASE(InlineHostCandidate)
         PHASE(ScriptFunctionWithInlineCache)
         PHASE(IsConcatSpreadableCache)
         PHASE(Arena)
@@ -369,7 +377,6 @@ PHASE(All)
         PHASE(CFG)
         PHASE(ExceptionStackTrace)
         PHASE(ExtendedExceptionInfoStackTrace)
-        PHASE(ProjectionMetadata)
         PHASE(TypeHandlerTransition)
         PHASE(Debugger)
             PHASE(ENC)
@@ -385,6 +392,7 @@ PHASE(All)
         PHASE(ShareTypesWithAttributes)
         PHASE(ShareAccessorTypes)
         PHASE(ShareFuncTypes)
+        PHASE(ShareCrossSiteFuncTypes)
         PHASE(ConditionalCompilation)
         PHASE(InterpreterProfile)
         PHASE(InterpreterAutoProfile)
@@ -445,7 +453,8 @@ PHASE(All)
 #define DEFAULT_CONFIG_HybridFgJit          (false)
 #define DEFAULT_CONFIG_HybridFgJitBgQueueLengthThreshold (32)
 #define DEFAULT_CONFIG_Prejit               (false)
-#define DEFAULT_CONFIG_ParserStateCache     (false)
+#define DEFAULT_CONFIG_ParserStateCache     (true)
+#define DEFAULT_CONFIG_CompressParserStateCache (false)
 #define DEFAULT_CONFIG_DeferTopLevelTillFirstCall (true)
 #define DEFAULT_CONFIG_DirectCallTelemetryStats (false)
 #define DEFAULT_CONFIG_errorStackTrace      (true)
@@ -505,7 +514,6 @@ PHASE(All)
 #define DEFAULT_CONFIG_ForceOldDateAPI      (false)
 #define DEFAULT_CONFIG_Loop                 (1)
 #define DEFAULT_CONFIG_ForceDiagnosticsMode (false)
-#define DEFAULT_CONFIG_EnableJitInDiagMode  (true)
 #define DEFAULT_CONFIG_UseFullName          (true)
 #define DEFAULT_CONFIG_EnableContinueAfterExceptionWrappersForHelpers  (true)
 #define DEFAULT_CONFIG_EnableContinueAfterExceptionWrappersForBuiltIns  (true)
@@ -518,7 +526,10 @@ PHASE(All)
 #define DEFAULT_CONFIG_MaxJitThreadCount        (2)
 #define DEFAULT_CONFIG_ForceMaxJitThreadCount   (false)
 
+#ifdef ENABLE_SPECTRE_RUNTIME_MITIGATIONS
 #define DEFAULT_CONFIG_MitigateSpectre (true)
+
+#define DEFAULT_CONFIG_AddMaskingBlocks (true)
 
 #define DEFAULT_CONFIG_PoisonVarArrayLoad (true)
 #define DEFAULT_CONFIG_PoisonIntArrayLoad (true)
@@ -533,6 +544,25 @@ PHASE(All)
 #define DEFAULT_CONFIG_PoisonTypedArrayStore (true)
 #define DEFAULT_CONFIG_PoisonStringStore (true)
 #define DEFAULT_CONFIG_PoisonObjectsForStores (true)
+#else
+#define DEFAULT_CONFIG_MitigateSpectre (false)
+
+#define DEFAULT_CONFIG_AddMaskingBlocks (false)
+
+#define DEFAULT_CONFIG_PoisonVarArrayLoad (false)
+#define DEFAULT_CONFIG_PoisonIntArrayLoad (false)
+#define DEFAULT_CONFIG_PoisonFloatArrayLoad (false)
+#define DEFAULT_CONFIG_PoisonTypedArrayLoad (false)
+#define DEFAULT_CONFIG_PoisonStringLoad (false)
+#define DEFAULT_CONFIG_PoisonObjectsForLoads (false)
+
+#define DEFAULT_CONFIG_PoisonVarArrayStore (false)
+#define DEFAULT_CONFIG_PoisonIntArrayStore (false)
+#define DEFAULT_CONFIG_PoisonFloatArrayStore (false)
+#define DEFAULT_CONFIG_PoisonTypedArrayStore (false)
+#define DEFAULT_CONFIG_PoisonStringStore (false)
+#define DEFAULT_CONFIG_PoisonObjectsForStores (false)
+#endif
 
 #ifdef RECYCLER_PAGE_HEAP
 #define DEFAULT_CONFIG_PageHeap             ((Js::Number) PageHeapMode::PageHeapModeOff)
@@ -559,6 +589,8 @@ PHASE(All)
 #define DEFAULT_CONFIG_RegexTracing         (false)
 #define DEFAULT_CONFIG_RegexProfile         (false)
 #define DEFAULT_CONFIG_RegexDebug           (false)
+#define DEFAULT_CONFIG_RegexDebugAST        (true)
+#define DEFAULT_CONFIG_RegexDebugAnnotatedAST (true)
 #define DEFAULT_CONFIG_RegexBytecodeDebug   (false)
 #define DEFAULT_CONFIG_RegexOptimize        (true)
 #define DEFAULT_CONFIG_DynamicRegexMruListSize (16)
@@ -586,6 +618,7 @@ PHASE(All)
 #endif
 #define DEFAULT_CONFIG_JitRepro                (false)
 #define DEFAULT_CONFIG_LdChakraLib             (false)
+#define DEFAULT_CONFIG_TestChakraLib           (false)
 #define DEFAULT_CONFIG_EntryPointInfoRpcData   (false)
 
 // ES6 DEFAULT BEHAVIOR
@@ -595,20 +628,8 @@ PHASE(All)
 #define DEFAULT_CONFIG_CollectGarbage          (false)
 
 // ES6 sub-feature gate - to enable-disable ES6 sub-feature when ES6 flag is enabled
-#define DEFAULT_CONFIG_ES6Species              (true)
-#define DEFAULT_CONFIG_ES6Classes              (true)
 #define DEFAULT_CONFIG_ES6DateParseFix         (true)
-#define DEFAULT_CONFIG_ES6DefaultArgs          (true)
-#define DEFAULT_CONFIG_ES6Destructuring        (true)
-#define DEFAULT_CONFIG_ES6ForLoopSemantics     (true)
-
-#ifdef COMPILE_DISABLE_ES6FunctionNameFull
-    // If ES6FunctionNameFull needs to be disabled by compile flag, COMPILE_DISABLE_ES6FunctionNameFull should be false
-    #define DEFAULT_CONFIG_ES6FunctionNameFull     (false)
-#else
-    #define DEFAULT_CONFIG_ES6FunctionNameFull     (false)
-#endif
-
+#define DEFAULT_CONFIG_ES6FunctionNameFull     (true)
 #define DEFAULT_CONFIG_ES6Generators           (true)
 #define DEFAULT_CONFIG_ES6IsConcatSpreadable   (true)
 #define DEFAULT_CONFIG_ES6Math                 (true)
@@ -621,18 +642,22 @@ PHASE(All)
 #define DEFAULT_CONFIG_ES6Object               (true)
 #define DEFAULT_CONFIG_ES6Number               (true)
 #define DEFAULT_CONFIG_ES6ObjectLiterals       (true)
-#define DEFAULT_CONFIG_ES6Promise              (true)
 #define DEFAULT_CONFIG_ES6Proxy                (true)
 #define DEFAULT_CONFIG_ES6Rest                 (true)
 #define DEFAULT_CONFIG_ES6Spread               (true)
 #define DEFAULT_CONFIG_ES6String               (true)
 #define DEFAULT_CONFIG_ES6StringPrototypeFixes (true)
+#define DEFAULT_CONFIG_ES2018ObjectRestSpread  (true)
+
+#ifndef DEFAULT_CONFIG_ES6PrototypeChain
 #ifdef COMPILE_DISABLE_ES6PrototypeChain
     // If ES6PrototypeChain needs to be disabled by compile flag, DEFAULT_CONFIG_ES6PrototypeChain should be false
     #define DEFAULT_CONFIG_ES6PrototypeChain       (false)
 #else
-    #define DEFAULT_CONFIG_ES6PrototypeChain       (false)
+    #define DEFAULT_CONFIG_ES6PrototypeChain       (true)
 #endif
+#endif
+
 #define DEFAULT_CONFIG_ES6ToPrimitive          (true)
 #define DEFAULT_CONFIG_ES6ToLength             (true)
 #define DEFAULT_CONFIG_ES6ToStringTag          (true)
@@ -640,6 +665,24 @@ PHASE(All)
 #define DEFAULT_CONFIG_ES6UnicodeVerbose       (true)
 #define DEFAULT_CONFIG_ES6Unscopables          (true)
 #define DEFAULT_CONFIG_ES6RegExSticky          (true)
+#define DEFAULT_CONFIG_ES2018RegExDotAll       (true)
+#define DEFAULT_CONFIG_ESBigInt                (false)
+#define DEFAULT_CONFIG_ESNumericSeparator      (true)
+#define DEFAULT_CONFIG_ESHashbang              (true)
+#define DEFAULT_CONFIG_ESSymbolDescription     (true)
+#define DEFAULT_CONFIG_ESArrayFindFromLast     (true)
+#define DEFAULT_CONFIG_ESPromiseAny            (true)
+#define DEFAULT_CONFIG_ESNullishCoalescingOperator (true)
+#define DEFAULT_CONFIG_ESGlobalThis            (true)
+
+// Jitting generators has not been tested on ARM
+// enabled only for x86 and x64 for now
+#ifdef _M_ARM32_OR_ARM64
+    #define DEFAULT_CONFIG_JitES6Generators            (false)
+#else
+    #define DEFAULT_CONFIG_JitES6Generators            (true)
+#endif
+
 #ifdef COMPILE_DISABLE_ES6RegExPrototypeProperties
     // If ES6RegExPrototypeProperties needs to be disabled by compile flag, DEFAULT_CONFIG_ES6RegExPrototypeProperties should be false
     #define DEFAULT_CONFIG_ES6RegExPrototypeProperties (false)
@@ -652,13 +695,16 @@ PHASE(All)
 #else
     #define DEFAULT_CONFIG_ES6RegExSymbols         (false)
 #endif
-#define DEFAULT_CONFIG_ES6HasInstance          (true)
 #define DEFAULT_CONFIG_ES7AsyncAwait           (true)
 #define DEFAULT_CONFIG_ES7ExponentionOperator  (true)
 #define DEFAULT_CONFIG_ES7TrailingComma        (true)
 #define DEFAULT_CONFIG_ES7ValuesEntries        (true)
 #define DEFAULT_CONFIG_ESObjectGetOwnPropertyDescriptors (true)
-#define DEFAULT_CONFIG_ESDynamicImport         (false)
+#define DEFAULT_CONFIG_ESDynamicImport         (true)
+#define DEFAULT_CONFIG_ESImportMeta            (true)
+#define DEFAULT_CONFIG_ESExportNsAs            (true)
+#define DEFAULT_CONFIG_ES2018AsyncIteration    (true)
+#define DEFAULT_CONFIG_ESTopLevelAwait         (true)
 
 #define DEFAULT_CONFIG_ESSharedArrayBuffer     (false)
 
@@ -731,7 +777,6 @@ PHASE(All)
 #define DEFAULT_CONFIG_BigDictionaryTypeHandlerThreshold (0xffff)
 #define DEFAULT_CONFIG_ForceStringKeyedSimpleDictionaryTypeHandler (false)
 #define DEFAULT_CONFIG_TypeSnapshotEnumeration (true)
-#define DEFAULT_CONFIG_EnumerationCompat    (false)
 #define DEFAULT_CONFIG_ConcurrentRuntime (false)
 #define DEFAULT_CONFIG_PrimeRecycler     (false)
 #if defined(_WIN32)
@@ -750,8 +795,6 @@ PHASE(All)
 #define DEFAULT_CONFIG_ForceJITCFGCheck (false)
 #define DEFAULT_CONFIG_UseJITTrampoline (true)
 
-#define DEFAULT_CONFIG_FailFastIfDisconnectedDelegate    (false)
-
 #define DEFAULT_CONFIG_IsolatePrototypes    (true)
 #define DEFAULT_CONFIG_ChangeTypeOnProto    (true)
 #define DEFAULT_CONFIG_FixPropsOnPathTypes    (true)
@@ -763,7 +806,7 @@ PHASE(All)
 #define DEFAULT_CONFIG_LibraryStackFrameDebugger    (false)
 
 #define DEFAULT_CONFIG_FuncObjectInlineCacheThreshold   (2) // Maximum number of inline caches a function body may have to allow for inline caches to be allocated on the function object.
-#define DEFAULT_CONFIG_ShareInlineCaches (true)
+#define DEFAULT_CONFIG_ShareInlineCaches (false)
 #define DEFAULT_CONFIG_InlineCacheInvalidationListCompactionThreshold (4)
 #define DEFAULT_CONFIG_ConstructorCacheInvalidationThreshold (500)
 
@@ -775,15 +818,7 @@ PHASE(All)
 #define DEFAULT_CONFIG_InjectPartiallyInitializedInterpreterFrameError (0)
 #define DEFAULT_CONFIG_InjectPartiallyInitializedInterpreterFrameErrorType (0)
 
-#define DEFAULT_CONFIG_InvalidateSolutionContextsForGetStructure (true)
-
 #define DEFAULT_CONFIG_DeferLoadingAvailableSource  (false)
-#ifdef ENABLE_PROJECTION
-#define DEFAULT_CONFIG_NoWinRTFastSig       (false)
-#define DEFAULT_CONFIG_TargetWinRTVersion   (1)
-#define DEFAULT_CONFIG_WinRTDelegateInterfaces      (false)
-#define DEFAULT_CONFIG_WinRTAdaptiveApps            (true)
-#endif
 
 #define DEFAULT_CONFIG_RecyclerForceMarkInterior (false)
 
@@ -1017,6 +1052,7 @@ FLAGNR(Phases,  DebugBreakOnPhaseBegin, "Break into debugger at the beginning of
 
 FLAGNR(Boolean, DebugWindow           , "Send console output to debugger window", false)
 FLAGNR(Boolean, ParserStateCache      , "Enable creation of parser state cache", DEFAULT_CONFIG_ParserStateCache)
+FLAGNR(Boolean, CompressParserStateCache, "Enable compression of the parser state cache", DEFAULT_CONFIG_CompressParserStateCache)
 FLAGNR(Boolean, DeferTopLevelTillFirstCall      , "Enable tracking of deferred top level functions in a script file, until the first function of the script context is parsed.", DEFAULT_CONFIG_DeferTopLevelTillFirstCall)
 FLAGNR(Number,  DeferParse            , "Minimum size of defer-parsed script (non-zero only: use /nodeferparse do disable", 0)
 FLAGNR(Boolean, DirectCallTelemetryStats, "Enables logging stats for direct call telemetry", DEFAULT_CONFIG_DirectCallTelemetryStats)
@@ -1059,6 +1095,9 @@ FLAGR(Boolean, SkipSplitOnNoResult, "If the result of Regex split isn't used, sk
 #ifdef TEST_ETW_EVENTS
 FLAGNR(String,  TestEtwDll            , "Path of the TestEtwEventSink DLL", nullptr)
 #endif
+#ifdef ENABLE_TEST_HOOKS
+FLAGNR(Boolean, Force32BitByteCode, "Force CC to generate 32bit bytecode intended only for regenerating bytecode headers.", false)
+#endif
 
 FLAGNR(Boolean, CollectGarbage        , "Enable CollectGarbage API", DEFAULT_CONFIG_CollectGarbage)
 
@@ -1071,6 +1110,8 @@ FLAGNR(Boolean, JitRepro              , "Add Function.invokeJit to execute codeg
 FLAGNR(Boolean, EntryPointInfoRpcData , "Keep encoded rpc buffer for jitted function on EntryPointInfo until cleanup", DEFAULT_CONFIG_EntryPointInfoRpcData)
 
 FLAGNR(Boolean, LdChakraLib           , "Access to the Chakra internal library with the __chakraLibrary keyword", DEFAULT_CONFIG_LdChakraLib)
+FLAGNR(Boolean, TestChakraLib         , "Access to the Chakra internal library with the __chakraLibrary keyword without global access restriction", DEFAULT_CONFIG_TestChakraLib)
+
 // ES6 (BLUE+1) features/flags
 
 // Master ES6 flag to enable STABLE ES6 features/flags
@@ -1084,20 +1125,9 @@ FLAGNRC(Boolean, ES6Experimental           , "Enable all experimental features",
 
 // Per ES6 feature/flag
 
-FLAGPR           (Boolean, ES6, ES6Species             , "Enable ES6 '@@species' properties and built-in behaviors" , DEFAULT_CONFIG_ES6Species)
-
 FLAGPR           (Boolean, ES6, ES7AsyncAwait          , "Enable ES7 'async' and 'await' keywords"                  , DEFAULT_CONFIG_ES7AsyncAwait)
-FLAGPR           (Boolean, ES6, ES6Classes             , "Enable ES6 'class' and 'extends' keywords"                , DEFAULT_CONFIG_ES6Classes)
 FLAGPR           (Boolean, ES6, ES6DateParseFix        , "Enable ES6 Date.parse fixes"                              , DEFAULT_CONFIG_ES6DateParseFix)
-FLAGPR           (Boolean, ES6, ES6DefaultArgs         , "Enable ES6 Default Arguments"                             , DEFAULT_CONFIG_ES6DefaultArgs)
-FLAGPR           (Boolean, ES6, ES6Destructuring       , "Enable ES6 Destructuring"                                 , DEFAULT_CONFIG_ES6Destructuring)
-FLAGPR           (Boolean, ES6, ES6ForLoopSemantics    , "Enable ES6 for loop per iteration bindings"               , DEFAULT_CONFIG_ES6ForLoopSemantics)
-
-#ifndef COMPILE_DISABLE_ES6FunctionNameFull
-    #define COMPILE_DISABLE_ES6FunctionNameFull 0
-#endif
-FLAGPR_REGOVR_EXP(Boolean, ES6, ES6FunctionNameFull    , "Enable ES6 Full function.name"                            , DEFAULT_CONFIG_ES6FunctionNameFull)
-
+FLAGPR           (Boolean, ES6, ES6FunctionNameFull    , "Enable ES6 Full function.name"                            , DEFAULT_CONFIG_ES6FunctionNameFull)
 FLAGPR           (Boolean, ES6, ES6Generators          , "Enable ES6 generators"                                    , DEFAULT_CONFIG_ES6Generators)
 FLAGPR           (Boolean, ES6, ES7ExponentiationOperator, "Enable ES7 exponentiation operator (**)"                , DEFAULT_CONFIG_ES7ExponentionOperator)
 
@@ -1115,17 +1145,14 @@ FLAGPR           (Boolean, ES6, ES6Module              , "Enable ES6 Modules"   
 FLAGPR           (Boolean, ES6, ES6Object              , "Enable ES6 Object extensions"                             , DEFAULT_CONFIG_ES6Object)
 FLAGPR           (Boolean, ES6, ES6Number              , "Enable ES6 Number extensions"                             , DEFAULT_CONFIG_ES6Number)
 FLAGPR           (Boolean, ES6, ES6ObjectLiterals      , "Enable ES6 Object literal extensions"                     , DEFAULT_CONFIG_ES6ObjectLiterals)
-FLAGPR           (Boolean, ES6, ES6Promise             , "Enable ES6 Promise feature"                               , DEFAULT_CONFIG_ES6Promise)
 FLAGPR           (Boolean, ES6, ES6Proxy               , "Enable ES6 Proxy feature"                                 , DEFAULT_CONFIG_ES6Proxy)
 FLAGPR           (Boolean, ES6, ES6Rest                , "Enable ES6 Rest parameters"                               , DEFAULT_CONFIG_ES6Rest)
 FLAGPR           (Boolean, ES6, ES6Spread              , "Enable ES6 Spread support"                                , DEFAULT_CONFIG_ES6Spread)
 FLAGPR           (Boolean, ES6, ES6String              , "Enable ES6 String extensions"                             , DEFAULT_CONFIG_ES6String)
 FLAGPR           (Boolean, ES6, ES6StringPrototypeFixes, "Enable ES6 String.prototype fixes"                        , DEFAULT_CONFIG_ES6StringPrototypeFixes)
+FLAGPR           (Boolean, ES6, ES2018ObjectRestSpread , "Enable ES2018 Object Rest/Spread"                         , DEFAULT_CONFIG_ES2018ObjectRestSpread)
 
-#ifndef COMPILE_DISABLE_ES6PrototypeChain
-    #define COMPILE_DISABLE_ES6PrototypeChain 0
-#endif
-FLAGPR_REGOVR_EXP(Boolean, ES6, ES6PrototypeChain      , "Enable ES6 prototypes (Example: Date prototype is object)", DEFAULT_CONFIG_ES6PrototypeChain)
+FLAGPR           (Boolean, ES6, ES6PrototypeChain      , "Enable ES6 prototypes (Example: Date prototype is object)", DEFAULT_CONFIG_ES6PrototypeChain)
 FLAGPR           (Boolean, ES6, ES6ToPrimitive         , "Enable ES6 ToPrimitive symbol"                            , DEFAULT_CONFIG_ES6ToPrimitive)
 FLAGPR           (Boolean, ES6, ES6ToLength            , "Enable ES6 ToLength fixes"                                , DEFAULT_CONFIG_ES6ToLength)
 FLAGPR           (Boolean, ES6, ES6ToStringTag         , "Enable ES6 ToStringTag symbol"                            , DEFAULT_CONFIG_ES6ToStringTag)
@@ -1133,6 +1160,10 @@ FLAGPR           (Boolean, ES6, ES6Unicode             , "Enable ES6 Unicode 6.0
 FLAGPR           (Boolean, ES6, ES6UnicodeVerbose      , "Enable ES6 Unicode 6.0 verbose failure output"            , DEFAULT_CONFIG_ES6UnicodeVerbose)
 FLAGPR           (Boolean, ES6, ES6Unscopables         , "Enable ES6 With Statement Unscopables"                    , DEFAULT_CONFIG_ES6Unscopables)
 FLAGPR           (Boolean, ES6, ES6RegExSticky         , "Enable ES6 RegEx sticky flag"                             , DEFAULT_CONFIG_ES6RegExSticky)
+FLAGPR           (Boolean, ES6, ES2018RegExDotAll      , "Enable ES2018 RegEx dotAll flag"                          , DEFAULT_CONFIG_ES2018RegExDotAll)
+FLAGPR           (Boolean, ES6, ESExportNsAs           , "Enable ES experimental export * as name"                  , DEFAULT_CONFIG_ESExportNsAs)
+FLAGPR           (Boolean, ES6, ES2018AsyncIteration   , "Enable ES2018 Async Iteration"                            , DEFAULT_CONFIG_ES2018AsyncIteration)
+FLAGPR           (Boolean, ES6, ESTopLevelAwait        , "Enable Top Level Await in modules"                        , DEFAULT_CONFIG_ESTopLevelAwait)
 
 #ifndef COMPILE_DISABLE_ES6RegExPrototypeProperties
     #define COMPILE_DISABLE_ES6RegExPrototypeProperties 0
@@ -1148,7 +1179,6 @@ FLAGPR_REGOVR_EXP(Boolean, ES6, ES6RegExPrototypeProperties, "Enable ES6 propert
 // Also, the corresponding helpers in JnHelperMethodList.h should be marked as being reentrant
 FLAGPR_REGOVR_EXP(Boolean, ES6, ES6RegExSymbols        , "Enable ES6 RegExp symbols"                                , DEFAULT_CONFIG_ES6RegExSymbols)
 
-FLAGPR           (Boolean, ES6, ES6HasInstance         , "Enable ES6 @@hasInstance symbol"                          , DEFAULT_CONFIG_ES6HasInstance)
 FLAGPR           (Boolean, ES6, ES6Verbose             , "Enable ES6 verbose trace"                                 , DEFAULT_CONFIG_ES6Verbose)
 FLAGPR           (Boolean, ES6, ESObjectGetOwnPropertyDescriptors, "Enable Object.getOwnPropertyDescriptors"        , DEFAULT_CONFIG_ESObjectGetOwnPropertyDescriptors)
 
@@ -1158,24 +1188,43 @@ FLAGPR           (Boolean, ES6, ESObjectGetOwnPropertyDescriptors, "Enable Objec
 
 FLAGPR_REGOVR_EXP(Boolean, ES6, ESSharedArrayBuffer    , "Enable SharedArrayBuffer"                                 , DEFAULT_CONFIG_ESSharedArrayBuffer)
 
-// /ES6 (BLUE+1) features/flags
+// Newer language feature flags
 
+// ES BigInt flag
+FLAGR(Boolean, ESBigInt, "Enable ESBigInt flag", DEFAULT_CONFIG_ESBigInt)
 
+// ES Numeric Separator support for numeric constants
+FLAGR(Boolean, ESNumericSeparator, "Enable Numeric Separator flag", DEFAULT_CONFIG_ESNumericSeparator)
 
-#ifdef ENABLE_PROJECTION
-FLAGNR(Boolean, WinRTDelegateInterfaces , "Treat WinRT Delegates as Interfaces when determining their resolvability.", DEFAULT_CONFIG_WinRTDelegateInterfaces)
-FLAGR(Boolean, WinRTAdaptiveApps        , "Enable the adaptive apps feature, allowing for variable projection."      , DEFAULT_CONFIG_WinRTAdaptiveApps)
-#endif
+// ES Nullish coalescing operator support (??)
+FLAGR(Boolean, ESNullishCoalescingOperator, "Enable nullish coalescing operator", DEFAULT_CONFIG_ESNullishCoalescingOperator)
+
+// ES Hashbang support for interpreter directive syntax
+FLAGR(Boolean, ESHashbang, "Enable Hashbang syntax", DEFAULT_CONFIG_ESHashbang)
+
+// ES Symbol.prototype.description flag
+FLAGR(Boolean, ESSymbolDescription, "Enable Symbol.prototype.description", DEFAULT_CONFIG_ESSymbolDescription)
+
+FLAGR(Boolean, ESArrayFindFromLast, "Enable findLast, findLastIndex for Array.prototype and TypedArray.prorotype", DEFAULT_CONFIG_ESArrayFindFromLast)
+
+// ES Promise.any and AggregateError flag
+FLAGR(Boolean, ESPromiseAny, "Enable Promise.any and AggregateError", DEFAULT_CONFIG_ESPromiseAny)
+
+// ES import.meta keyword meta-property
+FLAGR(Boolean, ESImportMeta, "Enable import.meta keyword", DEFAULT_CONFIG_ESImportMeta)
+
+//ES globalThis flag
+FLAGR(Boolean, ESGlobalThis, "Enable globalThis", DEFAULT_CONFIG_ESGlobalThis)
 
 // This flag to be removed once JITing generator functions is stable
-FLAGNR(Boolean, JitES6Generators        , "Enable JITing of ES6 generators", false)
+FLAGNR(Boolean, JitES6Generators        , "Enable JITing of ES6 generators", DEFAULT_CONFIG_JitES6Generators)
 
 FLAGNR(Boolean, FastLineColumnCalculation, "Enable fast calculation of line/column numbers from the source.", DEFAULT_CONFIG_FastLineColumnCalculation)
 FLAGR (String,  Filename              , "Jscript source file", nullptr)
 FLAGNR(Boolean, FreeRejittedCode      , "Free rejitted code", true)
 FLAGNR(Boolean, ForceGuardPages       , "Force the addition of guard pages", false)
 FLAGNR(Boolean, PrintGuardPageBounds  , "Prints the bounds of a guard page", false)
-FLAGNR(Boolean, ForceLegacyEngine     , "Force a jscrip9 dll load", false)
+FLAGNR(Boolean, ForceLegacyEngine     , "Force a jscript9 dll load", false)
 FLAGNR(Phases,  Force                 , "Force certain phase to run ignoring heuristics", )
 FLAGNR(Phases,  Stress                , "Stress certain phases by making them kick in even if they normally would not.", )
 FLAGNR(Boolean, ForceArrayBTree       , "Force enable creation of BTree for Arrays", false)
@@ -1190,7 +1239,6 @@ FLAGNR(Boolean, ForceGetWriteWatchOOM , "Force GetWriteWatch to go into OOM code
 FLAGNR(Boolean, ForcePostLowerGlobOptInstrString, "Force tracking of globopt instr string post lower", DEFAULT_CONFIG_ForcePostLowerGlobOptInstrString)
 FLAGNR(Boolean, ForceSplitScope       , "All functions will have unmerged body and param scopes", DEFAULT_CONFIG_ForceSplitScope)
 FLAGNR(Boolean, EnumerateSpecialPropertiesInDebugger, "Enable enumeration of special debug properties", DEFAULT_CONFIG_EnumerateSpecialPropertiesInDebugger)
-FLAGNR(Boolean, EnableJitInDiagMode   , "Enable Fast F12 (only applicable with ForceDiagnosticsMode or while under debugger)", DEFAULT_CONFIG_EnableJitInDiagMode)
 FLAGNR(Boolean, EnableContinueAfterExceptionWrappersForHelpers, "Enable wrapper over helper methods in debugger, Fast F12 only", DEFAULT_CONFIG_EnableContinueAfterExceptionWrappersForHelpers)
 FLAGNR(Boolean, EnableContinueAfterExceptionWrappersForBuiltIns, "Enable wrapper over library calls in debugger, Fast F12 only", DEFAULT_CONFIG_EnableContinueAfterExceptionWrappersForBuiltIns)
 FLAGNR(Boolean, EnableFunctionSourceReportForHeapEnum, "During HeapEnum, whether to report function source info (url/row/col)", DEFAULT_CONFIG_EnableFunctionSourceReportForHeapEnum)
@@ -1295,6 +1343,8 @@ FLAGNR(Boolean, ForceMaxJitThreadCount, "Force the number of parallel jit thread
 
 FLAGR(Boolean, MitigateSpectre, "Use mitigations for Spectre", DEFAULT_CONFIG_MitigateSpectre)
 
+FLAGPR(Boolean, MitigateSpectre, AddMaskingBlocks, "Optimize Spectre mitigations by masking on loop out edges", DEFAULT_CONFIG_AddMaskingBlocks)
+
 FLAGPR(Boolean, MitigateSpectre, PoisonVarArrayLoad, "Poison loads from Var arrays", DEFAULT_CONFIG_PoisonVarArrayLoad)
 FLAGPR(Boolean, MitigateSpectre, PoisonIntArrayLoad, "Poison loads from Int arrays", DEFAULT_CONFIG_PoisonIntArrayLoad)
 FLAGPR(Boolean, MitigateSpectre, PoisonFloatArrayLoad, "Poison loads from Float arrays", DEFAULT_CONFIG_PoisonFloatArrayLoad)
@@ -1366,9 +1416,6 @@ FLAGR (Boolean, NoNative              , "Disable native codegen", false)
 FLAGNR(Number,  NopFrequency          , "Frequency of NOPs inserted by NOP insertion phase.  A NOP is guaranteed to be inserted within a range of (1<<n) instrs (default=8)", DEFAULT_CONFIG_NopFrequency)
 FLAGNR(Boolean, NoStrictMode          , "Disable strict mode checks on all functions", false)
 FLAGNR(Boolean, NormalizeStats        , "When dumping stats, do some normalization (used with -instrument:linearscan)", false)
-#ifdef ENABLE_PROJECTION
-FLAGNR(Boolean, NoWinRTFastSig        , "Disable fast call for common WinRT function signatures", false)
-#endif
 FLAGNR(Phases,  Off                   , "Turn off specific phases or feature.(Might not work for all phases)", )
 FLAGNR(Phases,  OffProfiledByteCode   , "Turn off specific byte code for phases or feature.(Might not work for all phases)", )
 FLAGNR(Phases,  On                    , "Turn on specific phases or feature.(Might not work for all phases)", )
@@ -1471,7 +1518,6 @@ FLAGR (Number,  AllocPolicyLimit      , "Memory allocation policy limit in MB (d
 #ifdef RUNTIME_DATA_COLLECTION
 FLAGNR(String,  RuntimeDataOutputFile, "Filename to write the dynamic profile info", nullptr)
 #endif
-FLAGNR(Boolean, ReportErrors          , "Enable reporting of syntax errors", false)
 FLAGR (Number,  SpeculationCap        , "How much bytecode we'll speculatively JIT", DEFAULT_CONFIG_SpeculationCap)
 #if DBG_DUMP || defined(BGJIT_STATS) || defined(RECYCLER_STATS)
 FLAGNR(Phases,  Stats                 , "Stats the given phase", )
@@ -1504,11 +1550,6 @@ FLAGNR(Boolean, TraceWin8Allocations  , "Trace the win8 memory allocations", fal
 FLAGNR(Boolean, TraceWin8DeallocationsImmediate  , "Trace the win8 memory deallocations immediately", false)
 FLAGNR(Boolean, PrintWin8StatsDetailed  , "Print the detailed memory trace report", false)
 FLAGNR(Boolean, TraceProtectPages     , "Trace calls to protecting pages of custom heap allocated pages", false)
-//TraceProjection flag with optional levels:
-//    Level 1 = error
-//    Level 2 = warning
-//    Level 3 = informational
-FLAGNR(Number, TraceProjection       , "Trace projection related activities, [Levels 1-3, with 3 corresponding to most detailed]", 3)
 #endif
 FLAGNR(Boolean, TraceAsyncDebugCalls  , "Trace calls to async debugging API (default: false)", DEFAULT_CONFIG_TraceAsyncDebugCalls)
 #ifdef TRACK_DISPATCH
@@ -1516,16 +1557,9 @@ FLAGNR(Boolean, TrackDispatch         , "Save stack traces of where JavascriptDi
 #endif
 FLAGNR(Boolean, Verbose               , "Dump details", DEFAULT_CONFIG_Verbose)
 FLAGNR(Boolean, UseFullName           , "Enable fully qualified name", DEFAULT_CONFIG_UseFullName)
-FLAGNR(Boolean, UseFunctionIdForTrace , "Use function id instead of function number for trace output", false)
 FLAGNR(Boolean, Utf8                  , "Use UTF8 for file output", false)
 FLAGR (Number,  Version               , "Version in which to run the jscript engine. [one of 1,2,3,4,5,6]. Default is latest for jc/jshost, 1 for IE", 6 )
-#ifdef ENABLE_PROJECTION
-FLAGR (Number,  HostType              , "Host type in which to run the jscript engine. [one of 1,2]. Default is 1 = Browser.", 1)
-#endif
 FLAGR(Boolean, WERExceptionSupport    , "WER feature for extended exception support. Enabled when WinRT is enabled", false)
-#ifdef ENABLE_PROJECTION
-FLAGR (Boolean, WinRTConstructorAllowed, "Whether WinRT constructors is allowed in WebView host type. Constructor is always allowed in other host type ", false)
-#endif
 FLAGNR(Boolean, ExtendedErrorStackForTestHost, "Enable passing extended error stack string to test host.", DEFAULT_CONFIG_ExtendedErrorStackForTestHost)
 FLAGNR(Boolean, errorStackTrace       , "error.StackTrace feature. Remove when feature complete", DEFAULT_CONFIG_errorStackTrace)
 FLAGNR(Boolean, DoHeapEnumOnEngineShutdown, "Perform a heap enumeration whenever shut a script engine down", false)
@@ -1540,6 +1574,8 @@ FLAGNR(Boolean, ValidateHeapEnum      , "Validate that heap enumeration is repor
 FLAGR (Boolean, RegexTracing          , "Trace all Regex invocations to the output.", DEFAULT_CONFIG_RegexTracing)
 FLAGR (Boolean, RegexProfile          , "Collect usage statistics on all Regex invocations.", DEFAULT_CONFIG_RegexProfile)
 FLAGR (Boolean, RegexDebug            , "Trace compilation of UnifiedRegex expressions.", DEFAULT_CONFIG_RegexDebug)
+FLAGR (Boolean, RegexDebugAST         , "Display Regex AST (requires -RegexDebug to view). [default on]", DEFAULT_CONFIG_RegexDebugAST)
+FLAGR (Boolean, RegexDebugAnnotatedAST, "Display Regex Annotated AST (requires -RegexDebug and -RegexDebugAST to view). [default on]", DEFAULT_CONFIG_RegexDebugAnnotatedAST)
 FLAGR (Boolean, RegexBytecodeDebug    , "Display layout of UnifiedRegex bytecode (requires -RegexDebug to view).", DEFAULT_CONFIG_RegexBytecodeDebug)
 FLAGR (Boolean, RegexOptimize         , "Optimize regular expressions in the unified Regex system (default: true)", DEFAULT_CONFIG_RegexOptimize)
 FLAGR (Number,  DynamicRegexMruListSize, "Size of the MRU list for dynamic regexes", DEFAULT_CONFIG_DynamicRegexMruListSize)
@@ -1553,18 +1589,11 @@ FLAGNR(Boolean, EnableEvalMapCleanup, "Enable cleaning up the eval map", true)
 #ifdef PROFILE_MEM
 FLAGNR(Boolean, TraceObjectAllocation, "Enable cleaning up the eval map", false)
 #endif
-#ifdef ENABLE_PROJECTION
-FLAGNR(Boolean, EnableThirdPartyGCPressure, "Enable use of GCPressure attribute value on 3rd party WinRT objects (not in Windows namespace) (default: false)", false)
-FLAGNR(Number, TargetWinRTVersion, "Specifies WinRT version number to target. [one of 0,1,2,3,4]. Default is 1 = NTDDI_WIN8", DEFAULT_CONFIG_TargetWinRTVersion)
-FLAGNR(Boolean, EnableVersioningAllAssemblies, "Enable versioning behavior for all assemblies, regardless of host flag (default: false)", false)
-FLAGR(Boolean, FailFastIfDisconnectedDelegate, "When set fail fast if disconnected delegate is invoked", DEFAULT_CONFIG_FailFastIfDisconnectedDelegate)
-#endif
 FLAGNR(Number, Sse, "Virtually disables SSE-based optimizations above the specified SSE level in the Chakra JIT (does not affect CRT SSE usage)", DEFAULT_CONFIG_Sse)
 FLAGNR(Number,  DeletedPropertyReuseThreshold, "Start reusing deleted property indexes after this many properties are deleted. Zero to disable reuse.", DEFAULT_CONFIG_DeletedPropertyReuseThreshold)
 FLAGNR(Boolean, ForceStringKeyedSimpleDictionaryTypeHandler, "Force switch to string keyed version of SimpleDictionaryTypeHandler on first new property added to a SimpleDictionaryTypeHandler", DEFAULT_CONFIG_ForceStringKeyedSimpleDictionaryTypeHandler)
 FLAGNR(Number,  BigDictionaryTypeHandlerThreshold, "Min Slot Capacity required to convert DictionaryTypeHandler to BigDictionaryTypeHandler.(Advisable to give more than 15 - to avoid false positive cases)", DEFAULT_CONFIG_BigDictionaryTypeHandlerThreshold)
 FLAGNR(Boolean, TypeSnapshotEnumeration, "Create a true snapshot of the type of an object before enumeration and enumerate only those properties.", DEFAULT_CONFIG_TypeSnapshotEnumeration)
-FLAGR (Boolean, EnumerationCompat,      "When set in IE10 mode, restores enumeration behavior to RC behavior", DEFAULT_CONFIG_EnumerationCompat)
 FLAGNR(Boolean, IsolatePrototypes, "Should prototypes get unique types not shared with other objects (default: true)?", DEFAULT_CONFIG_IsolatePrototypes)
 FLAGNR(Boolean, ChangeTypeOnProto, "When becoming a prototype should the object switch to a new type (default: true)?", DEFAULT_CONFIG_ChangeTypeOnProto)
 FLAGNR(Boolean, ShareInlineCaches, "Determines whether inline caches are shared between all loads (or all stores) of the same property ID", DEFAULT_CONFIG_ShareInlineCaches)
@@ -1624,12 +1653,6 @@ FLAGNR(Number, ConstructorCacheInvalidationThreshold, "Clear uniquePropertyGuard
 #ifdef IR_VIEWER
 FLAGNR(Boolean, IRViewer, "Enable IRViewer functionality (improved UI for various stages of IR generation)", false)
 #endif /* IR_VIEWER */
-
-FLAGNR(Boolean, InvalidateSolutionContextsForGetStructure, "To reduce memory consumption, in the end of GetStructure call, invalidate script contexts used only for GetStructure -- this would invalidate ones associated with solution files (not top-most references such as helpers.js)", DEFAULT_CONFIG_InvalidateSolutionContextsForGetStructure)
-FLAGNR(Boolean, ES5LangTel, "Print ES5 language telemetry output.", false)
-FLAGNR(Boolean, ES6LangTel, "Print ES6 language telemetry output.", false)
-FLAGNR(Boolean, ESBLangTel, "Print ES built-ins telemetry output.", false)
-FLAGNR(Boolean, DateParseTel, "Print Date.parse telemetry output.", false)
 
 FLAGNR(Number,  GCMemoryThreshold, "Threshold for allocation-based GC initiation (in MB)", 0)
 

@@ -1,5 +1,6 @@
 //-------------------------------------------------------------------------------------------------------
 // Copyright (C) Microsoft. All rights reserved.
+// Copyright (c) 2021 ChakraCore Project Contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
 //-------------------------------------------------------------------------------------------------------
 #include "RuntimeBasePch.h"
@@ -180,6 +181,12 @@ namespace Js
     }
 
     LPCUTF8
+        ParseableFunctionInfo::GetToStringSource(const  char16* reason) const
+    {
+        return this->GetUtf8SourceInfo()->GetSource(reason == nullptr ? _u("ParseableFunctionInfo::GetToStringSource") : reason) + this->PrintableStartOffset();
+    }
+
+    LPCUTF8
     ParseableFunctionInfo::GetStartOfDocument(const char16* reason) const
     {
         return this->GetUtf8SourceInfo()->GetSource(reason == nullptr ? _u("ParseableFunctionInfo::GetStartOfDocument") : reason);
@@ -206,6 +213,17 @@ namespace Js
     uint
     ParseableFunctionInfo::StartOffset() const
     {
+        return this->m_cbStartOffset;
+    }
+
+    uint
+    ParseableFunctionInfo::PrintableStartOffset() const
+    {
+        PrintOffsets* printOffsets = this->GetPrintOffsets();
+        if (printOffsets != nullptr)
+        {
+            return printOffsets->cbStartPrintOffset;
+        }
         return this->m_cbStartOffset;
     }
 
@@ -319,6 +337,18 @@ namespace Js
 
         // No offset found in the range.
         return FALSE;
+    }
+
+    bool
+    FunctionBody::SkipAutoProfileForCoroutine() const
+    {
+        return this->IsCoroutine() && CONFIG_FLAG(JitES6Generators);
+    }
+
+    bool
+    FunctionBody::IsGeneratorAndJitIsDisabled() const
+    {
+        return this->IsCoroutine() && !(CONFIG_FLAG(JitES6Generators) && !this->GetHasTry() && !this->IsInDebugMode() && !this->IsModule());
     }
 
     ScriptContext* EntryPointInfo::GetScriptContext()
@@ -810,6 +840,10 @@ namespace Js
             {
                 this->UpdateActiveFunctionsForOneDataSet(pActiveFuncs, callSiteData, callSiteData->GetCallbackInlinees(), this->GetProfiledCallSiteCount());
             }
+            if (callSiteData->GetCallApplyTargetInlinees())
+            {
+                this->UpdateActiveFunctionsForOneDataSet(pActiveFuncs, callSiteData, callSiteData->GetCallApplyTargetInlinees(), this->GetProfiledCallApplyCallSiteCount());
+            }
         }
 
         // Now walk the top-level data, but only do it once, since it's always the same.
@@ -838,6 +872,15 @@ namespace Js
             {
                 this->UpdateActiveFunctionsForOneDataSet(pActiveFuncs, nullptr, data, this->GetProfiledCallSiteCount());
             }
+        }
+        {
+#if ENABLE_NATIVE_CODEGEN
+            Field(FunctionCodeGenRuntimeData*)* data = this->GetCodeGenCallApplyTargetRuntimeData();
+            if (data != nullptr)
+            {
+                this->UpdateActiveFunctionsForOneDataSet(pActiveFuncs, nullptr, data, this->GetProfiledCallApplyCallSiteCount());
+            }
+#endif
         }
     }
 
@@ -1472,6 +1515,8 @@ namespace Js
 
 #define CopyDeferParseField(field) other->field = this->field;
         CopyDeferParseField(flags);
+        CopyDeferParseField(crossSiteDeferredFunctionType);
+        CopyDeferParseField(crossSiteUndeferredFunctionType);
         CopyDeferParseField(m_isDeclaration);
         CopyDeferParseField(m_isAccessor);
         CopyDeferParseField(m_isStrictMode);
@@ -1487,6 +1532,7 @@ namespace Js
         CopyDeferParseField(m_grfscr);
         other->SetScopeInfo(this->GetScopeInfo());
         other->SetDeferredStubs(this->GetDeferredStubs());
+        other->SetPrintOffsets(this->GetPrintOffsets());
         CopyDeferParseField(m_utf8SourceHasBeenSet);
 #if DBG
         CopyDeferParseField(deferredParseNextFunctionId);
@@ -1585,6 +1631,8 @@ namespace Js
         LocalFunctionId functionId, Utf8SourceInfo* sourceInfo, ScriptContext* scriptContext, uint functionNumber,
         const char16* displayName, uint displayNameLength, uint displayShortNameOffset, FunctionInfo::Attributes attributes, FunctionBodyFlags flags) :
       FunctionProxy(scriptContext, sourceInfo, functionNumber),
+      crossSiteDeferredFunctionType(nullptr),
+      crossSiteUndeferredFunctionType(nullptr),
 #if DYNAMIC_INTERPRETER_THUNK
       m_dynamicInterpreterThunk(nullptr),
 #endif
@@ -2071,6 +2119,28 @@ namespace Js
         undeferredFunctionType = type;
     }
 
+    ScriptFunctionType * FunctionProxy::GetCrossSiteDeferredFunctionType() const
+    {
+        return HasParseableInfo() ? GetParseableFunctionInfo()->GetCrossSiteDeferredFunctionType() : nullptr;
+    }
+
+    void FunctionProxy::SetCrossSiteDeferredFunctionType(ScriptFunctionType * type)
+    {
+        Assert(HasParseableInfo());
+        GetParseableFunctionInfo()->SetCrossSiteDeferredFunctionType(type);
+    }
+
+    ScriptFunctionType * FunctionProxy::GetCrossSiteUndeferredFunctionType() const
+    {
+        return HasParseableInfo() ? GetParseableFunctionInfo()->GetCrossSiteUndeferredFunctionType() : nullptr;
+    }
+
+    void FunctionProxy::SetCrossSiteUndeferredFunctionType(ScriptFunctionType * type)
+    {
+        Assert(HasParseableInfo());
+        GetParseableFunctionInfo()->SetCrossSiteUndeferredFunctionType(type);
+    }
+
     JavascriptMethod FunctionProxy::GetDirectEntryPoint(ProxyEntryPointInfo* entryPoint) const
     {
         Assert(entryPoint->jsMethod != nullptr);
@@ -2377,6 +2447,51 @@ namespace Js
                         grfscr &= ~fscrDeferredFncIsMethod;
                     }
 
+                    if (funcBody->IsAsync())
+                    {
+                        grfscr |= fscrDeferredFncIsAsync;
+                    }
+                    else
+                    {
+                        grfscr &= ~fscrDeferredFncIsAsync;
+                    }
+
+                    if (funcBody->IsGenerator())
+                    {
+                        grfscr |= fscrDeferredFncIsGenerator;
+                    }
+                    else
+                    {
+                        grfscr &= ~fscrDeferredFncIsGenerator;
+                    }
+
+                    if (funcBody->IsClassConstructor())
+                    {
+                        grfscr |= fscrDeferredFncIsClassConstructor;
+                    }
+                    else
+                    {
+                        grfscr &= ~fscrDeferredFncIsClassConstructor;
+                    }
+
+                    if (funcBody->IsBaseClassConstructor())
+                    {
+                        grfscr |= fscrDeferredFncIsBaseClassConstructor;
+                    }
+                    else
+                    {
+                        grfscr &= ~fscrDeferredFncIsBaseClassConstructor;
+                    }
+
+                    if (funcBody->IsClassMethod())
+                    {
+                        grfscr |= fscrDeferredFncIsClassMember;
+                    }
+                    else
+                    {
+                        grfscr &= ~fscrDeferredFncIsClassMember;
+                    }
+
                     if (isDebugOrAsmJsReparse)
                     {
                         // Disable deferred parsing if not DeferNested, or doing a debug/asm.js re-parse
@@ -2677,6 +2792,7 @@ namespace Js
         if (srcName == Js::Constants::GlobalFunction ||
             srcName == Js::Constants::AnonymousFunction ||
             srcName == Js::Constants::GlobalCode ||
+            srcName == Js::Constants::ModuleCode ||
             srcName == Js::Constants::Anonymous ||
             srcName == Js::Constants::UnknownScriptCode ||
             srcName == Js::Constants::FunctionCode)
@@ -2809,8 +2925,17 @@ namespace Js
             {
                 Js::Throw::OutOfMemory();
             }
+            Assert(node->cbStringMin <= node->cbMin);
             this->m_cbStartOffset = (uint)cbMin;
             this->m_cbLength = (uint)lengthInBytes;
+
+            if (node->cbStringMin != node->cbMin)
+            {
+                PrintOffsets* printOffsets = RecyclerNewLeaf(this->m_scriptContext->GetRecycler(), PrintOffsets);
+                printOffsets->cbStartPrintOffset = (uint)node->cbStringMin;
+                printOffsets->cbEndPrintOffset = (uint)node->cbStringLim;
+                this->SetPrintOffsets(printOffsets);
+            }
 
             Assert(this->m_utf8SourceInfo != nullptr);
             this->m_utf8SourceHasBeenSet = true;
@@ -4286,7 +4411,13 @@ namespace Js
     void FunctionBody::RecordIntConstant(RegSlot location, unsigned int val)
     {
         ScriptContext *scriptContext = this->GetScriptContext();
+#ifdef ENABLE_TEST_HOOKS
+        Var intConst = scriptContext->GetConfig()->Force32BitByteCode() ?
+            JavascriptNumber::ToVarFor32BitBytecode((int32)val, scriptContext) :
+            JavascriptNumber::ToVar((int32)val, scriptContext);
+#else
         Var intConst = JavascriptNumber::ToVar((int32)val, scriptContext);
+#endif
         this->RecordConstant(location, intConst);
     }
 
@@ -4314,6 +4445,13 @@ namespace Js
             str = scriptContext->GetPropertyString(propertyRecord->GetPropertyId());
         }
         this->RecordConstant(location, str);
+    }
+
+    void FunctionBody::RecordBigIntConstant(RegSlot location, LPCOLESTR psz, uint32 cch, bool isNegative)
+    {
+        ScriptContext *scriptContext = this->GetScriptContext();
+        Var bigintConst = JavascriptBigInt::Create(psz, cch, isNegative, scriptContext);
+        this->RecordConstant(location, bigintConst);
     }
 
     void FunctionBody::RecordFloatConstant(RegSlot location, double d)
@@ -4504,13 +4642,16 @@ namespace Js
             }
             Output::Print(_u("\n\n  Line %3d: "), line + 1);
             // Need to match up cchStartOffset to appropriate cbStartOffset given function's cbStartOffset and cchStartOffset
-            size_t i = utf8::CharacterIndexToByteIndex(source, sourceInfo->GetCbLength(), cchStartOffset, this->m_cbStartOffset, this->m_cchStartOffset);
-
-            size_t lastOffset = StartOffset() + LengthInBytes();
-            for (;i < lastOffset && source[i] != '\n' && source[i] != '\r'; i++)
+            size_t utf8SrcStartIdx = utf8::CharacterIndexToByteIndex(source, sourceInfo->GetCbLength(), cchStartOffset, this->m_cbStartOffset, this->m_cchStartOffset);
+            size_t utf8SrcEndIdx = StartOffset() + LengthInBytes();
+            char16* utf16Buf = HeapNewArray(char16, utf8SrcEndIdx - utf8SrcStartIdx + 2); 
+            size_t utf16BufSz = utf8::DecodeUnitsIntoAndNullTerminateNoAdvance(utf16Buf, source + utf8SrcStartIdx, source + utf8SrcEndIdx, utf8::DecodeOptions::doDefault);
+            Assert(utf16BufSz <= utf8SrcEndIdx - utf8SrcStartIdx);
+            for (size_t i = 0; i < utf16BufSz && utf16Buf[i] != _u('\n') && utf16Buf[i] != _u('\r'); i++)
             {
-                Output::Print(_u("%C"), source[i]);
+                Output::Print(_u("%lc"), utf16Buf[i]);
             }
+            HeapDeleteArray(utf8SrcEndIdx - utf8SrcStartIdx + 2, utf16Buf);
             Output::Print(_u("\n"));
             Output::Print(_u("  Col %4d:%s^\n"), col + 1, ((col+1)<10000) ? _u(" ") : _u(""));
 
@@ -4938,6 +5079,14 @@ namespace Js
             this->undeferredFunctionType->SetEntryPoint(this->GetDefaultEntryPointInfo()->jsMethod);
             this->undeferredFunctionType->SetEntryPointInfo(this->GetDefaultEntryPointInfo());
         }
+        if (this->crossSiteDeferredFunctionType)
+        {
+            this->crossSiteDeferredFunctionType->SetEntryPointInfo(this->GetDefaultEntryPointInfo());
+        }
+        if (this->crossSiteUndeferredFunctionType)
+        {
+            this->crossSiteUndeferredFunctionType->SetEntryPointInfo(this->GetDefaultEntryPointInfo());
+        }
 
 #if DBG
         if (!this->HasValidEntryPoint())
@@ -5013,6 +5162,9 @@ namespace Js
         this->cacheIdToPropertyIdMap = nullptr;
         this->SetFormalsPropIdArray(nullptr);
         this->SetReferencedPropertyIdMap(nullptr);
+#if ENABLE_NATIVE_CODEGEN
+        this->SetCallSiteToCallApplyCallSiteArray(nullptr);
+#endif
         this->SetLiteralRegexs(nullptr);
         this->SetSlotIdInCachedScopeToNestedIndexArray(nullptr);
         this->SetStatementMaps(nullptr);
@@ -5185,7 +5337,7 @@ namespace Js
         OUTPUT_VERBOSE_TRACE(Js::DebuggerPhase, _u("Regenerate Due To Debug Mode: function %s (%s) from script context %p\n"),
             this->GetDisplayName(), this->GetDebugNumberSet(debugStringBuffer), m_scriptContext);
 
-        this->UnlockCounters(); // asuming background jit is stopped and allow the counter setters access again
+        this->UnlockCounters(); // assuming background jit is stopped and allow the counter setters access again
 #endif
     }
 #endif
@@ -5229,7 +5381,7 @@ namespace Js
         if (this->deferredPrototypeType)
         {
             // Update old entry points on the deferred prototype type,
-            // as they may point to old native code gen regions which age gone now.
+            // as they may point to old native code gen regions which are gone now.
             this->deferredPrototypeType->SetEntryPoint(this->GetDefaultEntryPointInfo()->jsMethod);
             this->deferredPrototypeType->SetEntryPointInfo(this->GetDefaultEntryPointInfo());
         }
@@ -5237,6 +5389,14 @@ namespace Js
         {
             this->undeferredFunctionType->SetEntryPoint(this->GetDefaultEntryPointInfo()->jsMethod);
             this->undeferredFunctionType->SetEntryPointInfo(this->GetDefaultEntryPointInfo());
+        }
+        if (this->crossSiteDeferredFunctionType)
+        {
+            this->crossSiteDeferredFunctionType->SetEntryPointInfo(this->GetDefaultEntryPointInfo());
+        }
+        if (this->crossSiteUndeferredFunctionType)
+        {
+            this->crossSiteUndeferredFunctionType->SetEntryPointInfo(this->GetDefaultEntryPointInfo());
         }
         ReinitializeExecutionModeAndLimits();
     }
@@ -5525,7 +5685,7 @@ namespace Js
 
     ScopeType FrameDisplay::GetScopeType(void* scope)
     {
-        if(Js::ActivationObject::Is(scope))
+        if(Js::VarIs<Js::ActivationObject>(scope))
         {
             return ScopeType_ActivationObject;
         }
@@ -5537,7 +5697,7 @@ namespace Js
     }
 
     // ScopeSlots
-    bool ScopeSlots::IsDebuggerScopeSlotArray() 
+    bool ScopeSlots::IsDebuggerScopeSlotArray()
     {
         return DebuggerScope::Is(slotArray[ScopeMetadataSlotIndex]);
     }
@@ -6452,6 +6612,23 @@ namespace Js
         return slotIdToNestedIndexArray;
     }
 
+#if ENABLE_NATIVE_CODEGEN
+    ProfileId* FunctionBody::CreateCallSiteToCallApplyCallSiteArray()
+    {
+        Assert(this->GetCallSiteToCallApplyCallSiteArray() == nullptr);
+        uint count = this->GetProfiledCallSiteCount();
+        if (count != 0)
+        {
+            this->SetCallSiteToCallApplyCallSiteArray(RecyclerNewArrayLeaf(this->m_scriptContext->GetRecycler(), ProfileId, count));
+            for (uint i = 0; i < count; i++)
+            {
+                this->GetCallSiteToCallApplyCallSiteArray()[i] = Js::Constants::NoProfileId;
+            }
+        }
+        return this->GetCallSiteToCallApplyCallSiteArray();
+    }
+#endif
+
     void FunctionBody::ResetProfileIds()
     {
 #if ENABLE_PROFILE_INFO
@@ -6497,7 +6674,7 @@ namespace Js
         AssertMsg(!this->byteCodeBlock || !this->IsWasmFunction(), "We should never reset the bytecode block for Wasm");
         this->byteCodeBlock = nullptr;
 
-        // Also, remove the function body from the source info to prevent any further processing 
+        // Also, remove the function body from the source info to prevent any further processing
         // of the function such as attempts to set breakpoints.
         if (GetIsFuncRegistered())
         {
@@ -6609,6 +6786,23 @@ namespace Js
         return EnsureCodeGenRuntimeDataCommon<AuxPointerType::CodeGenCallbackRuntimeData>(recycler, profiledCallSiteId, inlinee);
     }
 
+    const FunctionCodeGenRuntimeData * FunctionBody::GetCallApplyTargetInlineeCodeGenRuntimeData(const ProfileId callApplyCallSiteId) const
+    {
+        Assert(callApplyCallSiteId < GetProfiledCallApplyCallSiteCount());
+
+        Field(FunctionCodeGenRuntimeData*)* codeGenRuntimeData = this->GetCodeGenCallApplyTargetRuntimeDataWithLock();
+        return codeGenRuntimeData ? codeGenRuntimeData[callApplyCallSiteId] : nullptr;
+    }
+
+    FunctionCodeGenRuntimeData * FunctionBody::EnsureCallApplyTargetInlineeCodeGenRuntimeData(
+        Recycler *const recycler,
+        const ProfileId callApplyCallSiteId,
+        FunctionBody *const inlinee)
+    {
+        Assert(callApplyCallSiteId < this->GetProfiledCallApplyCallSiteCount());
+        return EnsureCodeGenRuntimeDataCommon<AuxPointerType::CodeGenCallApplyTargetRuntimeData>(recycler, callApplyCallSiteId, inlinee);
+    }
+    
     const FunctionCodeGenRuntimeData *FunctionBody::GetLdFldInlineeCodeGenRuntimeData(const InlineCacheIndex inlineCacheIndex) const
     {
         Assert(inlineCacheIndex < this->GetInlineCacheCount());
@@ -6958,8 +7152,7 @@ namespace Js
             !GetScriptContext()->IsScriptContextInDebugMode() &&
             DoInterpreterProfile() &&
 #pragma warning(suppress: 6235) // (<non-zero constant> || <expression>) is always a non-zero constant.
-            (!CONFIG_FLAG(NewSimpleJit) || DoInterpreterAutoProfile()) &&
-            !IsCoroutine(); // Generator JIT requires bailout which SimpleJit cannot do since it skips GlobOpt
+            (!CONFIG_FLAG(NewSimpleJit) || DoInterpreterAutoProfile());
     }
 
     bool FunctionBody::DoSimpleJitWithLock() const
@@ -6973,8 +7166,7 @@ namespace Js
             !this->IsInDebugMode() &&
             DoInterpreterProfileWithLock() &&
 #pragma warning(suppress: 6235) // (<non-zero constant> || <expression>) is always a non-zero constant.
-            (!CONFIG_FLAG(NewSimpleJit) || DoInterpreterAutoProfile()) &&
-            !IsCoroutine(); // Generator JIT requires bailout which SimpleJit cannot do since it skips GlobOpt
+            (!CONFIG_FLAG(NewSimpleJit) || DoInterpreterAutoProfile());
     }
 
     bool FunctionBody::DoSimpleJitDynamicProfile() const
@@ -8196,7 +8388,7 @@ namespace Js
     }
 #endif
 
-   
+
     void EntryPointInfo::PinTypeRefs(ScriptContext* scriptContext)
     {
         NativeEntryPointData * nativeEntryPointData = this->GetNativeEntryPointData();
@@ -8229,7 +8421,7 @@ namespace Js
             Js::PropertyGuard* sharedPropertyGuard = nullptr;
             bool hasSharedPropertyGuard = nativeEntryPointData->TryGetSharedPropertyGuard(propertyId, sharedPropertyGuard);
             Assert(hasSharedPropertyGuard);
-            bool isValid = hasSharedPropertyGuard ? sharedPropertyGuard->IsValid() : false;
+            bool isValid = hasSharedPropertyGuard && sharedPropertyGuard->IsValid();
             if (isValid)
             {
                 scriptContext->GetThreadContext()->RegisterLazyBailout(propertyId, this);
@@ -8287,7 +8479,7 @@ namespace Js
         if (jitTransferData->equivalentTypeGuardOffsets)
         {
             // InstallGuards
-            int guardCount = jitTransferData->equivalentTypeGuardOffsets->count;            
+            int guardCount = jitTransferData->equivalentTypeGuardOffsets->count;
             EquivalentTypeCache* cache = this->nativeEntryPointData->EnsureEquivalentTypeCache(guardCount, scriptContext, this);
             char * nativeDataBuffer = this->GetOOPNativeEntryPointData()->GetNativeDataBuffer();
             for (int i = 0; i < guardCount; i++)
@@ -8585,7 +8777,14 @@ namespace Js
 
     }
 
-    void EntryPointInfo::DoLazyBailout(BYTE** addressOfInstructionPointer, Js::FunctionBody* functionBody, const PropertyRecord* propertyRecord)
+    void EntryPointInfo::DoLazyBailout(
+        BYTE **addressOfInstructionPointer,
+        BYTE *framePointer
+#if DBG
+        , Js::FunctionBody *functionBody
+        , const PropertyRecord *propertyRecord
+#endif
+    )
     {
         BYTE* instructionPointer = *addressOfInstructionPointer;
         NativeEntryPointData * nativeEntryPointData = this->GetNativeEntryPointData();
@@ -8593,40 +8792,53 @@ namespace Js
         ptrdiff_t codeSize = nativeEntryPointData->GetCodeSize();
         Assert(instructionPointer > (BYTE*)nativeAddress && instructionPointer < ((BYTE*)nativeAddress + codeSize));
         size_t offset = instructionPointer - (BYTE*)nativeAddress;
-        BailOutRecordMap * bailoutRecordMap = this->GetInProcNativeEntryPointData()->GetBailOutRecordMap();
-        int found = bailoutRecordMap->BinarySearch([=](const LazyBailOutRecord& record, int index)
+        NativeLazyBailOutRecordList * bailOutRecordList = this->GetInProcNativeEntryPointData()->GetSortedLazyBailOutRecordList();
+
+        AssertMsg(bailOutRecordList != nullptr, "Lazy Bailout: bailOutRecordList is missing");
+
+        int found = bailOutRecordList->BinarySearch([=](const LazyBailOutRecord& record, int index)
         {
-            // find the closest entry which is greater than the current offset.
-            if (record.offset >= offset)
+            if (record.offset == offset)
             {
-                if (index == 0 || (index > 0 && bailoutRecordMap->Item(index - 1).offset < offset))
-                {
-                    return 0;
-                }
-                else
-                {
-                    return 1;
-                }
+                return 0;
             }
-            return -1;
+            else if (record.offset > offset)
+            {
+                return 1;
+            }
+            else
+            {
+                return -1;
+            }
         });
+
         if (found != -1)
         {
-            LazyBailOutRecord& record = bailoutRecordMap->Item(found);
-            *addressOfInstructionPointer = record.instructionPointer;
-            record.SetBailOutKind();
+            auto inProcNativeEntryPointData = this->GetInProcNativeEntryPointData();
+            const LazyBailOutRecord& record = bailOutRecordList->Item(found);
+            const uint32 lazyBailOutThunkOffset = inProcNativeEntryPointData->GetLazyBailOutThunkOffset();
+            BYTE * const lazyBailOutThunkAddress = (BYTE *) nativeAddress + lazyBailOutThunkOffset;
+
+            // Change the instruction pointer of the frame to our thunk so that
+            // when execution returns back to this frame, we will execute the thunk instead
+            *addressOfInstructionPointer = lazyBailOutThunkAddress;
+
+            // Put the BailOutRecord corresponding to our LazyBailOut point on the pre-allocated slot on the stack
+            BYTE *addressOfLazyBailOutRecordSlot = framePointer + inProcNativeEntryPointData->GetLazyBailOutRecordSlotOffset();
+            *(reinterpret_cast<intptr_t *>(addressOfLazyBailOutRecordSlot)) = reinterpret_cast<intptr_t>(record.bailOutRecord);
+            
             if (PHASE_TRACE1(Js::LazyBailoutPhase))
             {
-                Output::Print(_u("On stack lazy bailout. Property: %s Old IP: 0x%x New IP: 0x%x "), propertyRecord->GetBuffer(), instructionPointer, record.instructionPointer);
 #if DBG
+                Output::Print(_u("On stack lazy bailout. Property: %s Old IP: 0x%x New IP: 0x%x "), propertyRecord->GetBuffer(), instructionPointer, lazyBailOutThunkAddress);
                 record.Dump(functionBody);
-#endif
                 Output::Print(_u("\n"));
+#endif
             }
         }
         else
         {
-            AssertMsg(false, "Lazy Bailout address mapping missing");
+            AssertMsg(false, "Lazy Bailout: Address mapping missing");
         }
     }
 
@@ -8796,7 +9008,7 @@ namespace Js
             this->OnCleanup(isShutdown);
 
             if (this->nativeEntryPointData)
-            {                
+            {
                 this->nativeEntryPointData->Cleanup(GetScriptContext(), isShutdown, false);
                 this->nativeEntryPointData = nullptr;
             }
@@ -8876,7 +9088,7 @@ namespace Js
     void EntryPointInfo::SetTJCodeSize(ptrdiff_t size)
     {
         Assert(isAsmJsFunction);
-        // TODO: We don't need the whole NativeEntryPointData to just hold just the code and size for TJ mode 
+        // TODO: We don't need the whole NativeEntryPointData to just hold just the code and size for TJ mode
         this->EnsureNativeEntryPointData()->SetTJCodeSize(size);
     }
 

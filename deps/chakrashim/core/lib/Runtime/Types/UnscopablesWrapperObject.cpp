@@ -6,21 +6,10 @@
 
 namespace Js
 {
-    bool UnscopablesWrapperObject::Is(Var aValue)
+    RecyclableObject * UnscopablesWrapperObject::GetThisAndUnwrappedInstance(Var* thisVar) const
     {
-        return JavascriptOperators::GetTypeId(aValue) == TypeIds_UnscopablesWrapperObject;
-    }
-
-    UnscopablesWrapperObject* UnscopablesWrapperObject::FromVar(Var aValue)
-    {
-        AssertOrFailFast(UnscopablesWrapperObject::Is(aValue));
-        return static_cast<UnscopablesWrapperObject*>(aValue);
-    }
-
-    UnscopablesWrapperObject* UnscopablesWrapperObject::UnsafeFromVar(Var aValue)
-    {
-        Assert(UnscopablesWrapperObject::Is(aValue));
-        return static_cast<UnscopablesWrapperObject*>(aValue);
+        *thisVar = this->GetWrappedObject();
+        return this->GetWrappedObject();
     }
 
     PropertyQueryFlags UnscopablesWrapperObject::HasPropertyQuery(PropertyId propertyId, _Inout_opt_ PropertyValueInfo* info)

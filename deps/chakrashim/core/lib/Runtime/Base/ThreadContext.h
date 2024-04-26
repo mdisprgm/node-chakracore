@@ -50,12 +50,6 @@ enum ThreadContextFlags
 
 const int LS_MAX_STACK_SIZE_KB = 300;
 
-struct IProjectionContext
-{
-public:
-    virtual HRESULT Close() = 0;
-};
-
 class ThreadContext;
 
 class InterruptPoller
@@ -189,26 +183,10 @@ enum RecyclerCollectCallBackFlags
     Collect_Begin_Partial            = 0x21,
     Collect_Begin_Concurrent_Partial = Collect_Begin_Concurrent | Collect_Begin_Partial,
     Collect_End                      = 0x02,
-    Collect_Wait                     = 0x04     // callback can be from another thread
+    Collect_Wait                     = 0x04,     // callback can be from another thread
+    Collect_Begin_Sweep              = 0x08
 };
 typedef void (__cdecl *RecyclerCollectCallBackFunction)(void * context, RecyclerCollectCallBackFlags flags);
-
-#ifdef ENABLE_PROJECTION
-class ExternalWeakReferenceCache
-{
-public:
-    virtual void MarkNow(Recycler *recycler, bool inPartialCollect) = 0;
-    virtual void ResolveNow(Recycler *recycler) = 0;
-};
-#if DBG_DUMP
-class IProjectionContextMemoryInfo abstract
-{
-public:
-    virtual void DumpCurrentStats(LPCWSTR headerMsg, bool forceDetailed) = 0;
-    virtual void Release() = 0;
-};
-#endif
-#endif
 
 #ifdef NTBUILD
 struct ThreadContextWatsonTelemetryBlock
@@ -683,7 +661,6 @@ private:
     PropertyNoCaseSetType * caseInvariantPropertySet;
 
     Js::ScriptContext * rootPendingClose;
-    JsUtil::List<IProjectionContext *, ArenaAllocator>* pendingProjectionContextCloseList;
     Js::ScriptEntryExitRecord * entryExitRecord;
     Js::InterpreterStackFrame* leafInterpreterFrame;
     const Js::PropertyRecord * propertyNamesDirect[128];
@@ -710,13 +687,6 @@ private:
 
     Js::TypeId nextTypeId;
     uint32 polymorphicCacheState;
-
-#ifdef ENABLE_PROJECTION
-    SListBase<ExternalWeakReferenceCache *, HeapAllocator> externalWeakReferenceCacheList;
-#if DBG_DUMP
-    IProjectionContextMemoryInfo *projectionMemoryInformation;
-#endif
-#endif
 
 #if ENABLE_NATIVE_CODEGEN
     JsUtil::JobProcessor *jobProcessor;
@@ -802,11 +772,6 @@ private:
 
 #ifdef ENABLE_GLOBALIZATION
     Js::DelayLoadWinRtString delayLoadWinRtString;
-#ifdef ENABLE_PROJECTION
-    Js::DelayLoadWinRtError delayLoadWinRtError;
-    Js::DelayLoadWinRtTypeResolution delayLoadWinRtTypeResolution;
-    Js::DelayLoadWinRtRoParameterizedIID delayLoadWinRtRoParameterizedIID;
-#endif
 #if defined(ENABLE_INTL_OBJECT) || defined(ENABLE_ES6_CHAR_CLASSIFIER)
 #ifdef INTL_WINGLOB
     Js::DelayLoadWindowsGlobalization delayLoadWindowsGlobalizationLibrary;
@@ -920,11 +885,6 @@ public:
 
 #ifdef ENABLE_GLOBALIZATION
     Js::DelayLoadWinRtString *GetWinRTStringLibrary();
-#ifdef ENABLE_PROJECTION
-    Js::DelayLoadWinRtError *GetWinRTErrorLibrary();
-    Js::DelayLoadWinRtTypeResolution* GetWinRTTypeResolutionLibrary();
-    Js::DelayLoadWinRtRoParameterizedIID* GetWinRTRoParameterizedIIDLibrary();
-#endif
 #if defined(ENABLE_INTL_OBJECT) || defined(ENABLE_ES6_CHAR_CLASSIFIER)
 #ifdef INTL_WINGLOB
     Js::DelayLoadWindowsGlobalization *GetWindowsGlobalizationLibrary();
@@ -1154,10 +1114,6 @@ public:
     ThreadContext::CollectCallBack * AddRecyclerCollectCallBack(RecyclerCollectCallBackFunction callback, void * context);
     void RemoveRecyclerCollectCallBack(ThreadContext::CollectCallBack * collectCallBack);
 
-    void AddToPendingProjectionContextCloseList(IProjectionContext *projectionContext);
-    void RemoveFromPendingClose(IProjectionContext *projectionContext);
-    void ClosePendingProjectionContexts();
-
     void AddToPendingScriptContextCloseList(Js::ScriptContext * scriptContext);
     void RemoveFromPendingClose(Js::ScriptContext * scriptContext);
     void ClosePendingScriptContexts();
@@ -1222,19 +1178,6 @@ public:
 
     void SetThreadServiceWrapper(ThreadServiceWrapper*);
     ThreadServiceWrapper* GetThreadServiceWrapper();
-
-#ifdef ENABLE_PROJECTION
-    void AddExternalWeakReferenceCache(ExternalWeakReferenceCache *externalWeakReferenceCache);
-    void RemoveExternalWeakReferenceCache(ExternalWeakReferenceCache *externalWeakReferenceCache);
-    virtual void MarkExternalWeakReferencedObjects(bool inPartialCollect) override;
-    virtual void ResolveExternalWeakReferencedObjects() override;
-
-#if DBG_DUMP
-    void RegisterProjectionMemoryInformation(IProjectionContextMemoryInfo* projectionContextMemoryInfo);
-    void DumpProjectionContextMemoryStats(LPCWSTR headerMsg, bool forceDetailed = false);
-    IProjectionContextMemoryInfo* GetProjectionContextMemoryInformation();
-#endif
-#endif
 
     uint NewFunctionNumber() { return ++functionCount; }
     uint PeekNewFunctionNumber() { return functionCount + 1; }

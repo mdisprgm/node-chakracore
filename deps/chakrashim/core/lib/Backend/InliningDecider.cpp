@@ -1,5 +1,6 @@
 //-------------------------------------------------------------------------------------------------------
 // Copyright (C) Microsoft. All rights reserved.
+// Copyright (c) 2021 ChakraCore Project Contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
 //-------------------------------------------------------------------------------------------------------
 #include "Backend.h"
@@ -101,6 +102,17 @@ Js::FunctionInfo * InliningDecider::GetCallSiteCallbackInfo(Js::FunctionBody *co
     return profileData->GetCallbackInfo(inliner, profiledCallSiteId);
 }
 
+Js::FunctionInfo * InliningDecider::GetCallApplyTargetInfo(Js::FunctionBody *const inliner, const Js::ProfileId profiledCallSiteId)
+{
+    Assert(inliner != nullptr);
+    Assert(profiledCallSiteId < inliner->GetProfiledCallSiteCount());
+
+    Js::DynamicProfileInfo * profileData = inliner->GetAnyDynamicProfileInfo();
+    Assert(profileData != nullptr);
+
+    return profileData->GetCallApplyTargetInfo(inliner, profiledCallSiteId);
+}
+
 uint16 InliningDecider::GetConstantArgInfo(Js::FunctionBody *const inliner, const Js::ProfileId profiledCallSiteId)
 {
     Assert(inliner);
@@ -145,6 +157,16 @@ Js::FunctionInfo * InliningDecider::InlineCallback(Js::FunctionBody *const inlin
         return Inline(inliner, functionInfo, false, false, true, GetConstantArgInfo(inliner, profiledCallSiteId), profiledCallSiteId, recursiveInlineDepth, true);
     }
     return nullptr;
+}
+
+Js::FunctionInfo * InliningDecider::InlineCallApplyTarget(Js::FunctionBody *const inliner, const Js::ProfileId profiledCallSiteId, uint recursiveInlineDepth)
+{
+    Js::FunctionInfo * functionInfo = GetCallApplyTargetInfo(inliner, profiledCallSiteId);
+    if (functionInfo)
+    {
+        return Inline(inliner, functionInfo, false, false, false, GetConstantArgInfo(inliner, profiledCallSiteId), profiledCallSiteId, recursiveInlineDepth, true);
+    }
+    return functionInfo;
 }
 
 uint InliningDecider::InlinePolymorphicCallSite(Js::FunctionBody *const inliner, const Js::ProfileId profiledCallSiteId,
@@ -484,12 +506,14 @@ bool InliningDecider::GetBuiltInInfoCommon(
         *inlineCandidateOpCode = Js::OpCode::InlineArrayPop;
         break;
 
+    case Js::JavascriptBuiltInFunction::JavascriptArray_At:
     case Js::JavascriptBuiltInFunction::JavascriptArray_Concat:
     case Js::JavascriptBuiltInFunction::JavascriptArray_Reverse:
     case Js::JavascriptBuiltInFunction::JavascriptArray_Shift:
     case Js::JavascriptBuiltInFunction::JavascriptArray_Slice:
     case Js::JavascriptBuiltInFunction::JavascriptArray_Splice:
 
+    case Js::JavascriptBuiltInFunction::JavascriptString_At:
     case Js::JavascriptBuiltInFunction::JavascriptString_Link:
         goto CallDirectCommon;
 
@@ -516,6 +540,7 @@ bool InliningDecider::GetBuiltInInfoCommon(
 
     case Js::JavascriptBuiltInFunction::JavascriptArray_Includes:
     case Js::JavascriptBuiltInFunction::JavascriptObject_HasOwnProperty:
+    case Js::JavascriptBuiltInFunction::JavascriptObject_HasOwn:
     case Js::JavascriptBuiltInFunction::JavascriptArray_IsArray:
         *returnType = ValueType::Boolean;
         goto CallDirectCommon;
@@ -552,6 +577,9 @@ bool InliningDecider::GetBuiltInInfoCommon(
         break;
     case Js::JavascriptBuiltInFunction::JavascriptFunction_Call:
         *inlineCandidateOpCode = Js::OpCode::InlineFunctionCall;
+        break;
+    case Js::JavascriptBuiltInFunction::EngineInterfaceObject_CallInstanceFunction:
+        *inlineCandidateOpCode = Js::OpCode::InlineCallInstanceFunction;
         break;
 
     // The following are not currently inlined, but are tracked for their return type
@@ -648,12 +676,6 @@ bool InliningDecider::GetBuiltInInfoCommon(
     case Js::JavascriptBuiltInFunction::CharArray_NewInstance:
         *returnType = ValueType::GetObject(ObjectType::CharArray);
         break;
-
-#ifdef ENABLE_DOM_FAST_PATH
-    case Js::JavascriptBuiltInFunction::DOMFastPathGetter:
-        *inlineCandidateOpCode = Js::OpCode::DOMFastPathGetter;
-        break;
-#endif
 
     default:
         return false;

@@ -1,6 +1,7 @@
 [
   {
     "this": {
+      "Symbol.toStringTag": "string global",
       "x": "undefined undefined",
       "Run": "function <large string>"
     },
@@ -22,6 +23,7 @@
       }
     },
     "globals": {
+      "Symbol.toStringTag": "string global",
       "x": "undefined undefined",
       "Run": "function <large string>"
     }
@@ -40,6 +42,7 @@
               "getOwnPropertyDescriptor": "function <large string>",
               "getOwnPropertyDescriptors": "function <large string>",
               "defineProperties": "function <large string>",
+              "hasOwn": "function <large string>",
               "create": "function <large string>",
               "seal": "function <large string>",
               "freeze": "function <large string>",
@@ -55,7 +58,8 @@
               "is": "function <large string>",
               "assign": "function <large string>",
               "values": "function <large string>",
-              "entries": "function <large string>"
+              "entries": "function <large string>",
+              "fromEntries": "function <large string>"
             },
             "hasOwnProperty": {
               "#__proto__": "function <large string>",
@@ -129,13 +133,13 @@
               "resolvedOptions": "function <large string>",
               "compare": "function <large string>"
             },
+            "length": "number 0",
             "name": "string Collator",
             "supportedLocalesOf": {
               "#__proto__": "function <large string>",
-              "name": "string <large string>",
-              "length": "number 1"
-            },
-            "length": "number 0"
+              "length": "number 1",
+              "name": "string <large string>"
+            }
           },
           "resolvedOptions": {
             "#__proto__": {
@@ -151,8 +155,8 @@
               "caller": "Error <large string>",
               "arguments": "Error <large string>"
             },
-            "name": "string resolvedOptions",
-            "length": "number 0"
+            "length": "number 0",
+            "name": "string resolvedOptions"
           },
           "compare": {
             "#__proto__": {
@@ -188,6 +192,7 @@
               "getOwnPropertyDescriptor": "function <large string>",
               "getOwnPropertyDescriptors": "function <large string>",
               "defineProperties": "function <large string>",
+              "hasOwn": "function <large string>",
               "create": "function <large string>",
               "seal": "function <large string>",
               "freeze": "function <large string>",
@@ -203,7 +208,8 @@
               "is": "function <large string>",
               "assign": "function <large string>",
               "values": "function <large string>",
-              "entries": "function <large string>"
+              "entries": "function <large string>",
+              "fromEntries": "function <large string>"
             },
             "hasOwnProperty": {
               "#__proto__": "function <large string>",
@@ -277,13 +283,13 @@
               "resolvedOptions": "function <large string>",
               "format": "function <large string>"
             },
+            "length": "number 0",
             "name": "string NumberFormat",
             "supportedLocalesOf": {
               "#__proto__": "function <large string>",
-              "name": "string <large string>",
-              "length": "number 1"
-            },
-            "length": "number 0"
+              "length": "number 1",
+              "name": "string <large string>"
+            }
           },
           "resolvedOptions": {
             "#__proto__": {
@@ -299,8 +305,8 @@
               "caller": "Error <large string>",
               "arguments": "Error <large string>"
             },
-            "name": "string resolvedOptions",
-            "length": "number 0"
+            "length": "number 0",
+            "name": "string resolvedOptions"
           },
           "format": {
             "#__proto__": {
@@ -336,6 +342,7 @@
               "getOwnPropertyDescriptor": "function <large string>",
               "getOwnPropertyDescriptors": "function <large string>",
               "defineProperties": "function <large string>",
+              "hasOwn": "function <large string>",
               "create": "function <large string>",
               "seal": "function <large string>",
               "freeze": "function <large string>",
@@ -351,7 +358,8 @@
               "is": "function <large string>",
               "assign": "function <large string>",
               "values": "function <large string>",
-              "entries": "function <large string>"
+              "entries": "function <large string>",
+              "fromEntries": "function <large string>"
             },
             "hasOwnProperty": {
               "#__proto__": "function <large string>",
@@ -425,6 +433,7 @@
               "format": "function <large string>",
               "resolvedOptions": "function <large string>"
             },
+            "length": "number 0",
             "name": "string DateTimeFormat",
             "__relevantExtensionKeys": {
               "#__proto__": "Array []",
@@ -434,10 +443,9 @@
             },
             "supportedLocalesOf": {
               "#__proto__": "function <large string>",
-              "name": "string <large string>",
-              "length": "number 1"
-            },
-            "length": "number 0"
+              "length": "number 1",
+              "name": "string <large string>"
+            }
           },
           "format": {
             "#__proto__": {
@@ -469,8 +477,8 @@
               "caller": "Error <large string>",
               "arguments": "Error <large string>"
             },
-            "name": "string resolvedOptions",
-            "length": "number 0"
+            "length": "number 0",
+            "name": "string resolvedOptions"
           }
         }
       }

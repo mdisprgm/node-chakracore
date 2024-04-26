@@ -211,7 +211,6 @@ void
 GlobOpt::KillLiveElems(IR::IndirOpnd * indirOpnd, IR::Opnd * valueOpnd, BVSparse<JitArenaAllocator> * bv, bool inGlobOpt, Func *func)
 {
     IR::RegOpnd *indexOpnd = indirOpnd->GetIndexOpnd();
-
     // obj.x = 10;
     // obj["x"] = ...;   // This needs to kill obj.x...  We need to kill all fields...
     //
@@ -392,6 +391,7 @@ GlobOpt::ProcessFieldKills(IR::Instr *instr, BVSparse<JitArenaAllocator> *bv, bo
 
     case Js::OpCode::InitSetFld:
     case Js::OpCode::InitGetFld:
+    case Js::OpCode::InitClassMember:
     case Js::OpCode::InitClassMemberGet:
     case Js::OpCode::InitClassMemberSet:
         sym = instr->GetDst()->AsSymOpnd()->m_sym;
@@ -440,6 +440,7 @@ GlobOpt::ProcessFieldKills(IR::Instr *instr, BVSparse<JitArenaAllocator> *bv, bo
     case Js::OpCode::StSlot:
     case Js::OpCode::StSlotChkUndecl:
     case Js::OpCode::StSuperFld:
+    case Js::OpCode::StSuperFldStrict:
         Assert(dstOpnd != nullptr);
         sym = dstOpnd->AsSymOpnd()->m_sym;
         if (inGlobOpt)
@@ -481,7 +482,7 @@ GlobOpt::ProcessFieldKills(IR::Instr *instr, BVSparse<JitArenaAllocator> *bv, bo
     case Js::OpCode::InlineeEnd:
         Assert(!instr->UsesAllFields());
 
-        // Kill all live 'arguments' and 'caller' fields, as 'inlineeFunction.arguments' and 'inlineeFunction.caller' 
+        // Kill all live 'arguments' and 'caller' fields, as 'inlineeFunction.arguments' and 'inlineeFunction.caller'
         // cannot be copy-propped across different instances of the same inlined function.
         KillLiveFields(argumentsEquivBv, bv);
         KillLiveFields(callerEquivBv, bv);
@@ -564,7 +565,14 @@ GlobOpt::ProcessFieldKills(IR::Instr *instr, BVSparse<JitArenaAllocator> *bv, bo
         }
         break;
 
-    case Js::OpCode::InitClass:
+    case Js::OpCode::NewClassProto:
+        Assert(instr->GetSrc1());
+        if (IR::AddrOpnd::IsEqualAddr(instr->GetSrc1(), (void*)func->GetScriptContextInfo()->GetObjectPrototypeAddr()))
+        {
+            // No extends operand, the proto parent is the Object prototype
+            break;
+        }
+        // Fall through
     case Js::OpCode::InitProto:
     case Js::OpCode::NewScObjectNoCtor:
     case Js::OpCode::NewScObjectNoCtorFull:
@@ -635,7 +643,7 @@ GlobOpt::CreateFieldSrcValue(PropertySym * sym, PropertySym * originalSym, IR::O
     }
 
     Assert((*ppOpnd)->AsSymOpnd()->m_sym == sym || this->IsLoopPrePass());
-    
+
     // We don't use the sym store to do copy prop on hoisted fields, but create a value
     // in case it can be copy prop out of the loop.
     return this->NewGenericValue(ValueType::Uninitialized, *ppOpnd);
@@ -929,6 +937,7 @@ GlobOpt::FinishOptPropOp(IR::Instr *instr, IR::PropertySymOpnd *opnd, BasicBlock
         if (!isObjTypeSpecialized || opnd->ChangesObjectLayout())
         {
             this->KillObjectHeaderInlinedTypeSyms(block, isObjTypeSpecialized, opndId);
+            this->KillAuxSlotPtrSyms(opnd, block, isObjTypeSpecialized);
         }
         else if (!isObjTypeChecked && this->HasLiveObjectHeaderInlinedTypeSym(block, true, opndId))
         {
@@ -937,6 +946,37 @@ GlobOpt::FinishOptPropOp(IR::Instr *instr, IR::PropertySymOpnd *opnd, BasicBlock
     }
 
     return isObjTypeSpecialized;
+}
+
+StackSym *
+GlobOpt::EnsureAuxSlotPtrSym(IR::PropertySymOpnd *opnd)
+{
+    StackSym *auxSlotPtrSym = opnd->EnsureAuxSlotPtrSym(this->func);
+    this->auxSlotPtrSyms->Set(auxSlotPtrSym->m_id);
+    return auxSlotPtrSym;
+}
+
+void
+GlobOpt::KillAuxSlotPtrSyms(IR::PropertySymOpnd *opnd, BasicBlock *block, bool isObjTypeSpecialized)
+{
+    StackSym *auxSlotPtrSym = nullptr;
+    if (isObjTypeSpecialized)
+    {
+        // Kill all aux slot syms other than this one
+        auxSlotPtrSym = opnd->GetAuxSlotPtrSym();
+        if (auxSlotPtrSym)
+        {
+            Assert(this->auxSlotPtrSyms && this->auxSlotPtrSyms->Test(auxSlotPtrSym->m_id));
+            this->auxSlotPtrSyms->Clear(auxSlotPtrSym->m_id);
+        }
+    }
+
+    block->globOptData.liveFields->Minus(this->auxSlotPtrSyms);
+
+    if (auxSlotPtrSym)
+    {
+        this->auxSlotPtrSyms->Set(auxSlotPtrSym->m_id);
+    }
 }
 
 void
@@ -1123,19 +1163,6 @@ GlobOpt::ProcessPropOpInTypeCheckSeq(IR::Instr* instr, IR::PropertySymOpnd *opnd
     Assert(opnd->IsTypeCheckSeqCandidate());
     Assert(opnd->HasObjectTypeSym());
 
-    if (opnd->HasTypeMismatch())
-    {
-        if (emitsTypeCheckOut != nullptr)
-        {
-            *emitsTypeCheckOut = false;
-        }
-        if (changesTypeValueOut != nullptr)
-        {
-            *changesTypeValueOut = false;
-        }
-        return false;
-    }
-
     bool isStore = opnd == instr->GetDst();
     bool isTypeDead = opnd->IsTypeDead();
     bool consumeType = makeChanges && !IsLoopPrePass();
@@ -1173,6 +1200,19 @@ GlobOpt::ProcessPropOpInTypeCheckSeq(IR::Instr* instr, IR::PropertySymOpnd *opnd
     if (consumeType && valueInfo != nullptr)
     {
         opnd->SetTypeAvailable(true);
+    }
+
+    if (opnd->HasTypeMismatch())
+    {
+        if (emitsTypeCheckOut != nullptr)
+        {
+            *emitsTypeCheckOut = false;
+        }
+        if (changesTypeValueOut != nullptr)
+        {
+            *changesTypeValueOut = false;
+        }
+        return false;
     }
 
     bool doEquivTypeCheck = opnd->HasEquivalentTypeSet() && !opnd->NeedsMonoCheck();
@@ -1347,12 +1387,6 @@ GlobOpt::ProcessPropOpInTypeCheckSeq(IR::Instr* instr, IR::PropertySymOpnd *opnd
             {
                 // Indicates we can optimize, as all upstream types are equivalent here.
 
-                opnd->SetSlotIndex(slotIndex);
-                opnd->SetUsesAuxSlot(auxSlot);
-
-                opnd->GetObjTypeSpecInfo()->SetSlotIndex(slotIndex);
-                opnd->GetObjTypeSpecInfo()->SetUsesAuxSlot(auxSlot);
-
                 isSpecialized = true;
                 if (isTypeCheckedOut)
                 {
@@ -1361,10 +1395,17 @@ GlobOpt::ProcessPropOpInTypeCheckSeq(IR::Instr* instr, IR::PropertySymOpnd *opnd
                 if (consumeType)
                 {
                     opnd->SetTypeChecked(true);
-                }
-                if (checkedTypeSetIndex != (uint16)-1)
-                {
-                    opnd->SetCheckedTypeSetIndex(checkedTypeSetIndex);
+
+                    opnd->SetSlotIndex(slotIndex);
+                    opnd->SetUsesAuxSlot(auxSlot);
+
+                    opnd->GetObjTypeSpecInfo()->SetSlotIndex(slotIndex);
+                    opnd->GetObjTypeSpecInfo()->SetUsesAuxSlot(auxSlot);
+
+                    if (checkedTypeSetIndex != (uint16)-1)
+                    {
+                        opnd->SetCheckedTypeSetIndex(checkedTypeSetIndex);
+                    }
                 }
             }
         }
@@ -1407,8 +1448,8 @@ GlobOpt::ProcessPropOpInTypeCheckSeq(IR::Instr* instr, IR::PropertySymOpnd *opnd
             }
         }
         else if (valueInfo->GetJsTypeSet() &&
-                 (opnd->IsMono() ? 
-                      valueInfo->GetJsTypeSet()->Contains(opnd->GetFirstEquivalentType()) : 
+                 (opnd->IsMono() ?
+                      valueInfo->GetJsTypeSet()->Contains(opnd->GetFirstEquivalentType()) :
                       IsSubsetOf(opndTypeSet, valueInfo->GetJsTypeSet())
                  )
             )
@@ -1541,6 +1582,43 @@ GlobOpt::ProcessPropOpInTypeCheckSeq(IR::Instr* instr, IR::PropertySymOpnd *opnd
         *changesTypeValueOut = isSpecialized && (emitsTypeCheck || addsProperty);
     }
 
+    if (makeChanges)
+    {
+        // Track liveness of aux slot ptr syms.
+        if (!PHASE_OFF(Js::ReuseAuxSlotPtrPhase, this->func) && isSpecialized)
+        {
+            if (opnd->UsesAuxSlot() && !opnd->IsLoadedFromProto())
+            {
+                // Optimized ld/st that loads/uses an aux slot ptr.
+                // Aux slot sym is live forward.
+                StackSym *auxSlotPtrSym = this->EnsureAuxSlotPtrSym(opnd);
+                if (!this->IsLoopPrePass() && opnd->IsTypeChecked())
+                {
+                    if (block->globOptData.liveFields->TestAndSet(auxSlotPtrSym->m_id))
+                    {
+                        // Aux slot sym is available here. Tell lowerer to use it.
+                        opnd->SetAuxSlotPtrSymAvailable(true);
+                    }
+                }
+                else
+                {
+                    block->globOptData.liveFields->Set(auxSlotPtrSym->m_id);
+                }
+            }
+            else if (!opnd->IsTypeChecked())
+            {
+                // Type sym is not available here (i.e., object shape is not known) and we're not loading the aux slots.
+                // May get here with aux slot sym still in live set if type sym is not in the value table.
+                // Clear the aux slot sym out of the live set.
+                StackSym *auxSlotPtrSym = opnd->GetAuxSlotPtrSym();
+                if (auxSlotPtrSym)
+                {
+                    block->globOptData.liveFields->Clear(auxSlotPtrSym->m_id);
+                }
+            }
+        }
+    }
+
     return isSpecialized;
 }
 
@@ -1559,7 +1637,7 @@ GlobOpt::OptNewScObject(IR::Instr** instrPtr, Value* srcVal)
         instr->m_func->GetConstructorCache(static_cast<Js::ProfileId>(instr->AsProfiledInstr()->u.profileId)) : nullptr;
 
     // TODO: OOP JIT, enable assert
-    //Assert(ctorCache == nullptr || srcVal->GetValueInfo()->IsVarConstant() && Js::JavascriptFunction::Is(srcVal->GetValueInfo()->AsVarConstant()->VarValue()));
+    //Assert(ctorCache == nullptr || srcVal->GetValueInfo()->IsVarConstant() && Js::VarIs<Js::JavascriptFunction>(srcVal->GetValueInfo()->AsVarConstant()->VarValue()));
     Assert(ctorCache == nullptr || !ctorCache->IsTypeFinal() || ctorCache->CtorHasNoExplicitReturnValue());
 
     if (ctorCache != nullptr && !ctorCache->SkipNewScObject() && (isCtorInlined || ctorCache->IsTypeFinal()))
@@ -1854,6 +1932,11 @@ GlobOpt::KillObjectType(StackSym* objectSym, BVSparse<JitArenaAllocator>* liveFi
     }
 
     liveFields->Clear(objectSym->GetObjectTypeSym()->m_id);
+    StackSym *auxSlotPtrSym = objectSym->GetAuxSlotPtrSym();
+    if (auxSlotPtrSym)
+    {
+        liveFields->Clear(auxSlotPtrSym->m_id);
+    }
 }
 
 void
@@ -1862,6 +1945,7 @@ GlobOpt::KillAllObjectTypes(BVSparse<JitArenaAllocator>* liveFields)
     if (this->objectTypeSyms && liveFields)
     {
         liveFields->Minus(this->objectTypeSyms);
+        liveFields->Minus(this->auxSlotPtrSyms);
     }
 }
 
@@ -1931,6 +2015,8 @@ GlobOpt::CopyPropPropertySymObj(IR::SymOpnd *symOpnd, IR::Instr *instr)
                         bool shouldOptimize = CompareCurrentTypesWithExpectedTypes(newValueInfo, propertySymOpnd);
                         if (!shouldOptimize)
                         {
+                            // We would like just to force a new type check here and keep optimizing, but downstream
+                            // objtypespecfldinfo may have slot indices based on the old type.
                             propertySymOpnd->SetTypeCheckSeqCandidate(false);
                         }
                     }
@@ -2046,6 +2132,12 @@ GlobOpt::UpdateObjPtrValueType(IR::Opnd * opnd, IR::Instr * instr)
 
     AnalysisAssert(type != nullptr);
     Js::TypeId typeId = type->GetTypeId();
+
+    if (Js::TypedArrayBase::Is(typeId))
+    {
+        // Type ID does not allow us to distinguish between virtual and non-virtual typed array.
+        return;
+    }
 
     // Passing false for useVirtual as we would never have a virtual typed array hitting this code path
     ValueType newValueType = ValueType::FromTypeId(typeId, false);

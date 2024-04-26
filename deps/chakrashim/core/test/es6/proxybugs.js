@@ -1,5 +1,6 @@
 //-------------------------------------------------------------------------------------------------------
 // Copyright (C) Microsoft. All rights reserved.
+// Copyright (c) 2021 ChakraCore Project Contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
 //-------------------------------------------------------------------------------------------------------
 
@@ -483,6 +484,43 @@ var tests = [
 
             var obj2 = Reflect.construct(proxy2, [20]);
             assert.areEqual(20, obj2.x);
+        }
+    },
+    {
+        name: "Proxy's ownKeys is returning duplicate keys should throw",
+        body() {
+            var proxy = new Proxy({}, {
+                ownKeys: function (t) {
+                    return ["a", "a"];
+                }
+            });
+            assert.throws(()=> { Object.keys(proxy);}, TypeError, "proxy's ownKeys is returning duplicate keys", "Proxy's ownKeys trap returned duplicate keys");
+        }
+    },
+    {
+        name : "Proxy with DefineOwnProperty trap should not get descriptor properties twice",
+        body() {
+            const desc = { };
+            let counter = 0;
+            let handler = {
+                defineProperty : function (oTarget, sKey, oDesc) { 
+                    return Reflect.defineProperty(oTarget, sKey, oDesc); 
+                }
+            };
+            Object.defineProperty(desc, "writable", { get: function () { ++counter; return true; }});
+            Object.defineProperty(new Proxy({}, handler), "test", desc);
+            assert.areEqual(1, counter, "Writable property on descriptor should only be checked once");
+        }
+    },
+    {
+        name : "Proxy without construct trap, should get prototype when constructing",
+        body() {
+            const constructor = function() {}
+            constructor.prototype.a = 5;
+            const p = new Proxy(constructor, {get(a, b, c){ if (b === 'prototype') { return {b : 10} } return Reflect.get(a, b, c);}})
+            const obj = new p();
+            assert.areEqual(obj.b, 10);
+            assert.isUndefined(obj.a);
         }
     }
 ];

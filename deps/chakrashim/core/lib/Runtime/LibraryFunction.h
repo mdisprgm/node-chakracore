@@ -1,5 +1,6 @@
 //-------------------------------------------------------------------------------------------------------
 // Copyright (C) Microsoft. All rights reserved.
+// Copyright (c) 2021 ChakraCore Project Contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
 //-------------------------------------------------------------------------------------------------------
 /*
@@ -19,6 +20,7 @@ LIBRARY_FUNCTION(Math,          Asin,               1,    BIF_TypeSpecUnaryToFlo
 LIBRARY_FUNCTION(Math,          Atan,               1,    BIF_TypeSpecUnaryToFloat                          , Math::EntryInfo::Atan)
 LIBRARY_FUNCTION(Math,          Atan2,              2,    BIF_TypeSpecAllToFloat                            , Math::EntryInfo::Atan2)
 LIBRARY_FUNCTION(Math,          Ceil,               1,    BIF_TypeSpecDstToInt | BIF_TypeSpecSrc1ToFloat    , Math::EntryInfo::Ceil)
+LIBRARY_FUNCTION(JavascriptString,        At,                 2,    BIF_UseSrc0                                       , JavascriptString::EntryInfo::At)
 LIBRARY_FUNCTION(JavascriptString,        CodePointAt,        2,    BIF_TypeSpecSrc2ToInt | BIF_UseSrc0               , JavascriptString::EntryInfo::CodePointAt)
 LIBRARY_FUNCTION(JavascriptString,        CharAt,             2,    BIF_UseSrc0                                       , JavascriptString::EntryInfo::CharAt  )
 LIBRARY_FUNCTION(JavascriptString,        CharCodeAt,         2,    BIF_UseSrc0                                       , JavascriptString::EntryInfo::CharCodeAt )
@@ -41,7 +43,9 @@ LIBRARY_FUNCTION(JavascriptString,        ToLowerCase,        1,    BIF_UseSrc0 
 LIBRARY_FUNCTION(JavascriptString,        ToUpperCase,        1,    BIF_UseSrc0 | BIF_IgnoreDst                       , JavascriptString::EntryInfo::ToUpperCase)
 LIBRARY_FUNCTION(JavascriptString,        Trim,               1,    BIF_UseSrc0 | BIF_IgnoreDst                       , JavascriptString::EntryInfo::Trim)
 LIBRARY_FUNCTION(JavascriptString,        TrimLeft,           1,    BIF_UseSrc0 | BIF_IgnoreDst                       , JavascriptString::EntryInfo::TrimLeft)
+LIBRARY_FUNCTION(JavascriptString,        TrimStart,          1,    BIF_UseSrc0 | BIF_IgnoreDst                       , JavascriptString::EntryInfo::TrimStart)
 LIBRARY_FUNCTION(JavascriptString,        TrimRight,          1,    BIF_UseSrc0 | BIF_IgnoreDst                       , JavascriptString::EntryInfo::TrimRight)
+LIBRARY_FUNCTION(JavascriptString,        TrimEnd,            1,    BIF_UseSrc0 | BIF_IgnoreDst                       , JavascriptString::EntryInfo::TrimEnd)
 LIBRARY_FUNCTION(Math,          Cos,                1,    BIF_TypeSpecUnaryToFloat                          , Math::EntryInfo::Cos)
 LIBRARY_FUNCTION(Math,          Exp,                1,    BIF_TypeSpecUnaryToFloat                          , Math::EntryInfo::Exp)
 LIBRARY_FUNCTION(Math,          Floor,              1,    BIF_TypeSpecDstToInt | BIF_TypeSpecSrc1ToFloat    , Math::EntryInfo::Floor)
@@ -58,6 +62,7 @@ LIBRARY_FUNCTION(Math,          Round,              1,    BIF_TypeSpecDstToInt |
 LIBRARY_FUNCTION(Math,          Sin,                1,    BIF_TypeSpecUnaryToFloat                          , Math::EntryInfo::Sin)
 LIBRARY_FUNCTION(Math,          Sqrt,               1,    BIF_TypeSpecUnaryToFloat                          , Math::EntryInfo::Sqrt)
 LIBRARY_FUNCTION(Math,          Tan,                1,    BIF_TypeSpecUnaryToFloat                          , Math::EntryInfo::Tan)
+LIBRARY_FUNCTION(JavascriptArray,         At,                 2,    BIF_UseSrc0                                       , JavascriptArray::EntryInfo::At)
 LIBRARY_FUNCTION(JavascriptArray,         Concat,             15,   BIF_UseSrc0 | BIF_VariableArgsNumber              , JavascriptArray::EntryInfo::Concat)
 LIBRARY_FUNCTION(JavascriptArray,         IndexOf,            2,    BIF_UseSrc0                                       , JavascriptArray::EntryInfo::IndexOf)
 LIBRARY_FUNCTION(JavascriptArray,         Includes,           2,    BIF_UseSrc0                                       , JavascriptArray::EntryInfo::Includes)
@@ -71,6 +76,7 @@ LIBRARY_FUNCTION(JavascriptArray,         Splice,             15,   BIF_UseSrc0 
 LIBRARY_FUNCTION(JavascriptArray,         Unshift,            15,   BIF_UseSrc0 | BIF_VariableArgsNumber | BIF_IgnoreDst  , JavascriptArray::EntryInfo::Unshift)
 LIBRARY_FUNCTION(JavascriptFunction,      Apply,              3,    BIF_UseSrc0 | BIF_IgnoreDst | BIF_VariableArgsNumber  , JavascriptFunction::EntryInfo::Apply)
 LIBRARY_FUNCTION(JavascriptFunction,      Call,               15,   BIF_UseSrc0 | BIF_IgnoreDst | BIF_VariableArgsNumber  , JavascriptFunction::EntryInfo::Call)
+LIBRARY_FUNCTION(EngineInterfaceObject, CallInstanceFunction, 15,   BIF_UseSrc0 | BIF_IgnoreDst | BIF_VariableArgsNumber  , EngineInterfaceObject::EntryInfo::CallInstanceFunction)
 LIBRARY_FUNCTION(GlobalObject,  ParseInt,           1,    BIF_IgnoreDst                                         , GlobalObject::EntryInfo::ParseInt)
 LIBRARY_FUNCTION(JavascriptRegExp,        Exec,               2,    BIF_UseSrc0 | BIF_IgnoreDst                           , JavascriptRegExp::EntryInfo::Exec)
 LIBRARY_FUNCTION(JavascriptRegExp,        SymbolSearch,       2,    BIF_UseSrc0                                           , JavascriptRegExp::EntryInfo::SymbolSearch)
@@ -78,5 +84,6 @@ LIBRARY_FUNCTION(Math,          Fround,             1,    BIF_TypeSpecUnaryToFlo
 LIBRARY_FUNCTION(JavascriptString,        PadStart,           2,    BIF_UseSrc0 | BIF_VariableArgsNumber                  , JavascriptString::EntryInfo::PadStart)
 LIBRARY_FUNCTION(JavascriptString,        PadEnd,             2,    BIF_UseSrc0 | BIF_VariableArgsNumber                  , JavascriptString::EntryInfo::PadEnd)
 LIBRARY_FUNCTION(JavascriptObject,        HasOwnProperty,     2,    BIF_UseSrc0                                           , JavascriptObject::EntryInfo::HasOwnProperty)
+LIBRARY_FUNCTION(JavascriptObject,        HasOwn,             3,    BIF_None                                              , JavascriptObject::EntryInfo::HasOwn)
 
 // Note: 1st column is currently used only for debug tracing.

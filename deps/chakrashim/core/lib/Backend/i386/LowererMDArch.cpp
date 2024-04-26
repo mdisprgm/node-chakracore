@@ -347,7 +347,7 @@ LowererMDArch::LoadHeapArguments(IR::Instr *instrArgs)
 
 
             // Save the newly-created args object to its dedicated stack slot.
-            IR::Opnd *opnd = this->lowererMD->CreateStackArgumentsSlotOpnd();
+            IR::Opnd *opnd = LowererMD::CreateStackArgumentsSlotOpnd(func);
             instr = IR::Instr::New(Js::OpCode::MOV, opnd, instrArgs->GetDst(), func);
             instrArgs->InsertAfter(instr);
         }
@@ -460,7 +460,7 @@ LowererMDArch::LoadHeapArgsCached(IR::Instr *instrArgs)
             this->LoadHelperArgument(instrArgs, srcOpnd);
 
             // Save the newly-created args object to its dedicated stack slot.
-            IR::Opnd *opnd = this->lowererMD->CreateStackArgumentsSlotOpnd();
+            IR::Opnd *opnd = LowererMD::CreateStackArgumentsSlotOpnd(func);
             instr = IR::Instr::New(Js::OpCode::MOV, opnd, instrArgs->GetDst(), func);
             instrArgs->InsertAfter(instr);
         }
@@ -1362,6 +1362,22 @@ LowererMDArch::LowerCall(IR::Instr * callInstr, uint32 argCount, RegNum regNum)
             espOpnd, indirOpnd, this->m_func);
 
         callInstr->InsertAfter(addInstr);
+    }
+
+    if (callInstr->HasLazyBailOut())
+    {
+        BailOutInfo *bailOutInfo = callInstr->GetBailOutInfo();
+        if (bailOutInfo->bailOutRecord == nullptr)
+        {
+            bailOutInfo->bailOutRecord = NativeCodeDataNewZ(
+                this->m_func->GetNativeCodeDataAllocator(),
+                BailOutRecord,
+                bailOutInfo->bailOutOffset,
+                bailOutInfo->polymorphicCacheIndex,
+                callInstr->GetBailOutKind(),
+                bailOutInfo->bailOutFunc
+            );
+        }
     }
 
     this->helperCallArgsCount = 0;
@@ -4076,6 +4092,16 @@ LowererMDArch::FinalLower()
             // Get rid of the deps and srcs
             instr->FreeDst();
             instr->FreeSrc2();
+            break;
+        default:
+            if (instr->HasLazyBailOut())
+            {
+                // Since Lowerer and Peeps might have removed instructions with lazy bailout
+                // if we attach them to helper calls, FinalLower is the first phase that
+                // we can know if the function has any lazy bailouts at all.
+                this->m_func->SetHasLazyBailOut();
+            }
+
             break;
         }
     }

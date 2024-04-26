@@ -1,5 +1,6 @@
 //-------------------------------------------------------------------------------------------------------
 // Copyright (C) Microsoft. All rights reserved.
+// Copyright (c) ChakraCore Project Contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
 //-------------------------------------------------------------------------------------------------------
 #include "RuntimeLibraryPch.h"
@@ -7,10 +8,6 @@
 #include "Math/CrtSSE2Math.h"
 
 #include <math.h>
-
-#if defined(_M_IX86) || defined(_M_X64)
-#pragma intrinsic(_mm_round_sd)
-#endif
 
 const LPCWSTR UCrtC99MathApis::LibraryName = _u("api-ms-win-crt-math-l1-1-0.dll");
 
@@ -741,26 +738,33 @@ namespace Js
         else
         {
             double current = JavascriptConversion::ToNumber(args[1], scriptContext);
+
+            bool returnNaN = false;
             if (JavascriptNumber::IsNan(current))
             {
-                return scriptContext->GetLibrary()->GetNaN();
+                returnNaN = true;
             }
 
             for (uint idxArg = 2; idxArg < args.Info.Count; idxArg++)
             {
                 double compare = JavascriptConversion::ToNumber(args[idxArg], scriptContext);
-                if (JavascriptNumber::IsNan(compare))
+                if (JavascriptNumber::IsNan(compare) || returnNaN) // Call ToNumber for all args
                 {
-                    return scriptContext->GetLibrary()->GetNaN();
+                    returnNaN = true;
                 }
 
                 // In C++, -0.0f == 0.0f; however, in ES, -0.0f < 0.0f. Thus, use additional library 
                 // call to test this comparison.
-                if ((compare == 0 && JavascriptNumber::IsNegZero(current)) ||
+                else if ((compare == 0 && JavascriptNumber::IsNegZero(current)) ||
                     current < compare)
                 {
                     current = compare;
                 }
+            }
+
+            if (returnNaN)
+            {
+                return scriptContext->GetLibrary()->GetNaN();
             }
 
             return JavascriptNumber::ToVarNoCheck(current, scriptContext);
@@ -821,26 +825,33 @@ namespace Js
         else
         {
             double current = JavascriptConversion::ToNumber(args[1], scriptContext);
+
+            bool returnNaN = false;
             if (JavascriptNumber::IsNan(current))
             {
-                return scriptContext->GetLibrary()->GetNaN();
+                returnNaN = true;
             }
 
             for (uint idxArg = 2; idxArg < args.Info.Count; idxArg++)
             {
                 double compare = JavascriptConversion::ToNumber(args[idxArg], scriptContext);
-                if (JavascriptNumber::IsNan(compare))
+                if (JavascriptNumber::IsNan(compare) || returnNaN) // Call ToNumber for all args
                 {
-                    return scriptContext->GetLibrary()->GetNaN();
+                    returnNaN = true;
                 }
 
                 // In C++, -0.0f == 0.0f; however, in ES, -0.0f < 0.0f. Thus, use additional library 
                 // call to test this comparison.
-                if ((current == 0 && JavascriptNumber::IsNegZero(compare)) ||
+                else if ((current == 0 && JavascriptNumber::IsNegZero(compare)) ||
                     current > compare)
                 {
                     current = compare;
                 }
+            }
+
+            if (returnNaN)
+            {
+                return scriptContext->GetLibrary()->GetNaN();
             }
 
             return JavascriptNumber::ToVarNoCheck(current, scriptContext);

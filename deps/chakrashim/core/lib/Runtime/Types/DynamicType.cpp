@@ -454,7 +454,7 @@ namespace Js
     {
         if (JavascriptConversion::IsCallable(toPrimitiveFunction))
         {
-            RecyclableObject* toStringFunction = RecyclableObject::FromVar(toPrimitiveFunction);
+            RecyclableObject* toStringFunction = VarTo<RecyclableObject>(toPrimitiveFunction);
 
             ThreadContext * threadContext = requestContext->GetThreadContext();
             Var aResult = threadContext->ExecuteImplicitCall(toStringFunction, ImplicitCall_ToPrimitive, [=]() -> Js::Var
@@ -487,7 +487,6 @@ namespace Js
         if (this->HasObjectArray())
         {
             arrayObject = this->GetObjectArrayOrFlagsAsArray();
-            Assert(arrayObject->GetPropertyCount() == 0);
         }
         return enumerator->Initialize(prefixEnumerator, arrayObject, this, flags, requestContext, enumeratorCache);
     }

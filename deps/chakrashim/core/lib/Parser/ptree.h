@@ -72,6 +72,7 @@ class ParseNodeUni;
 class ParseNodeBin;
 class ParseNodeTri;
 class ParseNodeInt;
+class ParseNodeBigInt;
 class ParseNodeFloat;
 class ParseNodeRegExp;
 class ParseNodeStr;
@@ -84,6 +85,7 @@ class ParseNodeExportDefault;
 class ParseNodeStrTemplate;
 class ParseNodeSuperReference;
 class ParseNodeArrLit;
+class ParseNodeObjLit;
 class ParseNodeClass;
 class ParseNodeParamPattern;
 
@@ -100,7 +102,6 @@ class ParseNodeTryCatch;
 class ParseNodeTry;
 class ParseNodeCatch;
 class ParseNodeFinally;
-class ParseNodeLoop;
 class ParseNodeWhile;
 class ParseNodeFor;
 class ParseNodeForInOrForOf;
@@ -118,6 +119,7 @@ public:
     ParseNodeBin * AsParseNodeBin();
     ParseNodeTri * AsParseNodeTri();
     ParseNodeInt * AsParseNodeInt();
+    ParseNodeBigInt * AsParseNodeBigInt();
     ParseNodeFloat * AsParseNodeFloat();
     ParseNodeRegExp * AsParseNodeRegExp();
     ParseNodeVar * AsParseNodeVar();
@@ -129,6 +131,7 @@ public:
     ParseNodeStrTemplate * AsParseNodeStrTemplate();
     ParseNodeSuperReference * AsParseNodeSuperReference();
     ParseNodeArrLit * AsParseNodeArrLit();
+    ParseNodeObjLit * AsParseNodeObjLit();
 
     ParseNodeCall * AsParseNodeCall();
     ParseNodeSuperCall * AsParseNodeSuperCall();
@@ -150,7 +153,6 @@ public:
     ParseNodeCatch * AsParseNodeCatch();
     ParseNodeFinally * AsParseNodeFinally();
 
-    ParseNodeLoop * AsParseNodeLoop();
     ParseNodeWhile * AsParseNodeWhile();
     ParseNodeFor * AsParseNodeFor();
     ParseNodeForInOrForOf * AsParseNodeForInOrForOf();
@@ -307,6 +309,19 @@ public:
     DISABLE_SELF_CAST(ParseNodeInt);
 };
 
+// bigint constant
+class ParseNodeBigInt : public ParseNode
+{
+public:
+    ParseNodeBigInt(charcount_t ichMin, charcount_t ichLim, IdentPtr pid);
+
+    IdentPtr const pid;
+    bool isNegative : 1;
+
+    DISABLE_SELF_CAST(ParseNodeBigInt);
+
+};
+
 // double constant
 class ParseNodeFloat : public ParseNode
 {
@@ -405,6 +420,18 @@ public:
     DISABLE_SELF_CAST(ParseNodeArrLit);
 };
 
+class ParseNodeObjLit : public ParseNodeUni
+{
+public:
+    ParseNodeObjLit(OpCode nop, charcount_t ichMin, charcount_t ichLim, uint staticCnt=0, uint computedCnt=0, bool rest=false);
+
+    uint staticCount;
+    uint computedCount;
+    bool hasRest;
+
+    DISABLE_SELF_CAST(ParseNodeObjLit);
+};
+
 class FuncInfo;
 
 enum PnodeBlockType : unsigned
@@ -445,7 +472,7 @@ enum FncFlags : uint
     kFunctionIsStaticMember                     = 1 << 24,
     kFunctionIsGenerator                        = 1 << 25, // Function is an ES6 generator function
     kFunctionAsmjsMode                          = 1 << 26,
-    // Free = 1 << 27,
+    kFunctionIsDeclaredInParamScope             = 1 << 27, // Function is declared in parameter scope (ex: inside default argument)
     kFunctionIsAsync                            = 1 << 28, // function is async
     kFunctionHasDirectSuper                     = 1 << 29, // super()
     kFunctionIsDefaultModuleExport              = 1 << 30, // function is the default export of a module
@@ -475,14 +502,12 @@ public:
     LPCOLESTR hint;
     uint32 hintLength;
     uint32 hintOffset;
-    bool  isNameIdentifierRef;
-    bool  nestedFuncEscapes;
     ParseNodeBlock * pnodeScopes;
     ParseNodeBlock * pnodeBodyScope;
     ParseNodePtr pnodeParams;
     ParseNodePtr pnodeVars;
     ParseNodePtr pnodeBody;
-    ParseNodeVar * pnodeRest;
+    ParseNodePtr pnodeRest;
 
     FuncInfo *funcInfo; // function information gathered during byte code generation
     Scope *scope;
@@ -490,11 +515,11 @@ public:
     uint nestedCount; // Nested function count (valid until children have been processed)
     uint nestedIndex; // Index within the parent function (Used by ByteCodeGenerator)
 
-    uint16 firstDefaultArg; // Position of the first default argument, if any
-
     FncFlags fncFlags;
     int32 astSize;
     size_t cbMin; // Min an Lim UTF8 offsets.
+    size_t cbStringMin;
+    size_t cbStringLim;
     size_t cbLim;
     ULONG lineNumber;   // Line number relative to the current source buffer of the function declaration.
     ULONG columnNumber; // Column number of the declaration.
@@ -505,6 +530,9 @@ public:
     RestorePoint *pRestorePoint;
     DeferredFunctionStub *deferredStub;
     IdentPtrSet *capturedNames;
+    uint16 firstDefaultArg; // Position of the first default argument, if any
+    bool isNameIdentifierRef;
+    bool nestedFuncEscapes;
     bool canBeDeferred;
     bool isBodyAndParamScopeMerged; // Indicates whether the param scope and the body scope of the function can be merged together or not.
                                     // We cannot merge both scopes together if there is any closure capture or eval is present in the param scope.
@@ -583,6 +611,7 @@ public:
     void SetHasHomeObj(bool set = true) { SetFlags(kFunctionHasHomeObj, set); }
     void SetUsesArguments(bool set = true) { SetFlags(kFunctionUsesArguments, set); }
     void SetIsDefaultModuleExport(bool set = true) { SetFlags(kFunctionIsDefaultModuleExport, set); }
+    void SetIsDeclaredInParamScope(bool set = true) { SetFlags(kFunctionIsDeclaredInParamScope, set); }
     void SetNestedFuncEscapes(bool set = true) { nestedFuncEscapes = set; }
     void SetCanBeDeferred(bool set = true) { canBeDeferred = set; }
     void ResetBodyAndParamScopeMerged() { isBodyAndParamScopeMerged = false; }
@@ -623,6 +652,7 @@ public:
     bool HasHomeObj() const { return HasFlags(kFunctionHasHomeObj); }
     bool UsesArguments() const { return HasFlags(kFunctionUsesArguments); }
     bool IsDefaultModuleExport() const { return HasFlags(kFunctionIsDefaultModuleExport); }
+    bool IsDeclaredInParamScope() const { return HasFlags(kFunctionIsDeclaredInParamScope); }
     bool NestedFuncEscapes() const { return nestedFuncEscapes; }
     bool CanBeDeferred() const { return canBeDeferred; }
     bool IsBodyAndParamScopeMerged() { return isBodyAndParamScopeMerged; }
@@ -683,7 +713,6 @@ public:
     ParseNodeBlock * pnodeBlock;
     ParseNodeFnc * pnodeConstructor;
     ParseNodePtr pnodeMembers;
-    ParseNodePtr pnodeStaticMembers;
     ParseNodePtr pnodeExtends;
 
     bool isDefaultModuleExport;
@@ -772,8 +801,6 @@ class ParseNodeStmt : public ParseNode
 public:
     ParseNodeStmt(OpCode nop, charcount_t ichMin, charcount_t ichLim);
 
-    ParseNodeStmt * pnodeOuter;
-
     // Set by parsing code, used by code gen.
     uint grfnop;
 
@@ -831,21 +858,8 @@ public:
     DISABLE_SELF_CAST(ParseNodeJump);
 };
 
-// base for loop nodes
-class ParseNodeLoop : public ParseNodeStmt
-{
-public:
-    ParseNodeLoop(OpCode nop, charcount_t ichMin, charcount_t ichLim);
-
-    // Needed for byte code gen
-    uint loopId;
-
-
-    DISABLE_SELF_CAST(ParseNodeLoop);
-};
-
 // while and do-while loops
-class ParseNodeWhile : public ParseNodeLoop
+class ParseNodeWhile : public ParseNodeStmt
 {
 public:
     ParseNodeWhile(OpCode nop, charcount_t ichMin, charcount_t ichLim);
@@ -896,7 +910,7 @@ public:
 };
 
 // for-in loop
-class ParseNodeForInOrForOf : public ParseNodeLoop
+class ParseNodeForInOrForOf : public ParseNodeStmt
 {
 public:
     ParseNodeForInOrForOf(OpCode nop, charcount_t ichMin, charcount_t ichLim);
@@ -906,12 +920,14 @@ public:
     ParseNodePtr pnodeLval;
     ParseNodeBlock * pnodeBlock;
     Js::RegSlot itemLocation;
+    Js::RegSlot shouldCallReturnFunctionLocation;
+    Js::RegSlot shouldCallReturnFunctionLocationFinally;
 
     DISABLE_SELF_CAST(ParseNodeForInOrForOf);
 };
 
 // for loop
-class ParseNodeFor : public ParseNodeLoop
+class ParseNodeFor : public ParseNodeStmt
 {
 public:
     ParseNodeFor(OpCode nop, charcount_t ichMin, charcount_t ichLim);
@@ -1006,6 +1022,9 @@ class ParseNodeCatch : public ParseNodeStmt
 {
 public:
     ParseNodeCatch(OpCode nop, charcount_t ichMin, charcount_t ichLim);
+
+    bool HasPatternParam() { return pnodeParam != nullptr && pnodeParam->nop == knopParamPattern; }
+    bool HasParam() { return pnodeParam != nullptr;  }
 
     ParseNodePtr GetParam() { return pnodeParam; }
     void SetParam(ParseNodeName * pnode) { pnodeParam = pnode;  }

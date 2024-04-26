@@ -1,5 +1,6 @@
 //-------------------------------------------------------------------------------------------------------
 // Copyright (C) Microsoft. All rights reserved.
+// Copyright (c) ChakraCore Project Contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
 //-------------------------------------------------------------------------------------------------------
 #include "ParserPch.h"
@@ -492,6 +493,8 @@ tokens Scanner<EncodingPolicy>::ScanIdentifierContinue(bool identifyKwds, bool f
         break;
     }
 
+    m_lastIdentifierHasEscape = fHasEscape;
+
     Assert(p - pchMin > 0 && p - pchMin <= LONG_MAX);
 
     *pp = p;
@@ -597,12 +600,12 @@ IdentPtr Scanner<EncodingPolicy>::PidOfIdentiferAt(EncodedCharPtr p, EncodedChar
 }
 
 template <typename EncodingPolicy>
-typename Scanner<EncodingPolicy>::EncodedCharPtr Scanner<EncodingPolicy>::FScanNumber(EncodedCharPtr p, double *pdbl, bool& likelyInt)
+typename Scanner<EncodingPolicy>::EncodedCharPtr Scanner<EncodingPolicy>::FScanNumber(EncodedCharPtr p, double *pdbl, LikelyNumberType& likelyType, size_t savedMultiUnits)
 {
     EncodedCharPtr last = m_pchLast;
     EncodedCharPtr pchT = nullptr;
     bool baseSpecified = false;
-    likelyInt = true;
+    likelyType = LikelyNumberType::Int;
     // Reset
     m_OctOrLeadingZeroOnLastTKNumber = false;
 
@@ -627,27 +630,28 @@ typename Scanner<EncodingPolicy>::EncodedCharPtr Scanner<EncodingPolicy>::FScanN
         case '.':
         case 'e':
         case 'E':
-            likelyInt = false;
+        case 'n':
+            likelyType = LikelyNumberType::Double;
             // Floating point
             goto LFloat;
 
         case 'x':
         case 'X':
             // Hex
-            *pdbl = Js::NumberUtilities::DblFromHex(p + 2, &pchT);
+            *pdbl = Js::NumberUtilities::DblFromHex(p + 2, &pchT, m_scriptContext->GetConfig()->IsESNumericSeparatorEnabled());
             baseSpecifierCheck();
             goto LIdCheck;
         case 'o':
         case 'O':
             // Octal
-            *pdbl = Js::NumberUtilities::DblFromOctal(p + 2, &pchT);
+            *pdbl = Js::NumberUtilities::DblFromOctal(p + 2, &pchT, m_scriptContext->GetConfig()->IsESNumericSeparatorEnabled());
             baseSpecifierCheck();
             goto LIdCheck;
 
         case 'b':
         case 'B':
             // Binary
-            *pdbl = Js::NumberUtilities::DblFromBinary(p + 2, &pchT);
+            *pdbl = Js::NumberUtilities::DblFromBinary(p + 2, &pchT, m_scriptContext->GetConfig()->IsESNumericSeparatorEnabled());
             baseSpecifierCheck();
             goto LIdCheck;
 
@@ -678,8 +682,12 @@ typename Scanner<EncodingPolicy>::EncodedCharPtr Scanner<EncodingPolicy>::FScanN
     else
     {
 LFloat:
-        *pdbl = Js::NumberUtilities::StrToDbl(p, &pchT, likelyInt);
+        *pdbl = Js::NumberUtilities::StrToDbl(p, &pchT, likelyType, m_scriptContext->GetConfig()->IsESBigIntEnabled(), m_scriptContext->GetConfig()->IsESNumericSeparatorEnabled());
         Assert(pchT == p || !Js::NumberUtilities::IsNan(*pdbl));
+        if (likelyType == LikelyNumberType::BigInt)
+        {
+            Assert(*pdbl == 0);
+        }
         // fall through to LIdCheck
     }
 
@@ -696,6 +704,7 @@ LIdCheck:
     }
     if (this->charClassifier->IsIdStart(outChar))
     {
+        this->RestoreMultiUnits(savedMultiUnits);
         Error(ERRIdAfterLit);
     }
 
@@ -705,12 +714,14 @@ LIdCheck:
         startingLocation++; // TryReadEscape expects us to point to the 'u', and since it is by reference we need to do it beforehand.
         if (TryReadEscape(startingLocation, m_pchLast, &outChar))
         {
+            this->RestoreMultiUnits(savedMultiUnits);
             Error(ERRIdAfterLit);
         }
     }
 
     if (Js::NumberUtilities::IsDigit(*startingLocation))
     {
+        this->RestoreMultiUnits(savedMultiUnits);
         Error(ERRbadNumber);
     }
 
@@ -1056,7 +1067,6 @@ tokens Scanner<EncodingPolicy>::ScanStringConstant(OLECHAR delim, EncodedCharPtr
                 ch = rawch = kchNWL;
             }
 
-LEcmaLineBreak:
             // Fall through
         case kchNWL:
             if (stringTemplateMode)
@@ -1116,18 +1126,7 @@ LEcmaLineBreak:
 LMainDefault:
             if (this->IsMultiUnitChar(ch))
             {
-                if ((ch == kchLS || ch == kchPS))
-                {
-                    goto LEcmaLineBreak;
-                }
-
                 rawch = ch = this->template ReadRest<true>(ch, p, last);
-                switch (ch)
-                {
-                case kchLS: // 0x2028, classifies as new line
-                case kchPS: // 0x2029, classifies as new line
-                    goto LEcmaLineBreak;
-                }
             }
             break;
 
@@ -1594,9 +1593,10 @@ tokens Scanner<EncodingPolicy>::ScanCore(bool identifyKwds)
     bool seenDelimitedCommentEnd = false;
 
     // store the last token
-    m_tkPrevious = m_ptoken->tk;
+    m_tokenPrevious = *m_ptoken;
     m_iecpLimTokPrevious = IecpLimTok();    // Introduced for use by lambda parsing to find correct span of expression lambdas
     m_ichLimTokPrevious = IchLimTok();
+    size_t savedMultiUnits = this->m_cMultiUnits;
 
     if (p >= last)
     {
@@ -1637,6 +1637,7 @@ LLoop:
 #endif
         switch (ch)
         {
+LDefault:
         default:
             if (ch == kchLS ||
                 ch == kchPS )
@@ -1729,19 +1730,28 @@ LEof:
                 Assert(chType == _C_DIG || chType == _C_DOT);
                 p = m_pchMinTok;
                 this->RestoreMultiUnits(m_cMinTokMultiUnits);
-                bool likelyInt = true;
-                pchT = FScanNumber(p, &dbl, likelyInt);
+                LikelyNumberType likelyType = LikelyNumberType::Int;
+                pchT = FScanNumber(p, &dbl, likelyType, savedMultiUnits);
                 if (p == pchT)
                 {
+                    this->RestoreMultiUnits(savedMultiUnits);
                     Assert(this->PeekFirst(p, last) != '.');
                     Error(ERRbadNumber);
                 }
                 Assert(!Js::NumberUtilities::IsNan(dbl));
-
+                if (likelyType == LikelyNumberType::BigInt)
+                {
+                    Assert(m_scriptContext->GetConfig()->IsESBigIntEnabled());
+                    AssertOrFailFast(pchT - p < UINT_MAX);
+                    token = tkBigIntCon;
+                    m_ptoken->SetBigInt(this->GetHashTbl()->PidHashNameLen(p, pchT, (uint32) (pchT - p)));
+                    p = pchT;
+                    break;
+                }
                 p = pchT;
 
                 int32 value;
-                if (likelyInt && Js::NumberUtilities::FDblIsInt32(dbl, &value))
+                if ((likelyType == LikelyNumberType::Int) && Js::NumberUtilities::FDblIsInt32(dbl, &value))
                 {
                     m_ptoken->SetLong(value);
                     token = tkIntCon;
@@ -1749,7 +1759,7 @@ LEof:
                 else
                 {
                     token = tkFltCon;
-                    m_ptoken->SetDouble(dbl, likelyInt);
+                    m_ptoken->SetDouble(dbl, likelyType == LikelyNumberType::Int);
                 }
 
                 break;
@@ -1761,7 +1771,18 @@ LEof:
         case '[': Assert(chType == _C_LBR); token = tkLBrack; break;
         case ']': Assert(chType == _C_RBR); token = tkRBrack; break;
         case '~': Assert(chType == _C_TIL); token = tkTilde;  break;
-        case '?': Assert(chType == _C_QUE); token = tkQMark;  break;
+
+        case '?':
+            Assert(chType == _C_QUE);
+            token = tkQMark;
+            if (m_scriptContext->GetConfig()->IsESNullishCoalescingOperatorEnabled() && this->PeekFirst(p, last) == '?')
+            {
+                p++;
+                token = tkCoalesce;
+                break;
+            }
+            break;
+
         case '{': Assert(chType == _C_LC);  token = tkLCurly; break;
 
         // ES 2015 11.3 Line Terminators
@@ -1943,6 +1964,16 @@ LIdentifier:
                 }
             }
             break;
+
+        case '#':
+            // Hashbang syntax is a single line comment only if it is the first token in the source
+            if (m_scriptContext->GetConfig()->IsESHashbangEnabled() && this->PeekFirst(p, last) == '!' && m_pchBase == m_pchMinTok)
+            {
+                p++;
+                goto LSkipLineComment;
+            }
+            goto LDefault;
+
         case '/':
             token = tkDiv;
             switch(this->PeekFirst(p, last))

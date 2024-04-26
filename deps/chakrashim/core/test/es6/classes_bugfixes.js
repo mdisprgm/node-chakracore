@@ -1,5 +1,6 @@
 //-------------------------------------------------------------------------------------------------------
 // Copyright (C) Microsoft. All rights reserved.
+// Copyright (c) 2021 ChakraCore Project Contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
 //-------------------------------------------------------------------------------------------------------
 
@@ -258,7 +259,7 @@ var tests = [
         b.arguments=function() { };
         assert.areEqual(100, b.length, "Get/set accessor \'length\'");
         assert.areEqual("Caller", b.caller, "Get/set accessor \'caller\'");
-        assert.areEqual("function () { }", b.arguments.toString(), "Get/set accessor \'arguments\'");
+        assert.areEqual("function() { }", b.arguments.toString(), "Get/set accessor \'arguments\'");
     }
   },
   {
@@ -494,6 +495,17 @@ var tests = [
     name: "#3040 Class extends clause accepts LHS expressions only",
     body: function() {
       assert.throws(function () { eval("1,class extends[]/print(1){}"); }, SyntaxError, "Parsing extends expr should not go past a term", "Expected '{'");
+    }
+  },
+  {
+    name : "#6487 Recursive class declaration with extends function call should throw stack space, not nullptr-de-ref",
+    body : function() {
+      function recur() {
+        class a extends 'x'.match({})
+        {}
+        recur();
+      }
+      assert.throws(recur, Error, "Out of stack space");
     }
   }
 ];

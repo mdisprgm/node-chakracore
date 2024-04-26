@@ -636,6 +636,9 @@ public:
             // Note that even usesFixedValue cannot live on ObjTypeSpecFldInfo, because we may share a cache between
             // e.g. Object.prototype and new Object(), and only the latter actually uses the fixed value, even though both have it.
             bool usesFixedValue: 1;
+            bool auxSlotPtrSymAvailable:1;
+            bool producesAuxSlotPtr:1;
+            bool cantChangeType: 1;
 
             union
             {
@@ -972,6 +975,28 @@ public:
         this->typeDead = value;
     }
 
+    bool IsAuxSlotPtrSymAvailable() const
+    {
+        return this->auxSlotPtrSymAvailable;
+    }
+
+    void SetAuxSlotPtrSymAvailable(bool value)
+    {
+        Assert(IsTypeCheckSeqCandidate());
+        this->auxSlotPtrSymAvailable = value;
+    }
+
+    bool ProducesAuxSlotPtr() const
+    {
+        return this->producesAuxSlotPtr;
+    }
+
+    void SetProducesAuxSlotPtr(bool value)
+    {
+        Assert(IsTypeCheckSeqCandidate());
+        this->producesAuxSlotPtr = value;
+    }
+
     void SetTypeDeadIfTypeCheckSeqCandidate(bool value)
     {
         if (IsTypeCheckSeqCandidate())
@@ -1033,6 +1058,16 @@ public:
     {
         Assert(IsTypeCheckSeqCandidate());
         this->typeCheckRequired = value;
+    }
+
+    bool CantChangeType() const
+    {
+        return this->cantChangeType;
+    }
+
+    void SetCantChangeType(bool value)
+    {
+        this->cantChangeType = value;
     }
 
     uint16 GetObjTypeSpecFlags() const
@@ -1176,9 +1211,6 @@ public:
     {
         this->finalType = JITTypeHolder(nullptr);
     }
-
-    bool NeedsAuxSlotPtrSymLoad() const;
-    void GenerateAuxSlotPtrSymLoad(IR::Instr * instrInsert);
 
     BVSparse<JitArenaAllocator>* GetGuardedPropOps()
     {
@@ -1494,7 +1526,9 @@ public:
 public:
     //Note type: OpndKindAddr
     AddrOpnd *              CopyInternal(Func *func);
-    bool                    IsEqualInternal(Opnd *opnd);
+    bool                    IsEqualInternal(Opnd *opnd) const;
+    bool                    IsEqualAddr(void *addr) const;
+    static bool             IsEqualAddr(IR::Opnd * opnd, void * addr);
     void                    FreeInternal(Func * func);
 
     bool                    IsDynamic() const { return addrOpndKind > AddrOpndKindConstantVar; }

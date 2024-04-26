@@ -1,5 +1,6 @@
 //-------------------------------------------------------------------------------------------------------
 // Copyright (C) Microsoft. All rights reserved.
+// Copyright (c) ChakraCore Project Contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
 //-------------------------------------------------------------------------------------------------------
 #pragma once
@@ -82,6 +83,9 @@ inline int _count_args(const T1&, const T2&, const T3&, const T4&, const T5&, Js
 // xplat-todo: fix me ARM
 #define CALL_ENTRYPOINT_NOASSERT(entryPoint, function, callInfo, ...) \
     entryPoint(function, callInfo, ##__VA_ARGS__)
+#elif defined (_ARM64_)
+#define CALL_ENTRYPOINT_NOASSERT(entryPoint, function, callInfo, ...) \
+    entryPoint(function, callInfo, function, callInfo, ##__VA_ARGS__)
 #else
 #error CALL_ENTRYPOINT_NOASSERT not yet implemented
 #endif
@@ -196,7 +200,7 @@ namespace Js
         Arguments(const Arguments& other) : Info(other.Info), Values(other.Values) {}
 
         Var operator [](int idxArg) { return const_cast<Var>(static_cast<const Arguments&>(*this)[idxArg]); }
-        const Var operator [](int idxArg) const
+        Var operator [](int idxArg) const
         {
             AssertMsg((idxArg < (int)Info.Count) && (idxArg >= 0), "Ensure a valid argument index");
             return Values[idxArg];

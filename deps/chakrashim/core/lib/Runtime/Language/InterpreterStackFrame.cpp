@@ -1,5 +1,6 @@
 //-------------------------------------------------------------------------------------------------------
 // Copyright (C) Microsoft Corporation and contributors. All rights reserved.
+// Copyright (c) ChakraCore Project Contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
 //-------------------------------------------------------------------------------------------------------
 
@@ -283,6 +284,17 @@
 
 #define PROCESS_A1toA1MemNonVar(name, func) PROCESS_A1toA1MemNonVar_COMMON(name, func,)
 
+#define PROCESS_SIZEtoA1MemNonVar_COMMON(name, func, suffix) \
+    case OpCode::name: \
+    { \
+        PROCESS_READ_LAYOUT(name, Reg1Unsigned1, suffix); \
+        SetNonVarReg(playout->R0, \
+                func(playout->C1, GetScriptContext())); \
+        break; \
+    }
+
+#define PROCESS_SIZEtoA1MemNonVar(name, func) PROCESS_SIZEtoA1MemNonVar_COMMON(name, func,)
+
 #define PROCESS_INNERtoA1_COMMON(name, func, suffix) \
     case OpCode::name: \
     { \
@@ -302,6 +314,52 @@
     }
 
 #define PROCESS_U1toINNERMemNonVar(name, func) PROCESS_U1toINNERMemNonVar_COMMON(name, func,)
+
+#define PROCESS_XXtoA2_FB_COMMON(name, func, suffix) \
+    case OpCode::name: \
+    { \
+        PROCESS_READ_LAYOUT(name, Reg2U, suffix); \
+        SetReg(playout->R0, \
+               func(this->GetFrameDisplayForNestedFunc(), this->m_functionBody->GetNestedFuncReference(playout->SlotIndex), playout->R1)); \
+        break; \
+    }
+
+#define PROCESS_XXtoA2_FB(name, func) PROCESS_XXtoA2_FB_COMMON(name, func,)
+
+#define PROCESS_A1toA2_FB_COMMON(name, func, suffix) \
+    case OpCode::name: \
+    { \
+        PROCESS_READ_LAYOUT(name, Reg3U, suffix); \
+        SetReg(playout->R0, \
+               func((FrameDisplay*)GetNonVarReg(playout->R2), this->m_functionBody->GetNestedFuncReference(playout->SlotIndex), playout->R1)); \
+        break; \
+    }
+
+#define PROCESS_A1toA2_FB(name, func) PROCESS_A1toA2_FB_COMMON(name, func,)
+
+#define PROCESS_A2toA2_FB_COMMON(name, func, suffix) \
+    case OpCode::name: \
+    { \
+        PROCESS_READ_LAYOUT(name, Reg4U, suffix); \
+        SetReg(playout->R0, \
+               func(this->GetFrameDisplayForNestedFunc(), this->m_functionBody->GetNestedFuncReference(playout->SlotIndex), \
+               GetReg(playout->R2), GetReg(playout->R3), playout->R1)); \
+        break; \
+    }
+
+#define PROCESS_A2toA2_FB(name, func) PROCESS_A2toA2_FB_COMMON(name, func,)
+
+#define PROCESS_A3toA2_FB_COMMON(name, func, suffix) \
+    case OpCode::name: \
+    { \
+        PROCESS_READ_LAYOUT(name, Reg5U, suffix); \
+        SetReg(playout->R0, \
+               func((FrameDisplay*)GetNonVarReg(playout->R4), this->m_functionBody->GetNestedFuncReference(playout->SlotIndex), \
+               GetReg(playout->R2), GetReg(playout->R3), playout->R1)); \
+        break; \
+    }
+
+#define PROCESS_A3toA2_FB(name, func) PROCESS_A3toA2_FB_COMMON(name, func,)
 
 #define PROCESS_XXINNERtoA1MemNonVar_COMMON(name, func, suffix) \
     case OpCode::name: \
@@ -388,6 +446,26 @@
     }
 
 #define PROCESS_A2toXXMemNonVar(name, func) PROCESS_A2toXXMemNonVar_COMMON(name, func,)
+
+#define PROCESS_A2toXXMem_COMMON(name, func, suffix) \
+    case OpCode::name: \
+    { \
+        PROCESS_READ_LAYOUT(name, Reg2, suffix); \
+        func(GetReg(playout->R0), GetReg(playout->R1), GetScriptContext()); \
+        break; \
+    }
+
+#define PROCESS_A2A2NonVartoXXMem(name, func) PROCESS_A2A2NonVartoXXMem_COMMON(name, func,)
+
+#define PROCESS_A2A2NonVartoXXMem_COMMON(name, func, suffix) \
+    case OpCode::name: \
+    { \
+        PROCESS_READ_LAYOUT(name, Reg4, suffix); \
+        func(GetReg(playout->R0), GetReg(playout->R1), GetNonVarReg(playout->R2), GetNonVarReg(playout->R3), GetScriptContext()); \
+        break; \
+    }
+
+#define PROCESS_A2toXXMem(name, func) PROCESS_A2toXXMem_COMMON(name, func,)
 
 #define PROCESS_A1NonVarToA1_COMMON(name, func, suffix) \
     case OpCode::name: \
@@ -828,6 +906,16 @@
 
 #define PROCESS_SET_ELEM_SLOTNonVar(name, func) PROCESS_SET_ELEM_SLOTNonVar_COMMON(name, func,)
 
+#define PROCESS_SET_ELEM_SLOTMem_COMMON(name, func, suffix) \
+    case OpCode::name: \
+    { \
+        PROCESS_READ_LAYOUT(name, ElementSlot, suffix); \
+        func(GetNonVarReg(playout->Instance), playout->SlotIndex, GetReg(playout->Value), GetScriptContext()); \
+        break; \
+    }
+
+#define PROCESS_SET_ELEM_SLOTMem(name, func) PROCESS_SET_ELEM_SLOTMem_COMMON(name, func,)
+
 #define PROCESS_SET_ELEM_LOCALSLOTNonVar_COMMON(name, func, suffix) \
     case OpCode::name: \
     { \
@@ -980,23 +1068,37 @@ namespace Js
     }
 
     const int k_stackFrameVarCount = (sizeof(InterpreterStackFrame) + sizeof(Var) - 1) / sizeof(Var);
-    InterpreterStackFrame::Setup::Setup(Js::ScriptFunction * function, Js::Arguments& args, bool bailedOut, bool inlinee)
-        : function(function), inParams(args.Values), inSlotsCount(args.Info.Count), executeFunction(function->GetFunctionBody()), callFlags(args.Info.Flags), bailedOutOfInlinee(inlinee), bailedOut(bailedOut)
+    InterpreterStackFrame::Setup::Setup(Js::ScriptFunction * function, Js::Arguments& args, bool bailedOut, bool inlinee, bool isGeneratorFrame)
+        : function(function),
+          inParams(args.Values),
+          inSlotsCount(args.Info.Count),
+          executeFunction(function->GetFunctionBody()),
+          callFlags(args.Info.Flags),
+          bailedOutOfInlinee(inlinee),
+          bailedOut(bailedOut),
+          isGeneratorFrame(isGeneratorFrame)
     {
         SetupInternal();
     }
 
     InterpreterStackFrame::Setup::Setup(Js::ScriptFunction * function, Var * inParams, int inSlotsCount)
-        : function(function), inParams(inParams), inSlotsCount(inSlotsCount), executeFunction(function->GetFunctionBody()), callFlags(CallFlags_None), bailedOutOfInlinee(false), bailedOut(false)
+        : function(function),
+          inParams(inParams),
+          inSlotsCount(inSlotsCount),
+          executeFunction(function->GetFunctionBody()),
+          callFlags(CallFlags_None),
+          bailedOutOfInlinee(false),
+          bailedOut(false),
+          isGeneratorFrame(false)
     {
         SetupInternal();
     }
 
     void InterpreterStackFrame::Setup::SetupInternal()
     {
-        if (this->function->GetHasInlineCaches() && Js::ScriptFunctionWithInlineCache::Is(this->function))
+        if (this->function->GetHasInlineCaches() && Js::VarIs<Js::ScriptFunctionWithInlineCache>(this->function))
         {
-            this->inlineCaches = (void**)Js::ScriptFunctionWithInlineCache::FromVar(this->function)->GetInlineCaches();
+            this->inlineCaches = (void**)Js::VarTo<Js::ScriptFunctionWithInlineCache>(this->function)->GetInlineCaches();
             Assert(this->inlineCaches != nullptr);
         }
         else
@@ -1018,8 +1120,9 @@ namespace Js
             extraVarCount += (sizeof(ImplicitCallFlags) * this->executeFunction->GetLoopCount() + sizeof(Var) - 1) / sizeof(Var);
         }
 #endif
-        // If we bailed out, we will use the JIT frame's for..in enumerators
-        uint forInVarCount = bailedOut ? 0 : (this->executeFunction->GetForInLoopDepth() * (sizeof(Js::ForInObjectEnumerator) / sizeof(Var)));
+        // If we bailed out, we will use the JIT frame's for..in enumerators.
+        // But for generators, we will allocate space for them instead.
+        uint forInVarCount = (bailedOut && !isGeneratorFrame) ? 0 : (this->executeFunction->GetForInLoopDepth() * (sizeof(Js::ForInObjectEnumerator) / sizeof(Var)));
         this->varAllocCount = k_stackFrameVarCount + localCount + this->executeFunction->GetOutParamMaxDepth() + forInVarCount +
             extraVarCount + this->executeFunction->GetInnerScopeCount();
         this->stackVarAllocCount = 0;
@@ -1167,7 +1270,7 @@ namespace Js
         char * nextAllocBytes = (char *)(outparamsEnd);
 
         // If we bailed out, we will use the JIT frame's for..in enumerators
-        if (bailedOut || this->executeFunction->GetForInLoopDepth() == 0)
+        if (this->executeFunction->GetForInLoopDepth() == 0 || (!isGeneratorFrame && bailedOut))
         {
             newInstance->forInObjectEnumerators = nullptr;
         }
@@ -1711,19 +1814,19 @@ skipThunk:
     }
 #endif
 
-#if !defined(_M_ARM64)
+#if defined(_M_ARM64) && defined(_WIN32)
+    // Language\arm64\arm64_Thunks.asm
+#else
     Var InterpreterStackFrame::StaticInterpreterThunk(RecyclableObject* function, CallInfo callInfo, ...)
     {
         return InterpreterThunk((JavascriptCallStackLayout*)&function);
     }
-#else
-    // Language\arm64\arm64_Thunks.asm
 #endif
 #pragma optimize("", on)
 
     Var InterpreterStackFrame::InterpreterThunk(JavascriptCallStackLayout* layout)
     {
-        Js::ScriptFunction * function = Js::ScriptFunction::UnsafeFromVar(layout->functionObject);
+        Js::ScriptFunction * function = Js::UnsafeVarTo<Js::ScriptFunction>(layout->functionObject);
         Js::ArgumentReader args(&layout->callInfo, layout->args);
         void* localReturnAddress = _ReturnAddress();
         void* localAddressOfReturnAddress = _AddressOfReturnAddress();
@@ -1737,13 +1840,13 @@ skipThunk:
         ARGUMENTS(args, callInfo);
         void* localReturnAddress = _ReturnAddress();
         void* localAddressOfReturnAddress = _AddressOfReturnAddress();
-        Assert(ScriptFunction::Is(function));
-        return InterpreterHelper(ScriptFunction::FromVar(function), args, localReturnAddress, localAddressOfReturnAddress);
+        Assert(VarIs<ScriptFunction>(function));
+        return InterpreterHelper(VarTo<ScriptFunction>(function), args, localReturnAddress, localAddressOfReturnAddress);
     }
 #pragma optimize("", on)
 #endif
 
-    const bool InterpreterStackFrame::ShouldDoProfile(FunctionBody* executeFunction)
+    bool InterpreterStackFrame::ShouldDoProfile(FunctionBody* executeFunction)
     {
 #if ENABLE_PROFILE_INFO
         const bool doProfile = executeFunction->GetInterpreterExecutionMode(false) == ExecutionMode::ProfilingInterpreter ||
@@ -1762,7 +1865,7 @@ skipThunk:
         //
         ScriptContext* functionScriptContext = function->GetScriptContext();
         Arguments generatorArgs = generator->GetArguments();
-        InterpreterStackFrame::Setup setup(function, generatorArgs);
+        InterpreterStackFrame::Setup setup(function, generatorArgs, false /* bailedOut */, false /* inlinee */, true /* isGeneratorFrame */);
         Assert(setup.GetStackAllocationVarCount() == 0);
         size_t varAllocCount = setup.GetAllocationVarCount();
         size_t varSizeInBytes = varAllocCount * sizeof(Var);
@@ -1788,6 +1891,20 @@ skipThunk:
         newInstance->m_reader.Create(executeFunction);
 
         generator->SetFrame(newInstance, varSizeInBytes);
+
+        // Moving this to when we create the generator instance in the first place would be nice.
+        // But at that point the function might not have been parsed yet, so we don't have the locals count.
+        // We are also allocating more space than we actually need because we shouldn't need to
+        // reload all the symbols when bailing in.
+#ifdef ENABLE_DEBUG_CONFIG_OPTIONS
+        if (PHASE_TRACE(Js::Phase::BailInPhase, function->GetFunctionBody()))
+        {
+            generator->bailInSymbolsTraceArray = (Js::JavascriptGenerator::BailInSymbol*) RecyclerNewArrayLeafZ(
+                functionScriptContext->GetRecycler(), Js::JavascriptGenerator::BailInSymbol, executeFunction->GetFunctionBody()->GetLocalsCount()
+            );
+        }
+#endif
+
         return newInstance;
     }
 
@@ -1822,7 +1939,7 @@ skipThunk:
         Assert(threadContext->IsScriptActive());
         Assert(threadContext->IsInScript());
 
-        FunctionBody* executeFunction = JavascriptFunction::UnsafeFromVar(function)->GetFunctionBody();
+        FunctionBody* executeFunction = function->GetFunctionBody();
 #ifdef ENABLE_DEBUG_CONFIG_OPTIONS
         if (!isAsmJs && executeFunction->IsInDebugMode() != functionScriptContext->IsScriptContextInDebugMode()) // debug mode mismatch
         {
@@ -1900,22 +2017,23 @@ skipThunk:
             // If the FunctionBody is a generator then this call is being made by one of the three
             // generator resuming methods: next(), throw(), or return().  They all pass the generator
             // object as the first of two arguments.  The real user arguments are obtained from the
-            // generator object.  The second argument is the ResumeYieldData which is only needed
-            // when resuming a generator and so it only used here if a frame already exists on the
+            // generator object.  The second argument is the resume yield object which is only needed
+            // when resuming a generator and so it is only used here if a frame already exists on the
             // generator object.
-            AssertOrFailFastMsg(args.Info.Count == 2 && ((args.Info.Flags & CallFlags_ExtraArg) == CallFlags_None), "Generator ScriptFunctions should only be invoked by generator APIs with the pair of arguments they pass in -- the generator object and a ResumeYieldData pointer");
+            AssertOrFailFastMsg(args.Info.Count == 2 && ((args.Info.Flags & CallFlags_ExtraArg) == CallFlags_None), "Generator ScriptFunctions should only be invoked by generator APIs with the pair of arguments they pass in -- the generator object and a resume yield object");
 
-            JavascriptGenerator* generator = JavascriptGenerator::FromVar(args[0]);
+            JavascriptGenerator* generator = VarTo<JavascriptGenerator>(args[0]);
             newInstance = generator->GetFrame();
 
             if (newInstance != nullptr)
             {
-                ResumeYieldData* resumeYieldData = static_cast<ResumeYieldData*>(args[1]);
-                newInstance->SetNonVarReg(executeFunction->GetYieldRegister(), resumeYieldData);
+                newInstance->SetNonVarReg(executeFunction->GetYieldRegister(), args[1]);
 
                 // The debugger relies on comparing stack addresses of frames to decide when a step_out is complete so
                 // give the InterpreterStackFrame a legit enough stack address to make this comparison work.
                 newInstance->m_stackAddress = reinterpret_cast<DWORD_PTR>(&generator);
+
+                newInstance->retOffset = 0;
             }
             else
             {
@@ -2198,7 +2316,7 @@ skipThunk:
     template<typename T>
     T InterpreterStackFrame::AsmJsInterpreter(AsmJsCallStackLayout* layout)
     {
-        Js::ScriptFunction * function = Js::ScriptFunction::FromVar(layout->functionObject);
+        Js::ScriptFunction * function = Js::VarTo<Js::ScriptFunction>(layout->functionObject);
         int  flags = CallFlags_Value;
         ArgSlot nbArgs = ArgSlotMath::Add(function->GetFunctionBody()->GetAsmJsFunctionInfo()->GetArgCount(), 1);
 
@@ -2412,8 +2530,7 @@ skipThunk:
             if (exception)
             {
                 bool skipException = false;
-                if (!exception->IsGeneratorReturnException() &&
-                    exception != scriptContext->GetThreadContext()->GetPendingSOErrorObject() &&
+                if (exception != scriptContext->GetThreadContext()->GetPendingSOErrorObject() &&
                     exception != scriptContext->GetThreadContext()->GetPendingOOMErrorObject())
                 {
                     skipException = exception->IsDebuggerSkip();
@@ -2616,7 +2733,7 @@ skipThunk:
             if (CONFIG_FLAG(AsmJsEdge))
             {
                 // emscripten had a bug which caused this check to fail in some circumstances, so this check fails for some demos
-                if (!TaggedNumber::Is(value) && (!RecyclableObject::Is(value) || DynamicType::Is(RecyclableObject::FromVar(value)->GetTypeId())))
+                if (!TaggedNumber::Is(value) && (!VarIs<RecyclableObject>(value) || DynamicType::Is(VarTo<RecyclableObject>(value)->GetTypeId())))
                 {
                     AsmJSCompiler::OutputError(this->scriptContext, _u("Asm.js Runtime Error : Var import %s must be primitive"), this->scriptContext->GetPropertyName(import.field)->GetBuffer());
                     goto linkFailure;
@@ -2659,7 +2776,7 @@ skipThunk:
                 AsmJSCompiler::OutputError(this->scriptContext, _u("Asm.js Runtime Error : Accessing foreign function import %s has side effects"), this->scriptContext->GetPropertyName(import.field)->GetBuffer());
                 return this->ProcessLinkFailedAsmJsModule();
             }
-            if (!JavascriptFunction::Is(importFunc))
+            if (!VarIs<JavascriptFunction>(importFunc))
             {
                 AsmJSCompiler::OutputError(this->scriptContext, _u("Asm.js Runtime Error : Foreign function import %s is not a function"), this->scriptContext->GetPropertyName(import.field)->GetBuffer());
                 goto linkFailure;
@@ -2944,13 +3061,13 @@ skipThunk:
         }
 
         // Load module environment
-        AsmJsScriptFunction* asmJsFunc = AsmJsScriptFunction::FromVar(this->function);
+        AsmJsScriptFunction* asmJsFunc = VarTo<AsmJsScriptFunction>(this->function);
         m_localSlots[AsmJsFunctionMemory::ModuleEnvRegister] = asmJsFunc->GetModuleEnvironment();
         m_localSlots[AsmJsFunctionMemory::ArrayBufferRegister] = nullptr;
 #ifdef ENABLE_WASM
-        if (WasmScriptFunction::Is(func))
+        if (VarIs<WasmScriptFunction>(func))
         {
-            WasmScriptFunction* wasmFunc = WasmScriptFunction::FromVar(func);
+            WasmScriptFunction* wasmFunc = VarTo<WasmScriptFunction>(func);
             m_wasmMemory = wasmFunc->GetWebAssemblyMemory();
             m_signatures = func->GetFunctionBody()->GetAsmJsFunctionInfo()->GetWebAssemblyModule()->GetSignatures();
         }
@@ -3523,7 +3640,7 @@ skipThunk:
         Js::Var instance = this->GetRootObject();
         PropertyId propertyId = GetPropertyIdFromCacheId(playout->inlineCacheIndex);
         InlineCache *inlineCache = this->GetInlineCache(playout->inlineCacheIndex);
-        DynamicObject *obj = DynamicObject::UnsafeFromVar(instance);
+        DynamicObject *obj = UnsafeVarTo<DynamicObject>(instance);
 
         PropertyValueInfo info;
         PropertyValueInfo::SetCacheInfo(&info, GetFunctionBody(), inlineCache, playout->inlineCacheIndex, true);
@@ -3549,7 +3666,7 @@ skipThunk:
             GetFunctionBody(),
             GetInlineCache(playout->inlineCacheIndex),
             playout->inlineCacheIndex,
-            DynamicObject::UnsafeFromVar(rootInstance),
+            UnsafeVarTo<DynamicObject>(rootInstance),
             propertyId
             );
 
@@ -3575,9 +3692,9 @@ skipThunk:
         PropertyId propertyId = GetPropertyIdFromCacheId(playout->inlineCacheIndex);
 
         RecyclableObject* obj = NULL;
-        if (RecyclableObject::Is(varInstance))
+        if (VarIs<RecyclableObject>(varInstance))
         {
-            obj = RecyclableObject::FromVar(varInstance);
+            obj = VarTo<RecyclableObject>(varInstance);
         }
 
         InlineCache *inlineCache = this->GetInlineCache(playout->inlineCacheIndex);
@@ -3698,7 +3815,7 @@ skipThunk:
     }
     void InterpreterStackFrame::OP_CallAsmInternalCommon(ScriptFunction* function, RegSlot returnReg)
     {
-        AsmJsScriptFunction* scriptFunc = AsmJsScriptFunction::FromVar(function);
+        AsmJsScriptFunction* scriptFunc = VarTo<AsmJsScriptFunction>(function);
         AsmJsFunctionInfo* asmInfo = scriptFunc->GetFunctionBody()->GetAsmJsFunctionInfo();
         uint alignedArgsSize = ::Math::Align<uint32>(asmInfo->GetArgByteSize(), 16);
 #if _M_X64 && _WIN32
@@ -3758,15 +3875,19 @@ skipThunk:
         case AsmJsRetType::Uint8x16:
 #if _WIN32 //WASM.SIMD ToDo: Enable thunk for Xplat
 #if _M_X64
+#if !defined(__clang__)
             X86SIMDValue simdVal;
             simdVal.m128_value = JavascriptFunction::CallAsmJsFunction<__m128>(function, jsMethod, m_outParams, alignedArgsSize, reg);
             m_localSimdSlots[returnReg] = X86SIMDValue::ToSIMDValue(simdVal);
 #else
+            AssertOrFailFastMsg(false, "This particular path causes linking issues in clang on windows; potential difference in name mangling?");
+#endif // !defined(__clang__)
+#else
             m_localSimdSlots[returnReg] = JavascriptFunction::CallAsmJsFunction<AsmJsSIMDValue>(function, jsMethod, m_outParams, alignedArgsSize, reg);
-#endif
-#endif
+#endif // _M_X64
+#endif // _WIN32
             break;
-#endif
+#endif // ENABLE_WASM_SIMD
         default:
             Assume(UNREACHED);
         }
@@ -3884,13 +4005,41 @@ skipThunk:
     template <class T>
     void InterpreterStackFrame::OP_ProfileCallCommon(const unaligned T * playout, RecyclableObject * function, unsigned flags, ProfileId profileId, InlineCacheIndex inlineCacheIndex, const Js::AuxArray<uint32> *spreadIndices)
     {
+        JavascriptFunction * targetFunction = VarIs<JavascriptFunction>(m_outParams[0]) ? UnsafeVarTo<JavascriptFunction>(m_outParams[0]) : nullptr;
         FunctionBody* functionBody = this->m_functionBody;
-        DynamicProfileInfo * dynamicProfileInfo = functionBody->GetDynamicProfileInfo();
         FunctionInfo* functionInfo = function->GetTypeId() == TypeIds_Function ?
-            JavascriptFunction::FromVar(function)->GetFunctionInfo() : nullptr;
+            VarTo<JavascriptFunction>(function)->GetFunctionInfo() : nullptr;
+        DynamicProfileInfo* dynamicProfileInfo = functionBody->GetDynamicProfileInfo();
         bool isConstructorCall = (CallFlags_New & flags) == CallFlags_New;
-        dynamicProfileInfo->RecordCallSiteInfo(functionBody, profileId, functionInfo, functionInfo ? static_cast<JavascriptFunction*>(function) : nullptr, playout->ArgCount, isConstructorCall, inlineCacheIndex);
+
+
         OP_CallCommon<T>(playout, function, flags, spreadIndices);
+
+
+        // Profile call site
+
+        dynamicProfileInfo->RecordCallSiteInfo(functionBody, profileId, functionInfo, functionInfo ? static_cast<JavascriptFunction*>(function) : nullptr, playout->ArgCount, isConstructorCall, inlineCacheIndex);
+
+        if (functionInfo && !functionInfo->HasBody())
+        {
+            if ((functionInfo->IsBuiltInApplyFunction() || functionInfo->IsBuiltInCallFunction()) && targetFunction)
+            {
+                Js::ProfileId* callSiteToCallApplyCallSiteMap = this->m_functionBody->GetCallSiteToCallApplyCallSiteArray();
+                if (callSiteToCallApplyCallSiteMap)
+                {
+                    Js::ProfileId callApplyCallSiteId = callSiteToCallApplyCallSiteMap[profileId];
+                    if (callApplyCallSiteId < functionBody->GetProfiledCallApplyCallSiteCount())
+                    {
+                        dynamicProfileInfo->RecordCallApplyTargetInfo(functionBody, callApplyCallSiteId, targetFunction->GetFunctionInfo(), targetFunction);
+                    }
+                    else
+                    {
+                        Assert(callApplyCallSiteId == Js::Constants::NoProfileId);
+                    }
+                }
+            }
+        }
+
         if (playout->Return != Js::Constants::NoRegister)
         {
             dynamicProfileInfo->RecordReturnTypeOnCallSiteInfo(functionBody, profileId, GetReg((RegSlot)playout->Return));
@@ -3920,7 +4069,7 @@ skipThunk:
         InlineCache *inlineCache = this->GetInlineCache(playout->inlineCacheIndex);
 
         PropertyId propertyId = GetPropertyIdFromCacheId(playout->inlineCacheIndex);
-        DynamicObject * obj = DynamicObject::UnsafeFromVar(instance);
+        DynamicObject * obj = UnsafeVarTo<DynamicObject>(instance);
 
         PropertyValueInfo info;
         PropertyValueInfo::SetCacheInfo(&info, GetFunctionBody(), inlineCache, playout->inlineCacheIndex, true);
@@ -3945,7 +4094,7 @@ skipThunk:
             GetFunctionBody(),
             GetInlineCache(playout->inlineCacheIndex),
             playout->inlineCacheIndex,
-            DynamicObject::UnsafeFromVar(rootInstance),
+            UnsafeVarTo<DynamicObject>(rootInstance),
             propertyId
             );
 
@@ -3970,7 +4119,7 @@ skipThunk:
             GetFunctionBody(),
             GetInlineCache(playout->inlineCacheIndex),
             playout->inlineCacheIndex,
-            DynamicObject::UnsafeFromVar(rootInstance),
+            UnsafeVarTo<DynamicObject>(rootInstance),
             propertyId
             );
 
@@ -4144,10 +4293,10 @@ skipThunk:
         Var thisInstance = GetReg(playout->Value2);
         InlineCache *inlineCache = GetInlineCache(playout->PropertyIdIndex);
         PropertyId propertyId = GetPropertyIdFromCacheId(playout->PropertyIdIndex);
-        if (RecyclableObject::Is(instance) && RecyclableObject::Is(thisInstance))
+        if (VarIs<RecyclableObject>(instance) && VarIs<RecyclableObject>(thisInstance))
         {
-            RecyclableObject* superObj = RecyclableObject::FromVar(instance);
-            RecyclableObject* thisObj = RecyclableObject::FromVar(thisInstance);
+            RecyclableObject* superObj = VarTo<RecyclableObject>(instance);
+            RecyclableObject* thisObj = VarTo<RecyclableObject>(thisInstance);
             PropertyValueInfo info;
             PropertyValueInfo::SetCacheInfo(&info, GetFunctionBody(), inlineCache, playout->PropertyIdIndex, true);
 
@@ -4269,7 +4418,7 @@ skipThunk:
         int length = pScope->GetLength();
         if (1 == length)
         {
-            RecyclableObject *obj = RecyclableObject::FromVar(pScope->GetItem(0));
+            RecyclableObject *obj = VarTo<RecyclableObject>(pScope->GetItem(0));
             PropertyValueInfo info;
             PropertyValueInfo::SetCacheInfo(&info, GetFunctionBody(), inlineCache, playout->inlineCacheIndex, true);
             Var value;
@@ -4372,7 +4521,7 @@ skipThunk:
         int length = pScope->GetLength();
         if (1 == length)
         {
-            RecyclableObject* obj = RecyclableObject::FromVar(pScope->GetItem(0));
+            RecyclableObject* obj = VarTo<RecyclableObject>(pScope->GetItem(0));
             PropertyValueInfo info;
             PropertyValueInfo::SetCacheInfo(&info, GetFunctionBody(), inlineCache, playout->inlineCacheIndex, true);
             if (CacheOperators::TrySetProperty<true, false, false, false, false, true, false, false>(
@@ -4454,7 +4603,7 @@ skipThunk:
         InlineCache *inlineCache;
 
         if (!TaggedNumber::Is(instance)
-            && TrySetPropertyLocalFastPath(playout, propertyId, RecyclableObject::UnsafeFromVar(instance), inlineCache, flags))
+            && TrySetPropertyLocalFastPath(playout, propertyId, UnsafeVarTo<RecyclableObject>(instance), inlineCache, flags))
         {
             if (GetJavascriptFunction()->GetConstructorCache()->NeedsUpdateAfterCtor())
             {
@@ -4567,8 +4716,7 @@ skipThunk:
             GetInlineCache(playout->PropertyIdIndex),
             playout->PropertyIdIndex,
             GetReg(playout->Value),
-            m_functionBody->GetIsStrictMode() ?
-            (PropertyOperationFlags)(flags | PropertyOperation_StrictMode) : flags,
+            flags,
             GetJavascriptFunction(),
             thisInstance);
     }
@@ -4593,6 +4741,12 @@ skipThunk:
     }
 
     template <class T>
+    void InterpreterStackFrame::OP_SetSuperPropertyStrict(unaligned T* playout)
+    {
+        DoSetSuperProperty(playout, GetReg(playout->Instance), PropertyOperation_StrictMode);
+    }
+
+    template <class T>
     void InterpreterStackFrame::OP_ProfiledSetProperty(unaligned T* playout)
     {
         ProfiledSetProperty<T, false>(playout, GetReg(playout->Instance), PropertyOperation_None);
@@ -4608,6 +4762,12 @@ skipThunk:
     void InterpreterStackFrame::OP_ProfiledSetSuperProperty(unaligned T* playout)
     {
         ProfiledSetSuperProperty<T, false>(playout, GetReg(playout->Instance), GetReg(playout->Value2), PropertyOperation_None);
+    }
+
+    template <class T>
+    void InterpreterStackFrame::OP_ProfiledSetSuperPropertyStrict(unaligned T* playout)
+    {
+        ProfiledSetSuperProperty<T, false>(playout, GetReg(playout->Instance), GetReg(playout->Value2), PropertyOperation_StrictMode);
     }
 
     template <class T>
@@ -4731,7 +4891,7 @@ skipThunk:
 
         Assert(!TaggedNumber::Is(instance));
         PropertyId propertyId = GetPropertyIdFromCacheId(playout->inlineCacheIndex);
-        if (TrySetPropertyLocalFastPath(playout, propertyId, RecyclableObject::UnsafeFromVar(instance), inlineCache))
+        if (TrySetPropertyLocalFastPath(playout, propertyId, UnsafeVarTo<RecyclableObject>(instance), inlineCache))
         {
             return;
         }
@@ -4746,7 +4906,7 @@ skipThunk:
             GetFunctionBody(),
             GetInlineCache(playout->inlineCacheIndex),
             playout->inlineCacheIndex,
-            RecyclableObject::FromVar(instance),
+            VarTo<RecyclableObject>(instance),
             GetPropertyIdFromCacheId(playout->inlineCacheIndex),
             GetReg(playout->Value));
     }
@@ -4761,7 +4921,7 @@ skipThunk:
 
         Assert(!TaggedNumber::Is(instance));
         PropertyId propertyId = GetPropertyIdFromCacheId(playout->inlineCacheIndex);
-        if (!TrySetPropertyLocalFastPath(playout, propertyId, RecyclableObject::UnsafeFromVar(instance), inlineCache, flags))
+        if (!TrySetPropertyLocalFastPath(playout, propertyId, UnsafeVarTo<RecyclableObject>(instance), inlineCache, flags))
         {
             JavascriptOperators::OP_InitClassMember(instance, propertyId, GetReg(playout->Value));
         }
@@ -4823,7 +4983,7 @@ skipThunk:
 
         Assert(!TaggedNumber::Is(instance));
         PropertyId propertyId = GetPropertyIdFromCacheId(playout->inlineCacheIndex);
-        if (!TrySetPropertyLocalFastPath(playout, propertyId, RecyclableObject::UnsafeFromVar(instance), inlineCache, flags))
+        if (!TrySetPropertyLocalFastPath(playout, propertyId, UnsafeVarTo<RecyclableObject>(instance), inlineCache, flags))
         {
             JavascriptOperators::OP_InitLetProperty(instance, propertyId, GetReg(playout->Value));
         }
@@ -4837,7 +4997,7 @@ skipThunk:
 
         Assert(!TaggedNumber::Is(instance));
         PropertyId propertyId = GetPropertyIdFromCacheId(playout->inlineCacheIndex);
-        if (!TrySetPropertyLocalFastPath(playout, propertyId, RecyclableObject::UnsafeFromVar(instance), inlineCache, flags))
+        if (!TrySetPropertyLocalFastPath(playout, propertyId, UnsafeVarTo<RecyclableObject>(instance), inlineCache, flags))
         {
             JavascriptOperators::OP_InitConstProperty(instance, propertyId, GetReg(playout->Value));
         }
@@ -4957,7 +5117,7 @@ skipThunk:
     void InterpreterStackFrame::OP_InitUndeclConsoleLetProperty(unaligned T* playout)
     {
         FrameDisplay* pScope = (FrameDisplay*)this->LdEnv();
-        AssertMsg(ConsoleScopeActivationObject::Is((DynamicObject*)pScope->GetItem(pScope->GetLength() - 1)), "How come we got this opcode without ConsoleScopeActivationObject?");
+        AssertMsg(VarIs<ConsoleScopeActivationObject>((DynamicObject*)pScope->GetItem(pScope->GetLength() - 1)), "How come we got this opcode without ConsoleScopeActivationObject?");
         PropertyId propertyId = m_functionBody->GetReferencedPropertyId(playout->PropertyIdIndex);
         JavascriptOperators::OP_InitLetProperty(pScope->GetItem(0), propertyId, this->scriptContext->GetLibrary()->GetUndeclBlockVar());
     }
@@ -4966,7 +5126,7 @@ skipThunk:
     void InterpreterStackFrame::OP_InitUndeclConsoleConstProperty(unaligned T* playout)
     {
         FrameDisplay* pScope = (FrameDisplay*)this->LdEnv();
-        AssertMsg(ConsoleScopeActivationObject::Is((DynamicObject*)pScope->GetItem(pScope->GetLength() - 1)), "How come we got this opcode without ConsoleScopeActivationObject?");
+        AssertMsg(VarIs<ConsoleScopeActivationObject>((DynamicObject*)pScope->GetItem(pScope->GetLength() - 1)), "How come we got this opcode without ConsoleScopeActivationObject?");
         PropertyId propertyId = m_functionBody->GetReferencedPropertyId(playout->PropertyIdIndex);
         JavascriptOperators::OP_InitConstProperty(pScope->GetItem(0), propertyId, this->scriptContext->GetLibrary()->GetUndeclBlockVar());
     }
@@ -4976,7 +5136,7 @@ skipThunk:
     void InterpreterStackFrame::ProfiledInitProperty(unaligned T* playout, Var instance)
     {
         ProfilingHelpers::ProfiledInitFld(
-            RecyclableObject::FromVar(instance),
+            VarTo<RecyclableObject>(instance),
             GetPropertyIdFromCacheId(playout->inlineCacheIndex),
             GetInlineCache(playout->inlineCacheIndex),
             playout->inlineCacheIndex,
@@ -5044,7 +5204,7 @@ skipThunk:
         {
             element =
                 ProfilingHelpers::ProfiledLdElem_FastPath(
-                    JavascriptArray::UnsafeFromVar(instance),
+                    UnsafeVarTo<JavascriptArray>(instance),
                     GetReg(playout->Element),
                     GetScriptContext());
         }
@@ -5082,7 +5242,7 @@ skipThunk:
             !JavascriptOperators::SetElementMayHaveImplicitCalls(GetScriptContext()))
         {
             ProfilingHelpers::ProfiledStElem_FastPath(
-                JavascriptArray::UnsafeFromVar(instance),
+                UnsafeVarTo<JavascriptArray>(instance),
                 varIndex,
                 value,
                 GetScriptContext(),
@@ -5506,7 +5666,7 @@ skipThunk:
 
     Var InterpreterStackFrame::OP_GetCachedFunc(Var instance, int32 index)
     {
-        ActivationObjectEx *obj = ActivationObjectEx::FromVar(instance);
+        ActivationObjectEx *obj = VarTo<ActivationObjectEx>(instance);
 
         FuncCacheEntry *entry = obj->GetFuncCacheEntry((uint)index);
         return entry->func;
@@ -5520,7 +5680,7 @@ skipThunk:
 
     void InterpreterStackFrame::OP_CommitScopeHelper(const PropertyIdArray *propIds)
     {
-        ActivationObjectEx *obj = ActivationObjectEx::FromVar(this->localClosure);
+        ActivationObjectEx *obj = VarTo<ActivationObjectEx>(this->localClosure);
         ScriptFunction *func = obj->GetParentFunc();
 
         Assert(obj->GetParentFunc() == func);
@@ -5580,6 +5740,21 @@ skipThunk:
     {
         const Js::PropertyIdArray *propIds = Js::ByteCodeReader::ReadPropertyIdArray(playout->Offset, this->GetFunctionBody());
         SetNonVarReg(playout->R0, (Var)propIds);
+    }
+
+    void InterpreterStackFrame::OP_StPropIdArrFromVar(Var instance, uint32 index, Var value, ScriptContext* scriptContext)
+    {
+        Js::PropertyIdArray * propIds = reinterpret_cast<Js::PropertyIdArray *>(instance);
+        AssertOrFailFast(index < propIds->count);
+        Js::PropertyId id = JavascriptOperators::GetPropertyId(value, scriptContext);
+        propIds->elements[index] = id;
+    }
+
+    Js::PropertyIdArray * InterpreterStackFrame::OP_NewPropIdArrForCompProps(uint32 size, ScriptContext* scriptContext)
+    {
+        uint extraAlloc = UInt32Math::Mul(size, sizeof(Js::PropertyId));
+        Js::PropertyIdArray * propIdArr = RecyclerNewPlusLeaf(scriptContext->GetRecycler(), extraAlloc, Js::PropertyIdArray, size, 0);
+        return propIdArr;
     }
 
     bool InterpreterStackFrame::IsCurrentLoopNativeAddr(void * codeAddr) const
@@ -6177,7 +6352,11 @@ skipThunk:
         // For ARM we need to make sure that pipeline is synchronized with memory/cache for newly jitted code.
         // Note: this does not seem to affect perf, but if it was, we could add a boolean isCalled to EntryPointInfo
         //       and do ISB only for 1st time this entry point is called (potential working set regression though).
+        #if defined(_InstructionSynchronizationBarrier)
         _InstructionSynchronizationBarrier();
+        #else
+        asm("isb");
+        #endif
 #endif
         uint newOffset = ::Math::PointerCastToIntegral<uint>(
             CALL_ENTRYPOINT_NOASSERT(address, function, CallInfo(CallFlags_InternalFrame, 1), this));
@@ -6211,7 +6390,11 @@ skipThunk:
         // For ARM we need to make sure that pipeline is synchronized with memory/cache for newly jitted code.
         // Note: this does not seem to affect perf, but if it was, we could add a boolean isCalled to EntryPointInfo
         //       and do ISB only for 1st time this entry point is called (potential working set regression though).
+        #if defined(_InstructionSynchronizationBarrier)
         _InstructionSynchronizationBarrier();
+        #else
+        asm("isb");
+        #endif
 #endif
         uint newOffset = ::Math::PointerCastToIntegral<uint>(
             CALL_ENTRYPOINT_NOASSERT(address, function, CallInfo(CallFlags_InternalFrame, 1), this));
@@ -6505,6 +6688,12 @@ skipThunk:
         JavascriptOperators::OP_EnsureNoRootRedeclProperty(instance, this->m_functionBody->GetReferencedPropertyId(propertyIdIndex));
     }
 
+    void InterpreterStackFrame::OP_EnsureCanDeclGloFunc(uint propertyIdIndex)
+    {
+        Var instance = this->GetRootObject();
+        JavascriptOperators::OP_EnsureCanDeclGloFunc(instance, this->m_functionBody->GetReferencedPropertyId(propertyIdIndex));
+    }
+
     void InterpreterStackFrame::OP_ScopedEnsureNoRedeclProperty(Var aValue, uint propertyIdIndex, Var aValue2)
     {
         Js::PropertyId propertyId = this->m_functionBody->GetReferencedPropertyId(propertyIdIndex);
@@ -6575,12 +6764,6 @@ skipThunk:
         // Now that the stack is unwound, let's run the catch block.
         if (exception)
         {
-            if (exception->IsGeneratorReturnException())
-            {
-                // Generator return scenario, so no need to go into the catch block and we must rethrow to propagate the exception to down level
-                JavascriptExceptionOperators::DoThrow(exception, scriptContext);
-            }
-
             exception = exception->CloneIfStaticExceptionObject(scriptContext);
             // We've got a JS exception. Grab the exception object and assign it to the
             // catch object's location, then call the handler (i.e., we consume the Catch op here).
@@ -6791,11 +6974,6 @@ skipThunk:
         // Now that the stack is unwound, let's run the catch block.
         if (exception)
         {
-            if (exception->IsGeneratorReturnException())
-            {
-                // Generator return scenario, so no need to go into the catch block and we must rethrow to propagate the exception to down level
-                JavascriptExceptionOperators::DoThrow(exception, scriptContext);
-            }
             if (catchOffset != 0)
             {
                 exception = exception->CloneIfStaticExceptionObject(scriptContext);
@@ -7057,7 +7235,7 @@ skipThunk:
             SetNonVarReg(regOffset, reinterpret_cast<Js::Var>(currOffset));
         }
 
-        if (pExceptionObject && !pExceptionObject->IsGeneratorReturnException())
+        if (pExceptionObject)
         {
             // Clone static exception object early in case finally block overwrites it
             pExceptionObject = pExceptionObject->CloneIfStaticExceptionObject(scriptContext);
@@ -7115,7 +7293,7 @@ skipThunk:
             return;
         }
 
-        if (pExceptionObject && (endOfFinallyBlock || !pExceptionObject->IsGeneratorReturnException()))
+        if (pExceptionObject)
         {
             JavascriptExceptionOperators::DoThrow(pExceptionObject, scriptContext);
         }
@@ -7165,7 +7343,7 @@ skipThunk:
         }
 
         Js::JavascriptExceptionObject* exceptionObj = (Js::JavascriptExceptionObject*)GetNonVarReg(exceptionRegSlot);
-        if (exceptionObj && (endOfFinallyBlock || !exceptionObj->IsGeneratorReturnException()))
+        if (exceptionObj)
         {
             JavascriptExceptionOperators::DoThrow(exceptionObj, scriptContext);
         }
@@ -7399,7 +7577,7 @@ skipThunk:
     {
         uint innerScopeIndex = playout->C1;
         Var scope = this->InnerScopeFromIndex(innerScopeIndex);
-        BlockActivationObject* blockScope = BlockActivationObject::FromVar(scope);
+        BlockActivationObject* blockScope = VarTo<BlockActivationObject>(scope);
 
         scope = JavascriptOperators::OP_CloneBlockScope(blockScope, scriptContext);
         this->SetInnerScopeFromIndex(innerScopeIndex, scope);
@@ -7682,10 +7860,38 @@ skipThunk:
         return m_reader.SetCurrentRelativeOffset((const byte *)(playout + 1), playout->RelativeJumpOffset);
     }
 
-    template <class T>
-    void InterpreterStackFrame::OP_InitClass(const unaligned OpLayoutT_Class<T> * playout)
+    Var InterpreterStackFrame::OP_InitBaseClass(FrameDisplay *environment, FunctionInfoPtrPtr infoRef, RegSlot protoReg)
     {
-        JavascriptOperators::OP_InitClass(GetReg(playout->Constructor), playout->Extends != Js::Constants::NoRegister ? GetReg(playout->Extends) : NULL, GetScriptContext());
+        RecyclableObject * protoParent = scriptContext->GetLibrary()->GetObjectPrototype();
+        RecyclableObject * constructorParent = scriptContext->GetLibrary()->GetFunctionPrototype();
+
+        return InitClassHelper(environment, infoRef, protoParent, constructorParent, protoReg);
+    }
+
+    Var InterpreterStackFrame::OP_InitClass(FrameDisplay *environment, FunctionInfoPtrPtr infoRef, Var constructorParent, Var protoParent, RegSlot protoReg)
+    {
+        return InitClassHelper(environment, infoRef, VarTo<RecyclableObject>(protoParent), VarTo<RecyclableObject>(constructorParent), protoReg);
+    }
+
+    Var InterpreterStackFrame::InitClassHelper(FrameDisplay *environment, FunctionInfoPtrPtr infoRef, RecyclableObject *protoParent, RecyclableObject *constructorParent, RegSlot protoReg)
+    {
+        Assert(protoParent && JavascriptOperators::IsObjectOrNull(protoParent));
+        Assert(constructorParent && (JavascriptOperators::IsConstructor(constructorParent) || constructorParent == scriptContext->GetLibrary()->GetFunctionPrototype()));
+
+        // Create prototype object with the default class prototype object shape {'constructor': W:T, E:F, C:T} and [[Prototype]] == protoParent
+        DynamicObject * proto = scriptContext->GetLibrary()->CreateClassPrototypeObject(protoParent);
+
+        // Create class constructor object for the constructor function, with default constructor shape:
+        //    {'prototype': W:F, E:F, C:F}, {'length': W:F, E:F, C:T}, {'name': W:F, E:F, C:T}
+        //    [[Prototype]] == constructorParent and [[HomeObject]] == proto
+        // The callee initializes the object and the 3 properties.
+        ScriptFunction * constructor = ScriptFunction::OP_NewClassConstructor(environment, infoRef, proto, constructorParent);
+
+        proto->SetSlot(SetSlotArguments(Constants::NoProperty, 0, constructor));
+        constructor->SetSlot(SetSlotArguments(Constants::NoProperty, 0, proto));
+
+        SetReg(protoReg, proto);
+        return constructor;
     }
 
 #ifdef ENABLE_SCRIPT_DEBUGGING
@@ -8025,7 +8231,12 @@ skipThunk:
     void InterpreterStackFrame::OP_SimdLdArrGeneric(const unaligned T* playout)
     {
         Assert(playout->ViewType < Js::ArrayBufferView::TYPE_COUNT);
-        const uint64 index = ((uint64)(uint32)GetRegRawInt(playout->SlotIndex) + playout->Offset /* WASM only */) & (int64)(int)ArrayBufferView::ViewMask[playout->ViewType];
+
+        if (GetRegRawInt(playout->SlotIndex) < 0) {
+            JavascriptError::ThrowRangeError(scriptContext, JSERR_ArgumentOutOfRange, _u("Simd typed array access"));
+        }
+
+        const uint64 index = (uint64)GetRegRawInt(playout->SlotIndex) + playout->Offset;
 
         ArrayBufferBase* arr =
 #ifdef ENABLE_WASM_SIMD
@@ -8073,7 +8284,12 @@ skipThunk:
     void InterpreterStackFrame::OP_SimdStArrGeneric(const unaligned T* playout)
     {
         Assert(playout->ViewType < Js::ArrayBufferView::TYPE_COUNT);
-        const uint64 index = ((uint64)(uint32)GetRegRawInt(playout->SlotIndex) + playout->Offset /* WASM only */) & (int64)(int)ArrayBufferView::ViewMask[playout->ViewType];
+
+        if (GetRegRawInt(playout->SlotIndex) < 0)
+        {
+            JavascriptError::ThrowRangeError(scriptContext, JSERR_ArgumentOutOfRange, _u("Simd typed array access"));
+        }
+        const uint64 index = (uint64)GetRegRawInt(playout->SlotIndex) + playout->Offset;
 
         ArrayBufferBase* arr =
 #ifdef ENABLE_WASM_SIMD
@@ -8412,6 +8628,11 @@ skipThunk:
         return aValue != NULL;
     }
 
+    bool InterpreterStackFrame::OP_BrOnNotNullObj_A(Var aValue)
+    {
+        return aValue != scriptContext->GetLibrary()->GetNull();
+    }
+
     BOOL InterpreterStackFrame::OP_BrUndecl_A(Var aValue)
     {
         return this->scriptContext->GetLibrary()->IsUndeclBlockVar(aValue);
@@ -8434,10 +8655,10 @@ skipThunk:
             this->m_functionBody->GetReferencedPropertyId(propertyIdIndex), scriptContext);
     }
 
-    BOOL InterpreterStackFrame::OP_BrOnNoEnvProperty(Var envInstance, int32 slotIndex, uint propertyIdIndex, ScriptContext* scriptContext)
+    BOOL InterpreterStackFrame::OP_BrOnHasEnvProperty(Var envInstance, int32 slotIndex, uint propertyIdIndex, ScriptContext* scriptContext)
     {
         Var instance = OP_LdFrameDisplaySlot(envInstance, slotIndex);
-        return !JavascriptOperators::OP_HasProperty(instance,
+        return JavascriptOperators::OP_HasProperty(instance,
             this->m_functionBody->GetReferencedPropertyId(propertyIdIndex), scriptContext);
     }
 
@@ -8449,6 +8670,16 @@ skipThunk:
     BOOL InterpreterStackFrame::OP_BrOnBaseConstructorKind(Var aValue)
     {
         return JavascriptOperators::IsBaseConstructorKind(aValue);
+    }
+
+    bool InterpreterStackFrame::OP_BrOnConstructor(Var aValue)
+    {
+        return JavascriptOperators::IsConstructor(aValue);
+    }
+
+    Var InterpreterStackFrame::OP_LdBaseFncProto()
+    {
+        return scriptContext->GetLibrary()->GetFunctionPrototype();
     }
 
     template<class T>
@@ -8592,6 +8823,12 @@ skipThunk:
         }
     }
 
+    template <class T> 
+    void InterpreterStackFrame::OP_LdImportMeta(const unaligned T* playout)
+    {
+        SetReg(playout->R0, JavascriptOperators::OP_LdImportMeta(playout->C1, scriptContext));
+    }
+
     Var InterpreterStackFrame::OP_Ld_A(Var aValue)
     {
         return aValue;
@@ -8667,7 +8904,7 @@ skipThunk:
     void InterpreterStackFrame::OP_LdArrWasmFunc(const unaligned T* playout)
     {
 #ifdef ENABLE_WASM
-        WebAssemblyTable * table = WebAssemblyTable::FromVar(GetRegRawPtr(playout->Instance));
+        WebAssemblyTable * table = VarTo<WebAssemblyTable>(GetRegRawPtr(playout->Instance));
         const uint32 index = (uint32)GetRegRawInt(playout->SlotIndex);
         if (index >= table->GetCurrentLength())
         {
@@ -8686,7 +8923,7 @@ skipThunk:
     void InterpreterStackFrame::OP_CheckSignature(const unaligned T* playout)
     {
 #ifdef ENABLE_WASM
-        ScriptFunction * func = ScriptFunction::FromVar(GetRegRawPtr(playout->R0));
+        ScriptFunction * func = VarTo<ScriptFunction>(GetRegRawPtr(playout->R0));
         int sigIndex = playout->C1;
         Wasm::WasmSignature * expected = &m_signatures[sigIndex];
         if (func->GetFunctionInfo()->IsDeferredParseFunction())
@@ -9252,7 +9489,7 @@ skipThunk:
             isCachedScope = m_functionBody->HasCachedScopePropIds();
             propIds = this->m_functionBody->GetFormalsPropIdArray();
 
-            if (isScopeObjRestored && ActivationObject::Is(frameObject))
+            if (isScopeObjRestored && VarIs<ActivationObject>(frameObject))
             {
                 Assert(this->GetFunctionBody()->GetDoScopeObjectCreation());
                 isCachedScope = true;
@@ -9300,7 +9537,7 @@ skipThunk:
 
         if (heapArgObj)
         {
-            Assert(frameObject == nullptr || ActivationObject::Is(frameObject));
+            Assert(frameObject == nullptr || VarIs<ActivationObject>(frameObject));
             heapArgObj->SetFormalCount(formalsCount);
             heapArgObj->SetFrameObject(frameObject != nullptr ?
                 static_cast<ActivationObject*>(frameObject) : nullptr);
@@ -9325,14 +9562,6 @@ skipThunk:
     void* InterpreterStackFrame::OP_LdArgCnt()
     {
         return (void*)m_inSlotsCount;
-    }
-
-    Var InterpreterStackFrame::OP_ResumeYield(Var yieldDataVar, RegSlot yieldStarIterator)
-    {
-        ResumeYieldData* yieldData = static_cast<ResumeYieldData*>(yieldDataVar);
-        RecyclableObject* iterator = yieldStarIterator != Constants::NoRegister ? RecyclableObject::FromVar(GetNonVarReg(yieldStarIterator)) : nullptr;
-
-        return JavascriptOperators::OP_ResumeYield(yieldData, iterator);
     }
 
     void* InterpreterStackFrame::operator new(size_t byteSize, void* previousAllocation) throw()

@@ -210,7 +210,7 @@ namespace TTD
             res = ctx->TTDWellKnownInfo->LookupKnownObjectFromPath(snpObject->OptWellKnownToken);
 
             //Well known objects may always be dirty (e.g. we are re-using a context) so we always want to clean them
-            res = NSSnapObjects::ObjectPropertyReset_WellKnown(snpObject, Js::DynamicObject::FromVar(res), inflator);
+            res = NSSnapObjects::ObjectPropertyReset_WellKnown(snpObject, Js::VarTo<Js::DynamicObject>(res), inflator);
             TTDAssert(res != nullptr, "Should always produce a result!!!");
         }
         else
@@ -229,7 +229,7 @@ namespace TTD
         if(Js::DynamicType::Is(snpObject->SnapType->JsTypeId))
         {
             //Always ok to be x-site but if snap was x-site then we must be too
-            Js::DynamicObject* dynObj = Js::DynamicObject::FromVar(res);
+            Js::DynamicObject* dynObj = Js::VarTo<Js::DynamicObject>(res);
             if(snpObject->IsCrossSite && !dynObj->IsCrossSiteObject())
             {
                 Js::CrossSite::MarshalCrossSite_TTDInflate(dynObj);
@@ -303,6 +303,7 @@ namespace TTD
         //For the objects that have inflators
 
         this->m_snapObjectVTableArray[(uint32)NSSnapObjects::SnapObjectType::SnapDynamicObject] = { &NSSnapObjects::DoObjectInflation_SnapDynamicObject, nullptr, nullptr, nullptr };
+        this->m_snapObjectVTableArray[(uint32)NSSnapObjects::SnapObjectType::SnapAwaitObject] = { &NSSnapObjects::DoObjectInflation_SnapAwaitObject, nullptr, nullptr, nullptr };
         this->m_snapObjectVTableArray[(uint32)NSSnapObjects::SnapObjectType::SnapExternalObject] = { &NSSnapObjects::DoObjectInflation_SnapExternalObject, nullptr, nullptr, nullptr };
 
         this->m_snapObjectVTableArray[(uint32)NSSnapObjects::SnapObjectType::SnapScriptFunctionObject] = { &NSSnapObjects::DoObjectInflation_SnapScriptFunctionInfo, &NSSnapObjects::DoAddtlValueInstantiation_SnapScriptFunctionInfo, &NSSnapObjects::EmitAddtlInfo_SnapScriptFunctionInfo, &NSSnapObjects::ParseAddtlInfo_SnapScriptFunctionInfo };
@@ -363,17 +364,11 @@ namespace TTD
             &NSSnapObjects::DoAddtlValueInstantiation_SnapGeneratorInfo,
             &NSSnapObjects::EmitAddtlInfo_SnapGeneratorInfo,
             &NSSnapObjects::ParseAddtlInfo_SnapGeneratorInfo };
-        this->m_snapObjectVTableArray[(uint32)NSSnapObjects::SnapObjectType::JavascriptPromiseAsyncSpawnExecutorFunction] = {
-            &NSSnapObjects::DoObjectInflation_SnapJavascriptPromiseAsyncSpawnExecutorFunction,
-            &NSSnapObjects::DoAddtlValueInstantiation_SnapJavascriptPromiseAsyncSpawnExecutorFunction,
-            &NSSnapObjects::EmitAddtlInfo_SnapJavascriptPromiseAsyncSpawnExecutorFunction,
-            &NSSnapObjects::ParseAddtlInfo_SnapJavascriptPromiseAsyncSpawnExecutorFunction
-        };
-        this->m_snapObjectVTableArray[(uint32)NSSnapObjects::SnapObjectType::JavascriptPromiseAsyncSpawnStepArgumentExecutorFunction] = {
-            &NSSnapObjects::DoObjectInflation_SnapJavascriptPromiseAsyncSpawnStepArgumentExecutorFunctionInfo,
-            &NSSnapObjects::DoAddtlValueInstantiation_SnapJavascriptPromiseAsyncSpawnStepArgumentExecutorFunctionInfo,
-            &NSSnapObjects::EmitAddtlInfo_SnapJavascriptPromiseAsyncSpawnStepArgumentExecutorFunctionInfo,
-            &NSSnapObjects::ParseAddtlInfo_SnapJavascriptPromiseAsyncSpawnStepArgumentExecutorFunctionInfo
+        this->m_snapObjectVTableArray[(uint32)NSSnapObjects::SnapObjectType::JavascriptAsyncSpawnStepFunction] = {
+            &NSSnapObjects::DoObjectInflation_SnapJavascriptAsyncSpawnStepFunctionInfo,
+            &NSSnapObjects::DoAddtlValueInstantiation_SnapJavascriptAsyncSpawnStepFunctionInfo,
+            &NSSnapObjects::EmitAddtlInfo_SnapJavascriptAsyncSpawnStepFunctionInfo,
+            &NSSnapObjects::ParseAddtlInfo_SnapJavascriptAsyncSpawnStepFunctionInfo
         };
 
 
@@ -518,7 +513,7 @@ namespace TTD
             if(snpObj->OptWellKnownToken != TTD_INVALID_WELLKNOWN_TOKEN)
             {
                 Js::RecyclableObject* rObj = inflator->FindReusableObject_WellKnowReuseCheck(snpObj->ObjectPtrId);
-                bool blocking = NSSnapObjects::DoesObjectBlockScriptContextReuse(snpObj, Js::DynamicObject::FromVar(rObj), inflator);
+                bool blocking = NSSnapObjects::DoesObjectBlockScriptContextReuse(snpObj, Js::VarTo<Js::DynamicObject>(rObj), inflator);
 
                 if(blocking)
                 {
@@ -609,7 +604,7 @@ namespace TTD
 
             if(Js::DynamicType::Is(sobj->SnapType->JsTypeId))
             {
-                NSSnapObjects::StdPropertyRestore(sobj, Js::DynamicObject::FromVar(iobj), inflator);
+                NSSnapObjects::StdPropertyRestore(sobj, Js::VarTo<Js::DynamicObject>(iobj), inflator);
             }
         }
 

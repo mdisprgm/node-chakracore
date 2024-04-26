@@ -288,18 +288,14 @@ typedef JsUtil::BaseDictionary<ValueNumberPair, Value *, JitArenaAllocator> Valu
 namespace JsUtil
 {
     template <>
-    class ValueEntry<StackLiteralInitFldData> : public BaseValueEntry<StackLiteralInitFldData>
+    inline void ClearValue<StackLiteralInitFldData>::Clear(StackLiteralInitFldData* value)
     {
-    public:
-        void Clear()
-        {
 #if DBG
-            this->value.propIds = nullptr;
-            this->value.currentInitFldCount = (uint)-1;
+        value->propIds = nullptr;
+        value->currentInitFldCount = (uint)-1;
 #endif
-        }
-    };
-};
+    }
+}
 
 typedef JsUtil::BaseDictionary<IntConstType, StackSym *, JitArenaAllocator> IntConstantToStackSymMap;
 typedef JsUtil::BaseDictionary<int32, Value *, JitArenaAllocator> IntConstantToValueMap;
@@ -467,6 +463,8 @@ private:
     BVSparse<JitArenaAllocator> *  callerEquivBv;
 
     BVSparse<JitArenaAllocator> *   changedSymsAfterIncBailoutCandidate;
+
+    BVSparse<JitArenaAllocator> *   auxSlotPtrSyms;
 
     JitArenaAllocator *             alloc;
     JitArenaAllocator *             tempAlloc;
@@ -697,6 +695,7 @@ private:
     IR::Instr*              CreateBoundsCheckInstr(IR::Opnd* lowerBound, IR::Opnd* upperBound, int offset, IR::BailOutKind bailoutkind, BailOutInfo* bailoutInfo, Func* func);
     IR::Instr*              AttachBoundsCheckData(IR::Instr* instr, IR::Opnd* lowerBound, IR::Opnd* upperBound, int offset);
     void                    OptArraySrc(IR::Instr **const instrRef, Value ** src1Val, Value ** src2Val);
+    void                    OptStackArgLenAndConst(IR::Instr* instr, Value** src1Val);
 
 private:
     void                    TrackIntSpecializedAddSubConstant(IR::Instr *const instr, const AddSubConstantInfo *const addSubConstantInfo, Value *const dstValue, const bool updateSourceBounds);
@@ -745,7 +744,7 @@ private:
     void                    InsertCloneStrs(BasicBlock *toBlock, GlobOptBlockData *toData, GlobOptBlockData *fromData);
     void                    InsertValueCompensation(BasicBlock *const predecessor, BasicBlock *const successor, const SymToValueInfoMap *symsRequiringCompensationToMergedValueInfoMap);
     IR::Instr *             ToVarUses(IR::Instr *instr, IR::Opnd *opnd, bool isDst, Value *val);
-    void                    ToVar(BVSparse<JitArenaAllocator> *bv, BasicBlock *block);
+    void                    ToVar(BVSparse<JitArenaAllocator> *bv, BasicBlock *block, IR::Instr* insertBeforeInstr = nullptr);
     IR::Instr *             ToVar(IR::Instr *instr, IR::RegOpnd *regOpnd, BasicBlock *block, Value *val, bool needsUpdate);
     void                    ToInt32(BVSparse<JitArenaAllocator> *bv, BasicBlock *block, bool lossy, IR::Instr *insertBeforeInstr = nullptr);
     void                    ToFloat64(BVSparse<JitArenaAllocator> *bv, BasicBlock *block);
@@ -873,6 +872,7 @@ private:
     void                    ProcessInlineeEnd(IR::Instr * instr);
     void                    TrackCalls(IR::Instr * instr);
     void                    RecordInlineeFrameInfo(IR::Instr* instr);
+    void                    ClearInlineeFrameInfo(IR::Instr* instr);
     void                    EndTrackCall(IR::Instr * instr);
     void                    EndTrackingOfArgObjSymsForInlinee();
     void                    FillBailOutInfo(BasicBlock *block, BailOutInfo *bailOutInfo);
@@ -881,8 +881,14 @@ private:
     static void             MarkNonByteCodeUsed(IR::Instr * instr);
     static void             MarkNonByteCodeUsed(IR::Opnd * opnd);
 
+    void                    GenerateLazyBailOut(IR::Instr *& instr);
+    bool                    IsLazyBailOutCurrentlyNeeded(IR::Instr * instr, Value const * src1Val, Value const * src2Val, bool isHoisted) const;
+
     bool                    IsImplicitCallBailOutCurrentlyNeeded(IR::Instr * instr, Value const * src1Val, Value const * src2Val) const;
-    bool                    IsImplicitCallBailOutCurrentlyNeeded(IR::Instr * instr, Value const * src1Val, Value const * src2Val, BasicBlock const * block, bool hasLiveFields, bool mayNeedImplicitCallBailOut, bool isForwardPass) const;
+    bool                    IsImplicitCallBailOutCurrentlyNeeded(IR::Instr * instr, Value const * src1Val, Value const * src2Val,
+                                                                 BasicBlock const * block, bool hasLiveFields,
+                                                                 bool mayNeedImplicitCallBailOut, bool isForwardPass, bool mayNeedLazyBailOut = false) const;
+
     static bool             IsTypeCheckProtected(const IR::Instr * instr);
     static bool             MayNeedBailOnImplicitCall(IR::Instr const * instr, Value const * src1Val, Value const * src2Val);
     static bool             MaySrcNeedBailOnImplicitCall(IR::Opnd const * opnd, Value const * val);
@@ -923,7 +929,7 @@ private:
     void                    UpdateObjPtrValueType(IR::Opnd * opnd, IR::Instr * instr);
 
     bool                    TrackArgumentsObject();
-    void                    CannotAllocateArgumentsObjectOnStack();
+    void                    CannotAllocateArgumentsObjectOnStack(Func * curFunc);
 
 #if DBG
     bool                    IsPropertySymId(SymID symId) const;
@@ -945,6 +951,8 @@ private:
     bool                    CheckIfInstrInTypeCheckSeqEmitsTypeCheck(IR::Instr* instr, IR::PropertySymOpnd *opnd);
     template<bool makeChanges>
     bool                    ProcessPropOpInTypeCheckSeq(IR::Instr* instr, IR::PropertySymOpnd *opnd, BasicBlock* block, bool updateExistingValue, bool* emitsTypeCheckOut = nullptr, bool* changesTypeValueOut = nullptr, bool *isObjTypeChecked = nullptr);
+    StackSym *              EnsureAuxSlotPtrSym(IR::PropertySymOpnd *opnd);
+    void                    KillAuxSlotPtrSyms(IR::PropertySymOpnd *opnd, BasicBlock *block, bool isObjTypeSpecialized);
     template<class Fn>
     bool                    MapObjectHeaderInlinedTypeSymsUntil(BasicBlock *block, bool isObjTypeSpecialized, SymID opndId, Fn fn);
     void                    KillObjectHeaderInlinedTypeSyms(BasicBlock *block, bool isObjTypeSpecialized, SymID symId = SymID_Invalid);

@@ -1,5 +1,6 @@
 //-------------------------------------------------------------------------------------------------------
 // Copyright (C) Microsoft. All rights reserved.
+// Copyright (c) ChakraCore Project Contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
 //-------------------------------------------------------------------------------------------------------
 //----------------------------------------------------------------------------
@@ -16,6 +17,7 @@ public:
 
     bool DisableDebugScopeCapture() const { return this->disableDebugScopeCapture; }
     bool IsWin8OrLater();
+    bool IsWin8Point1OrLater();
 #if defined(_CONTROL_FLOW_GUARD)
     bool IsWinThresholdOrLater();
 #endif
@@ -61,7 +63,11 @@ public:
 #ifdef _WIN32
     static HMODULE GetCRTHandle();
 #endif
+#if defined(__APPLE__) && defined(_M_ARM64)
+    static DWORD const PageSize = 16384;
+#else
     static DWORD const PageSize = 4096;
+#endif
 
     static size_t const MaxPageCount = SIZE_MAX / PageSize;
 
@@ -88,6 +94,7 @@ private:
     AutoSystemInfo() : majorVersion(0), minorVersion(0), buildDateHash(0), buildTimeHash(0), crtSize(0) { Initialize(); }
     void Initialize();
     bool isWindows8OrGreater;
+    bool isWindows8Point1OrGreater;
     uint allocationGranularityPageCount;
     HANDLE processHandle;
     DWORD crtSize;
@@ -134,7 +141,12 @@ public:
 
 
 // For Prefast where it doesn't like symbolic constants
+#if defined(__APPLE__) && defined(_M_ARM64)
+CompileAssert(AutoSystemInfo::PageSize == 16384);
+#define __in_ecount_pagesize __in_ecount(16384)
+#define __in_ecount_twopagesize __in_ecount(32768)
+#else
 CompileAssert(AutoSystemInfo::PageSize == 4096);
 #define __in_ecount_pagesize __in_ecount(4096)
 #define __in_ecount_twopagesize __in_ecount(8192)
-
+#endif

@@ -8,8 +8,31 @@
   </test>
   <test>
     <default>
-      <files>array_qsortr.js</files>
-      <tags>exclude_windows</tags>
+      <files>array_at.js</files>
+      <compile-flags>-args summary -endargs</compile-flags>
+    </default>
+  </test>
+  <test>
+    <default>
+      <files>array_flat.js</files>
+      <compile-flags>-args summary -endargs</compile-flags>
+    </default>
+  </test>
+  <test>
+    <default>
+      <files>array_findlast.js</files>
+      <compile-flags>-args summary -endargs</compile-flags>
+    </default>
+  </test>
+  <test>
+    <default>
+      <files>array_findlastindex.js</files>
+      <compile-flags>-args summary -endargs</compile-flags>
+    </default>
+  </test>
+  <test>
+    <default>
+      <files>array_sort_order.js</files>
     </default>
   </test>
   <test>
@@ -216,6 +239,16 @@
   </test>
   <test>
     <default>
+      <files>pop4.js</files>
+    </default>
+  </test>
+  <test>
+    <default>
+      <files>pop5.js</files>
+    </default>
+  </test>
+  <test>
+    <default>
       <files>push1.js</files>
       <baseline>push1_2.baseline</baseline>
     </default>
@@ -231,7 +264,11 @@
     <default>
       <files>push3.js</files>
       <compile-flags>-off:nativearray -ForceES5Array</compile-flags>
-      <baseline>push3.baseline</baseline>
+    </default>
+  </test>
+  <test>
+    <default>
+      <files>push4_traps.js</files>
     </default>
   </test>
   <test>
@@ -296,33 +333,13 @@
   <test>
     <default>
       <files>array_sort.js</files>
-      <baseline>array_sort.baseline</baseline>
+      <compile-flags>-args summary -endargs</compile-flags>
     </default>
   </test>
   <test>
     <default>
       <files>array_includes.js</files>
       <compile-flags>-args summary -endargs</compile-flags>
-    </default>
-  </test>
-  <test>
-    <default>
-      <files>array_sort2.js</files>
-      <baseline>array_sort2.baseline</baseline>
-    </default>
-  </test>
-  <test>
-    <default>
-      <files>array_sort3.js</files>
-      <baseline>array_sort3.baseline</baseline>
-    </default>
-  </test>
-  <test>
-    <default>
-      <files>array_sort3.js</files>
-      <baseline>array_sort3.baseline</baseline>
-      <compile-flags>-arrayValidate</compile-flags>
-      <tags>exclude_test</tags>
     </default>
   </test>
   <test>
@@ -777,14 +794,26 @@
   </test>
   <test>
     <default>
-      <files>bug_gh5667.js</files>
-      <tags>exclude_windows</tags>
+      <files>FilterWithTypedArray.js</files>
     </default>
   </test>
   <test>
     <default>
-      <files>test_qsortr_random.js</files>
+      <files>bug_gh5667.js</files>
       <tags>exclude_windows</tags>
+      <compile-flags>-JsBuiltIn-</compile-flags>
+    </default>
+  </test>
+  <test>
+    <default>
+      <files>bug_gh6320.js</files>
+      <tags>exclude_nonative</tags>
+    </default>
+  </test>
+  <test>
+    <default>
+      <files>array_sort_random.js</files>
+      <tags>exclude_disable_jit,exclude_lite</tags>
     </default>
   </test>
 </regress-exe>

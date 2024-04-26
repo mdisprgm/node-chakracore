@@ -52,18 +52,7 @@ DefaultRecyclerCollectionWrapper::IsCollectionDisabled(Recycler * recycler)
     if (collectionDisabled)
     {
         // disabled collection should only happen if we allowed allocation during heap enum
-        if (recycler->IsHeapEnumInProgress())
-        {
-            Assert(recycler->AllowAllocationDuringHeapEnum());
-        }
-        else
-        {
-#ifdef ENABLE_PROJECTION
-            Assert(recycler->IsInRefCountTrackingForProjection());
-#else
-            Assert(false);
-#endif
-        }
+        Assert(recycler->IsHeapEnumInProgress() && recycler->AllowAllocationDuringHeapEnum());
     }
 #endif
     return collectionDisabled;
@@ -192,6 +181,7 @@ Recycler::Recycler(AllocationPolicyManager * policyManager, IdleDecommitPageAllo
     inDisposeWrapper(false),
     hasDisposableObject(false),
     hasNativeGCHost(false),
+    needExternalWrapperTracing(false),
     tickCountNextDispose(0),
     transientPinnedObject(nullptr),
     pinnedObjectMap(1024, HeapAllocator::GetNoMemProtectInstance()),
@@ -247,8 +237,9 @@ Recycler::Recycler(AllocationPolicyManager * policyManager, IdleDecommitPageAllo
     , capturePageHeapAllocStack(false)
     , capturePageHeapFreeStack(false)
 #endif
-    , objectBeforeCollectCallbackMap(nullptr)
+    , objectBeforeCollectCallbackList(nullptr)
     , objectBeforeCollectCallbackState(ObjectBeforeCollectCallback_None)
+    , objectBeforeCollectCallbackArena(_u("BeforeCollect-List"), pageAllocator, Js::Throw::OutOfMemory)
 #if GLOBAL_ENABLE_WRITE_BARRIER
     , pendingWriteBarrierBlockMap(&HeapAllocator::Instance)
 #endif
@@ -308,7 +299,6 @@ Recycler::Recycler(AllocationPolicyManager * policyManager, IdleDecommitPageAllo
 #endif
 #if DBG || defined RECYCLER_TRACE
     this->collectionCount = 0;
-    this->inResolveExternalWeakReferences = false;
 #endif
 #if DBG || defined(RECYCLER_STATS)
     isForceSweeping = false;
@@ -325,9 +315,6 @@ Recycler::Recycler(AllocationPolicyManager * policyManager, IdleDecommitPageAllo
 #if DBG
     allowAllocationDuringRenentrance = false;
     allowAllocationDuringHeapEnum = false;
-#ifdef ENABLE_PROJECTION
-    isInRefCountTrackingForProjection = false;
-#endif
 #endif
     ScheduleNextCollection();
 #if defined(RECYCLER_DUMP_OBJECT_GRAPH) ||  defined(LEAK_REPORT) || defined(CHECK_MEMORY_LEAK)
@@ -948,6 +935,18 @@ void
 Recycler::SetHasNativeGCHost()
 {
     this->hasNativeGCHost = true;
+}
+
+void
+Recycler::SetNeedExternalWrapperTracing()
+{
+    this->needExternalWrapperTracing = true;
+}
+
+void
+Recycler::ClearNeedExternalWrapperTracing()
+{
+    this->needExternalWrapperTracing = false;
 }
 
 bool
@@ -1843,19 +1842,6 @@ Recycler::FindRoots()
 
     RECYCLER_PROFILE_EXEC_BEGIN(this, Js::FindRootPhase);
 
-#ifdef ENABLE_PROJECTION
-    {
-        AUTO_TIMESTAMP(externalWeakReferenceObjectResolve);
-        BEGIN_DUMP_OBJECT(this, _u("External Weak Referenced Roots"));
-        Assert(!this->IsInRefCountTrackingForProjection());
-#if DBG
-        AutoIsInRefCountTrackingForProjection autoIsInRefCountTrackingForProjection(this);
-#endif
-        collectionWrapper->MarkExternalWeakReferencedObjects(this->inPartialCollectMode);
-        END_DUMP_OBJECT(this);
-    }
-#endif
-
     // go through ITracker* stuff. Don't need to do it if we are doing a partial collection
     // as we keep track and mark all trackable objects.
     // Do this first because the host might unpin stuff in the process
@@ -2116,6 +2102,13 @@ Recycler::CheckAllocExternalMark() const
 #endif
 }
 #endif
+
+void
+Recycler::TryExternalMarkNonInterior(void* candidate)
+{
+    Assert(!this->IsConcurrentExecutingState());
+    this->TryMarkNonInterior(candidate);
+}
 
 void
 Recycler::TryMarkNonInterior(void* candidate, void* parentReference)
@@ -2528,6 +2521,7 @@ Recycler::DoParallelMark()
     if (actualSplitCount == 0)
     {
         this->ProcessMark(false);
+
         return;
     }
 
@@ -2773,6 +2767,23 @@ Recycler::EndMarkCheckOOMRescan()
     return oomRescan;
 }
 
+void
+Recycler::FinishWrapperObjectTracing()
+{
+    //TODO:akatti:Add ETW event for this.
+    // Tracing would have generated more work for mark and marking might generate more work for tracing.
+    // We continue until we find no more pending tracing work.
+    do
+    {
+        this->collectionWrapper->EndMarkDomWrapperTracingCallback();
+        this->ProcessMark(false);
+    } while (!this->collectionWrapper->EndMarkDomWrapperTracingDoneCallback());
+
+    // This is just to wait until tracing has finished.
+    this->collectionWrapper->EndMarkDomWrapperTracingCallback();
+    this->ClearNeedExternalWrapperTracing();
+}
+
 bool
 Recycler::EndMark()
 {
@@ -2786,6 +2797,12 @@ Recycler::EndMark()
     {
         // We have finished marking
         AUTO_NO_EXCEPTION_REGION;
+        if (this->needExternalWrapperTracing)
+        {
+            this->collectionWrapper->EndMarkDomWrapperTracingEnterFinalPauseCallback();
+            this->FinishWrapperObjectTracing();
+        }
+
         collectionWrapper->EndMarkCallback();
     }
 
@@ -2888,8 +2905,15 @@ Recycler::EndMarkOnLowMemory()
         }
 #endif
 
-        // Drain the mark stack
-        ProcessMark(false);
+        // Drain the mark stack along with any required DOM wrapper tracing.
+        if (this->needExternalWrapperTracing)
+        {
+            this->FinishWrapperObjectTracing();
+        }
+        else
+        {
+            this->ProcessMark(false);
+        }
 
 #ifdef ENABLE_DEBUG_CONFIG_OPTIONS
         iterations++;
@@ -2937,7 +2961,14 @@ Recycler::PostHeapEnumScan(PostHeapEnumScanCallback callback, void *data)
     this->postHeapEnunScanData = data;
 
     FindRoots();
-    ProcessMark(false);
+    if (this->needExternalWrapperTracing)
+    {
+        this->FinishWrapperObjectTracing();
+    }
+    else
+    {
+        this->ProcessMark(false);
+    }
 
     this->pfPostHeapEnumScanCallback = NULL;
     this->postHeapEnunScanData = NULL;
@@ -3381,21 +3412,6 @@ Recycler::DisposeObjects()
     }
 #endif
 
-#ifdef ENABLE_PROJECTION
-    {
-        Assert(!this->inResolveExternalWeakReferences);
-        Assert(!this->allowDispose);
-#if DBG || defined RECYCLER_TRACE
-        AutoRestoreValue<bool> inResolveExternalWeakReferencedObjects(&this->inResolveExternalWeakReferences, true);
-#endif
-        AUTO_TIMESTAMP(externalWeakReferenceObjectResolve);
-
-        // This is where it is safe to resolve external weak references as they can lead to new script entry
-        collectionWrapper->ResolveExternalWeakReferencedObjects();
-    }
-#endif
-
-    Assert(!this->inResolveExternalWeakReferences);
     Assert(this->inDispose);
 
     this->inDispose = false;
@@ -6482,7 +6498,11 @@ Recycler::DoTwoPassConcurrentSweepPreCheck()
         //         SLIST during concurrent sweep.
         //      2. We are not in a Partial GC.
         //      3. At-least one heap bucket exceeds the RecyclerHeuristic::AllocDuringConcurrentSweepHeapBlockThreshold.
-        this->allowAllocationsDuringConcurrentSweepForCollection = this->isInScript && !this->recyclerSweepManager->InPartialCollect();
+        bool inPartialCollect = false;
+#if ENABLE_PARTIAL_GC
+        inPartialCollect = this->recyclerSweepManager->InPartialCollect();
+#endif
+        this->allowAllocationsDuringConcurrentSweepForCollection = this->isInScript && !inPartialCollect;
 
         // Do the actual 2-pass check only if the first 2 checks pass.
         if (this->allowAllocationsDuringConcurrentSweepForCollection)
@@ -8951,25 +8971,58 @@ void Recycler::SetObjectBeforeCollectCallback(void* object,
         return; // NOP at shutdown
     }
 
-    if (objectBeforeCollectCallbackMap == nullptr)
+    if (this->objectBeforeCollectCallbackList == nullptr)
     {
         if (callback == nullptr) return;
-        objectBeforeCollectCallbackMap = HeapNew(ObjectBeforeCollectCallbackMap, &HeapAllocator::Instance);
+        this->objectBeforeCollectCallbackList = Anew(&this->objectBeforeCollectCallbackArena, ObjectBeforeCollectCallbackList, &this->objectBeforeCollectCallbackArena);
     }
 
-    // only allow 1 callback per object
-    objectBeforeCollectCallbackMap->Item(object, ObjectBeforeCollectCallbackData(callbackWrapper, callback, callbackState, threadContext));
-
-    if (callback != nullptr && this->IsInObjectBeforeCollectCallback()) // revive
+    if (callback)
     {
-        this->ScanMemory<false>(&object, sizeof(object));
-        this->ProcessMark(/*background*/false);
+        this->objectBeforeCollectCallbackList->Push(ObjectBeforeCollectCallbackData(object, callbackWrapper, callback, callbackState, threadContext));
+
+        if (this->IsInObjectBeforeCollectCallback()) // revive
+        {
+            this->ScanMemory<false>(&object, sizeof(object));
+            this->ProcessMark(/*background*/false);
+        }
     }
+    else
+    {
+        // null callback means unregister
+        FOREACH_SLIST_ENTRY_EDITING(ObjectBeforeCollectCallbackData, callbackData, this->objectBeforeCollectCallbackList, iter)
+        {
+            if (callbackData.object == object)
+            {
+                iter.RemoveCurrent();
+            }
+        } NEXT_SLIST_ENTRY_EDITING;
+    }
+
+}
+
+void Recycler::SetDOMWrapperTracingCallback(void * state, DOMWrapperTracingCallback tracingCallback, DOMWrapperTracingDoneCallback tracingDoneCallback, DOMWrapperTracingEnterFinalPauseCallback enterFinalPauseCallback)
+{
+    Assert(state);
+    Assert(tracingCallback);
+    Assert(enterFinalPauseCallback);
+    this->collectionWrapper->SetWrapperTracingCallbackState(state);
+    this->collectionWrapper->SetDOMWrapperTracingCallback(tracingCallback);
+    this->collectionWrapper->SetDOMWrapperTracingDoneCallback(tracingDoneCallback);
+    this->collectionWrapper->SetDOMWrapperTracingEnterFinalPauseCallback(enterFinalPauseCallback);
+}
+
+void Recycler::ClearDOMWrapperTracingCallback()
+{
+    this->collectionWrapper->SetWrapperTracingCallbackState(nullptr);
+    this->collectionWrapper->SetDOMWrapperTracingCallback(nullptr);
+    this->collectionWrapper->SetDOMWrapperTracingDoneCallback(nullptr);
+    this->collectionWrapper->SetDOMWrapperTracingEnterFinalPauseCallback(nullptr);
 }
 
 bool Recycler::ProcessObjectBeforeCollectCallbacks(bool atShutdown/*= false*/)
 {
-    if (this->objectBeforeCollectCallbackMap == nullptr)
+    if (this->objectBeforeCollectCallbackList == nullptr)
     {
         return false; // no callbacks
     }
@@ -8977,21 +9030,21 @@ bool Recycler::ProcessObjectBeforeCollectCallbacks(bool atShutdown/*= false*/)
 
     Assert(!this->IsInObjectBeforeCollectCallback());
     AutoRestoreValue<ObjectBeforeCollectCallbackState> autoInObjectBeforeCollectCallback(&objectBeforeCollectCallbackState,
-        atShutdown ? ObjectBeforeCollectCallback_Shutdown: ObjectBeforeCollectCallback_Normal);
+        atShutdown ? ObjectBeforeCollectCallback_Shutdown : ObjectBeforeCollectCallback_Normal);
 
     // The callbacks may register/unregister callbacks while we are enumerating the current map. To avoid
     // conflicting usage of the callback map, we swap it out. New registration will go to a new map.
-    AutoAllocatorObjectPtr<ObjectBeforeCollectCallbackMap, HeapAllocator> oldCallbackMap(
-        this->objectBeforeCollectCallbackMap, &HeapAllocator::Instance);
-    this->objectBeforeCollectCallbackMap = nullptr;
+    AutoAllocatorObjectPtr<ObjectBeforeCollectCallbackList, ArenaAllocator> oldCallbackList(
+        this->objectBeforeCollectCallbackList, &this->objectBeforeCollectCallbackArena);
+    this->objectBeforeCollectCallbackList = nullptr;
 
     bool hasRemainingCallbacks = false;
-    oldCallbackMap->MapAndRemoveIf([&](const ObjectBeforeCollectCallbackMap::EntryType& entry)
+    FOREACH_SLIST_ENTRY_EDITING(ObjectBeforeCollectCallbackData, data, oldCallbackList, iter)
     {
-        const ObjectBeforeCollectCallbackData& data = entry.Value();
+        bool remove = true;
         if (data.callback != nullptr)
         {
-            void* object = entry.Key();
+            void* object = data.object;
             if (atShutdown || !this->IsObjectMarked(object))
             {
                 if (data.callbackWrapper != nullptr)
@@ -9006,34 +9059,42 @@ bool Recycler::ProcessObjectBeforeCollectCallbacks(bool atShutdown/*= false*/)
             else
             {
                 hasRemainingCallbacks = true;
-                return false; // Do not remove this entry, remaining callback for future
+                remove = false; // Do not remove this entry, remaining callback for future
             }
         }
-
-        return true; // Remove this entry
-    });
+        if (remove)
+        {
+            iter.RemoveCurrent();
+        }
+    } NEXT_SLIST_ENTRY_EDITING;
 
     // Merge back remaining callbacks if any
     if (hasRemainingCallbacks)
     {
-        if (this->objectBeforeCollectCallbackMap == nullptr)
+        if (this->objectBeforeCollectCallbackList == nullptr)
         {
-            this->objectBeforeCollectCallbackMap = oldCallbackMap.Detach();
+            this->objectBeforeCollectCallbackList = oldCallbackList.Detach();
         }
         else
         {
-            if (oldCallbackMap->Count() > this->objectBeforeCollectCallbackMap->Count())
-            {
-                // Swap so that oldCallbackMap is the smaller one
-                ObjectBeforeCollectCallbackMap* tmp = oldCallbackMap.Detach();
-                *&oldCallbackMap = this->objectBeforeCollectCallbackMap;
-                this->objectBeforeCollectCallbackMap = tmp;
-            }
+            // Swap back, since old list is likely larger
+            ObjectBeforeCollectCallbackList* tmp = oldCallbackList.Detach();
+            *&oldCallbackList = this->objectBeforeCollectCallbackList;
+            this->objectBeforeCollectCallbackList = tmp;
 
-            oldCallbackMap->Map([&](void* object, const ObjectBeforeCollectCallbackData& data)
+            try
             {
-                this->objectBeforeCollectCallbackMap->Item(object, data);
-            });
+                AUTO_NESTED_HANDLED_EXCEPTION_TYPE(ExceptionType_OutOfMemory);
+                oldCallbackList->Map([&](const ObjectBeforeCollectCallbackData& data)
+                {
+                    this->objectBeforeCollectCallbackList->Push(data);
+                });
+            }
+            catch (Js::OutOfMemoryException)
+            {
+                // can't recover from OOM here
+                AssertOrFailFast(UNREACHED);
+            }
         }
     }
 
@@ -9044,7 +9105,7 @@ void Recycler::ClearObjectBeforeCollectCallbacks()
 {
     // This is called at shutting down. All objects will be gone. Invoke each registered callback if any.
     ProcessObjectBeforeCollectCallbacks(/*atShutdown*/true);
-    Assert(objectBeforeCollectCallbackMap == nullptr);
+    Assert(objectBeforeCollectCallbackList == nullptr);
 }
 
 #ifdef RECYCLER_TEST_SUPPORT

@@ -26,6 +26,11 @@
             "fromCodePoint": "function <large string>",
             "raw": "function <large string>"
           },
+          "at": {
+            "#__proto__": "function <large string>",
+            "length": "number 1",
+            "name": "string at"
+          },
           "indexOf": {
             "#__proto__": "function <large string>",
             "length": "number 1",
@@ -221,15 +226,25 @@
             "length": "number 1",
             "name": "string includes"
           },
+          "trimStart": {
+            "#__proto__": "function <large string>",
+            "length": "number 0",
+            "name": "string trimStart"
+          },
           "trimLeft": {
             "#__proto__": "function <large string>",
             "length": "number 0",
-            "name": "string trimLeft"
+            "name": "string trimStart"
+          },
+          "trimEnd": {
+            "#__proto__": "function <large string>",
+            "length": "number 0",
+            "name": "string trimEnd"
           },
           "trimRight": {
             "#__proto__": "function <large string>",
             "length": "number 0",
-            "name": "string trimRight"
+            "name": "string trimEnd"
           },
           "Symbol.iterator": {
             "#__proto__": "function <large string>",
@@ -282,6 +297,11 @@
               "isArray": "function <large string>",
               "from": "function <large string>",
               "of": "function <large string>"
+            },
+            "at": {
+              "#__proto__": "function <large string>",
+              "length": "number 1",
+              "name": "string at"
             },
             "push": {
               "#__proto__": "function <large string>",
@@ -343,25 +363,10 @@
               "length": "number 1",
               "name": "string unshift"
             },
-            "indexOf": {
-              "#__proto__": "function <large string>",
-              "length": "number 1",
-              "name": "string indexOf"
-            },
             "every": {
               "#__proto__": "function <large string>",
               "length": "number 1",
               "name": "string every"
-            },
-            "filter": {
-              "#__proto__": "function <large string>",
-              "length": "number 1",
-              "name": "string filter"
-            },
-            "forEach": {
-              "#__proto__": "function <large string>",
-              "length": "number 1",
-              "name": "string forEach"
             },
             "lastIndexOf": {
               "#__proto__": "function <large string>",
@@ -393,37 +398,77 @@
               "length": "number 1",
               "name": "string find"
             },
+            "findLast": {
+              "#__proto__": "function <large string>",
+              "length": "number 1",
+              "name": "string findLast"
+            },
             "findIndex": {
               "#__proto__": "function <large string>",
               "length": "number 1",
               "name": "string findIndex"
             },
+            "findLastIndex": {
+              "#__proto__": "function <large string>",
+              "length": "number 1",
+              "name": "string findLastIndex"
+            },
             "keys": {
               "#__proto__": "function <large string>",
-              "name": "string keys",
-              "length": "number 0"
+              "length": "number 0",
+              "name": "string keys"
             },
             "values": {
               "#__proto__": "function <large string>",
-              "name": "string values",
-              "length": "number 0"
+              "length": "number 0",
+              "name": "string values"
             },
             "Symbol.iterator": {
               "#__proto__": "function <large string>",
-              "name": "string values",
-              "length": "number 0"
+              "length": "number 0",
+              "name": "string values"
             },
             "entries": {
               "#__proto__": "function <large string>",
-              "name": "string entries",
-              "length": "number 0"
+              "length": "number 0",
+              "name": "string entries"
+            },
+            "indexOf": {
+              "#__proto__": "function <large string>",
+              "length": "number 1",
+              "name": "string indexOf"
+            },
+            "filter": {
+              "#__proto__": "function <large string>",
+              "length": "number 1",
+              "name": "string filter"
+            },
+            "flat": {
+              "#__proto__": "function <large string>",
+              "length": "number 0",
+              "name": "string flat"
+            },
+            "flatMap": {
+              "#__proto__": "function <large string>",
+              "length": "number 1",
+              "name": "string flatMap"
+            },
+            "forEach": {
+              "#__proto__": "function <large string>",
+              "length": "number 1",
+              "name": "string forEach"
             },
             "Symbol.unscopables": {
-              "find": "boolean true",
-              "findIndex": "boolean true",
-              "fill": "boolean true",
+              "at": "boolean true",
               "copyWithin": "boolean true",
               "entries": "boolean true",
+              "fill": "boolean true",
+              "find": "boolean true",
+              "findLast": "boolean true",
+              "findIndex": "boolean true",
+              "findLastIndex": "boolean true",
+              "flat": "boolean true",
+              "flatMap": "boolean true",
               "includes": "boolean true",
               "keys": "boolean true",
               "values": "boolean true"
@@ -500,6 +545,11 @@
               "from": "function <large string>",
               "of": "function <large string>"
             },
+            "at": {
+              "#__proto__": "function <large string>",
+              "length": "number 1",
+              "name": "string at"
+            },
             "push": {
               "#__proto__": "function <large string>",
               "length": "number 1",
@@ -560,25 +610,10 @@
               "length": "number 1",
               "name": "string unshift"
             },
-            "indexOf": {
-              "#__proto__": "function <large string>",
-              "length": "number 1",
-              "name": "string indexOf"
-            },
             "every": {
               "#__proto__": "function <large string>",
               "length": "number 1",
               "name": "string every"
-            },
-            "filter": {
-              "#__proto__": "function <large string>",
-              "length": "number 1",
-              "name": "string filter"
-            },
-            "forEach": {
-              "#__proto__": "function <large string>",
-              "length": "number 1",
-              "name": "string forEach"
             },
             "lastIndexOf": {
               "#__proto__": "function <large string>",
@@ -610,37 +645,77 @@
               "length": "number 1",
               "name": "string find"
             },
+            "findLast": {
+              "#__proto__": "function <large string>",
+              "length": "number 1",
+              "name": "string findLast"
+            },
             "findIndex": {
               "#__proto__": "function <large string>",
               "length": "number 1",
               "name": "string findIndex"
             },
+            "findLastIndex": {
+              "#__proto__": "function <large string>",
+              "length": "number 1",
+              "name": "string findLastIndex"
+            },
             "keys": {
               "#__proto__": "function <large string>",
-              "name": "string keys",
-              "length": "number 0"
+              "length": "number 0",
+              "name": "string keys"
             },
             "values": {
               "#__proto__": "function <large string>",
-              "name": "string values",
-              "length": "number 0"
+              "length": "number 0",
+              "name": "string values"
             },
             "Symbol.iterator": {
               "#__proto__": "function <large string>",
-              "name": "string values",
-              "length": "number 0"
+              "length": "number 0",
+              "name": "string values"
             },
             "entries": {
               "#__proto__": "function <large string>",
-              "name": "string entries",
-              "length": "number 0"
+              "length": "number 0",
+              "name": "string entries"
+            },
+            "indexOf": {
+              "#__proto__": "function <large string>",
+              "length": "number 1",
+              "name": "string indexOf"
+            },
+            "filter": {
+              "#__proto__": "function <large string>",
+              "length": "number 1",
+              "name": "string filter"
+            },
+            "flat": {
+              "#__proto__": "function <large string>",
+              "length": "number 0",
+              "name": "string flat"
+            },
+            "flatMap": {
+              "#__proto__": "function <large string>",
+              "length": "number 1",
+              "name": "string flatMap"
+            },
+            "forEach": {
+              "#__proto__": "function <large string>",
+              "length": "number 1",
+              "name": "string forEach"
             },
             "Symbol.unscopables": {
-              "find": "boolean true",
-              "findIndex": "boolean true",
-              "fill": "boolean true",
+              "at": "boolean true",
               "copyWithin": "boolean true",
               "entries": "boolean true",
+              "fill": "boolean true",
+              "find": "boolean true",
+              "findLast": "boolean true",
+              "findIndex": "boolean true",
+              "findLastIndex": "boolean true",
+              "flat": "boolean true",
+              "flatMap": "boolean true",
               "includes": "boolean true",
               "keys": "boolean true",
               "values": "boolean true"

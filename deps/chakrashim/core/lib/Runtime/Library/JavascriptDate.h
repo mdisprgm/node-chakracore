@@ -1,5 +1,6 @@
 //-------------------------------------------------------------------------------------------------------
 // Copyright (C) Microsoft. All rights reserved.
+// Copyright (c) 2022 ChakraCore Project Contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
 //-------------------------------------------------------------------------------------------------------
 #pragma once
@@ -20,11 +21,7 @@ namespace Js
         JavascriptDate(double value, DynamicType * type);
         JavascriptDate(DynamicType * type);
 
-        static bool Is(Var aValue);
-
         double GetTime() { return m_date.GetMilliSeconds(); }
-        static JavascriptDate* FromVar(Var aValue);
-        static JavascriptDate* UnsafeFromVar(Var aValue);
 
         class EntryInfo
         {
@@ -49,7 +46,6 @@ namespace Js
             static FunctionInfo GetUTCMinutes;
             static FunctionInfo GetUTCMonth;
             static FunctionInfo GetUTCSeconds;
-            static FunctionInfo GetVarDate;
             static FunctionInfo Now;
             static FunctionInfo Parse;
             static FunctionInfo SetDate;
@@ -102,7 +98,6 @@ namespace Js
         static Var EntryGetUTCMinutes(RecyclableObject* function, CallInfo callInfo, ...);
         static Var EntryGetUTCMonth(RecyclableObject* function, CallInfo callInfo, ...);
         static Var EntryGetUTCSeconds(RecyclableObject* function, CallInfo callInfo, ...);
-        static Var EntryGetVarDate(RecyclableObject* function, CallInfo callInfo, ...);
         static Var EntryNow(RecyclableObject* function, CallInfo callInfo, ...);
         static Var EntryParse(RecyclableObject* function, CallInfo callInfo, ...);
         static Var EntrySetDate(RecyclableObject* function, CallInfo callInfo, ...);
@@ -133,6 +128,7 @@ namespace Js
         static Var EntryUTC(RecyclableObject* function, CallInfo callInfo, ...);
         static Var EntryValueOf(RecyclableObject* function, CallInfo callInfo, ...);
         static Var EntrySymbolToPrimitive(RecyclableObject* function, CallInfo callInfo, ...);
+        static double JavascriptDate::TimeClip(Var x);
 
         static JavascriptString* ToLocaleString(JavascriptDate* date, ScriptContext* requestContext);
         static JavascriptString* ToString(JavascriptDate* date, ScriptContext* requestContext);
@@ -158,5 +154,10 @@ namespace Js
         virtual void ExtractSnapObjectDataInto(TTD::NSSnapObjects::SnapObject* objData, TTD::SlabAllocator& alloc) override;
 #endif
     };
+
+    template <> inline bool VarIsImpl<JavascriptDate>(RecyclableObject* obj)
+    {
+        return JavascriptOperators::GetTypeId(obj) == TypeIds_Date;
+    }
 
 } // namespace Js

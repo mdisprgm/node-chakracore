@@ -1,5 +1,6 @@
 //-------------------------------------------------------------------------------------------------------
 // Copyright (C) Microsoft. All rights reserved.
+// Copyright (c) 2021 ChakraCore Project Contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
 //-------------------------------------------------------------------------------------------------------
 #include "stdafx.h"
@@ -252,7 +253,50 @@ namespace JsRTApiTest
         JsRTApiTest::RunWithAttributes(JsRTApiTest::DeleteObjectIndexedPropertyBug);
     }
 
+    void HasOwnItemTest(JsRuntimeAttributes attributes, JsRuntimeHandle runtime)
+    {
+        JsValueRef object;
+        REQUIRE(JsRunScript(_u("var obj = {a: [1,2], \"1\": 111}; obj.__proto__[3] = 333; obj;"), JS_SOURCE_CONTEXT_NONE, _u(""), &object) == JsNoError);
+
+        JsPropertyIdRef idRef = JS_INVALID_REFERENCE;
+        JsValueRef result = JS_INVALID_REFERENCE;
+        // delete property "a" triggers PathTypeHandler -> SimpleDictionaryTypeHandler
+        REQUIRE(JsGetPropertyIdFromName(_u("a"), &idRef) == JsNoError);
+        REQUIRE(JsGetProperty(object, idRef, &result) == JsNoError);
+        bool hasOwnItem = false;
+        REQUIRE(JsHasOwnItem(result, 0, &hasOwnItem) == JsNoError);
+        CHECK(hasOwnItem);
+
+        REQUIRE(JsHasOwnItem(result, 1, &hasOwnItem) == JsNoError);
+        CHECK(hasOwnItem);
+
+        REQUIRE(JsHasOwnItem(result, 2, &hasOwnItem) == JsNoError);
+        CHECK(!hasOwnItem); // It does not have item on index 2 - so we should not be able to find that.
+
+        REQUIRE(JsHasOwnItem(object, 1, &hasOwnItem) == JsNoError);
+        CHECK(hasOwnItem);
+
+        REQUIRE(JsHasOwnItem(object, 3, &hasOwnItem) == JsNoError);
+        CHECK(!hasOwnItem); // index 3 is on prototype.
+
+        bool has = false;
+        JsValueRef indexRef = JS_INVALID_REFERENCE;
+        REQUIRE(JsIntToNumber(3, &indexRef) == JsNoError);
+        REQUIRE(JsHasIndexedProperty(object, indexRef, &has) == JsNoError);
+        CHECK(has); // index 3 is prototype - so it should be able to find that.
+    }
+
+    TEST_CASE("ApiTest_HasOwnItemTest", "[ApiTest]")
+    {
+      JsRTApiTest::RunWithAttributes(JsRTApiTest::HasOwnItemTest);
+    }
+
     void CALLBACK ExternalObjectFinalizeCallback(void *data)
+    {
+        CHECK(data == (void *)0xdeadbeef);
+    }
+
+    void CALLBACK ExternalObjectTraceCallback(void *data)
     {
         CHECK(data == (void *)0xdeadbeef);
     }
@@ -292,6 +336,11 @@ namespace JsRTApiTest
         REQUIRE(JsSetPrototype(jsrtExternalObjectRef, mainObjectRef) == JsNoError);
         REQUIRE(JsHasExternalData(jsrtExternalObjectRef, &hasExternalData) == JsNoError);
         REQUIRE(hasExternalData);
+
+        JsValueRef object3 = JS_INVALID_REFERENCE;
+        JsGetterSetterInterceptor * interceptor3 = nullptr;
+        JsValueRef prototype2 = JS_INVALID_REFERENCE;
+        REQUIRE(JsCreateCustomExternalObject((void *)0xdeadbeef, 0, ExternalObjectTraceCallback, ExternalObjectFinalizeCallback, &interceptor3, prototype2, &object3) == JsNoError);
     }
 
     TEST_CASE("ApiTest_CrossContextSetPropertyTest", "[ApiTest]")
@@ -995,6 +1044,41 @@ namespace JsRTApiTest
         JsRTApiTest::RunWithAttributes(JsRTApiTest::EngineFlagTest);
     }
 
+    void CheckExceptionMetadata(JsValueRef exceptionMetadata)
+    {
+        JsPropertyIdRef property = JS_INVALID_REFERENCE;
+        JsValueRef metadataValue = JS_INVALID_REFERENCE;
+        JsValueType type;
+        REQUIRE(JsGetPropertyIdFromName(_u("exception"), &property) == JsNoError);
+        REQUIRE(JsGetProperty(exceptionMetadata, property, &metadataValue) == JsNoError);
+        REQUIRE(JsGetValueType(metadataValue, &type) == JsNoError);
+        CHECK(type == JsError);
+
+        REQUIRE(JsGetPropertyIdFromName(_u("line"), &property) == JsNoError);
+        REQUIRE(JsGetProperty(exceptionMetadata, property, &metadataValue) == JsNoError);
+        REQUIRE(JsGetValueType(metadataValue, &type) == JsNoError);
+        CHECK(type == JsNumber);
+
+        REQUIRE(JsGetPropertyIdFromName(_u("column"), &property) == JsNoError);
+        REQUIRE(JsGetProperty(exceptionMetadata, property, &metadataValue) == JsNoError);
+        REQUIRE(JsGetValueType(metadataValue, &type) == JsNoError);
+        CHECK(type == JsNumber);
+
+        REQUIRE(JsGetPropertyIdFromName(_u("length"), &property) == JsNoError);
+        REQUIRE(JsGetProperty(exceptionMetadata, property, &metadataValue) == JsNoError);
+        REQUIRE(JsGetValueType(metadataValue, &type) == JsNoError);
+        CHECK(type == JsNumber);
+
+        REQUIRE(JsGetPropertyIdFromName(_u("url"), &property) == JsNoError);
+        REQUIRE(JsGetProperty(exceptionMetadata, property, &metadataValue) == JsNoError);
+        REQUIRE(JsGetValueType(metadataValue, &type) == JsNoError);
+        CHECK(type == JsString);
+
+        REQUIRE(JsGetPropertyIdFromName(_u("source"), &property) == JsNoError);
+        REQUIRE(JsGetProperty(exceptionMetadata, property, &metadataValue) == JsNoError);
+        REQUIRE(JsGetValueType(metadataValue, &type) == JsNoError);
+        CHECK(type == JsString);
+    }
     void ExceptionHandlingTest(JsRuntimeAttributes attributes, JsRuntimeHandle runtime)
     {
         bool value;
@@ -1029,31 +1113,7 @@ namespace JsRTApiTest
         REQUIRE(JsGetProperty(exceptionMetadata, property, &metadataValue) == JsNoError);
         CHECK(metadataValue == exception);
 
-        REQUIRE(JsGetPropertyIdFromName(_u("line"), &property) == JsNoError);
-        REQUIRE(JsGetProperty(exceptionMetadata, property, &metadataValue) == JsNoError);
-        REQUIRE(JsGetValueType(metadataValue, &type) == JsNoError);
-        CHECK(type == JsNumber);
-
-        REQUIRE(JsGetPropertyIdFromName(_u("column"), &property) == JsNoError);
-        REQUIRE(JsGetProperty(exceptionMetadata, property, &metadataValue) == JsNoError);
-        REQUIRE(JsGetValueType(metadataValue, &type) == JsNoError);
-        CHECK(type == JsNumber);
-
-        REQUIRE(JsGetPropertyIdFromName(_u("length"), &property) == JsNoError);
-        REQUIRE(JsGetProperty(exceptionMetadata, property, &metadataValue) == JsNoError);
-        REQUIRE(JsGetValueType(metadataValue, &type) == JsNoError);
-        CHECK(type == JsNumber);
-
-        REQUIRE(JsGetPropertyIdFromName(_u("url"), &property) == JsNoError);
-        REQUIRE(JsGetProperty(exceptionMetadata, property, &metadataValue) == JsNoError);
-        REQUIRE(JsGetValueType(metadataValue, &type) == JsNoError);
-        CHECK(type == JsString);
-
-        REQUIRE(JsGetPropertyIdFromName(_u("source"), &property) == JsNoError);
-        REQUIRE(JsGetProperty(exceptionMetadata, property, &metadataValue) == JsNoError);
-        REQUIRE(JsGetValueType(metadataValue, &type) == JsNoError);
-        CHECK(type == JsString);
-
+        CheckExceptionMetadata(exceptionMetadata);
 
         REQUIRE(JsHasException(&value) == JsNoError);
         CHECK(value == false);
@@ -1069,35 +1129,18 @@ namespace JsRTApiTest
         REQUIRE(JsHasException(&value) == JsNoError);
         CHECK(value == false);
 
-        REQUIRE(JsGetPropertyIdFromName(_u("exception"), &property) == JsNoError);
-        REQUIRE(JsGetProperty(exceptionMetadata, property, &metadataValue) == JsNoError);
-        REQUIRE(JsGetValueType(metadataValue, &type) == JsNoError);
-        CHECK(type == JsError);
+        CheckExceptionMetadata(exceptionMetadata);
 
-        REQUIRE(JsGetPropertyIdFromName(_u("line"), &property) == JsNoError);
-        REQUIRE(JsGetProperty(exceptionMetadata, property, &metadataValue) == JsNoError);
-        REQUIRE(JsGetValueType(metadataValue, &type) == JsNoError);
-        CHECK(type == JsNumber);
+        // Test unicode characters
+        REQUIRE(JsRunScript(_u("function main() {\n  var x = '\u20ac' + test();\n}\nmain();"), JS_SOURCE_CONTEXT_NONE, _u(""), nullptr) == JsErrorScriptException);
+        REQUIRE(JsHasException(&value) == JsNoError);
+        CHECK(value == true);
 
-        REQUIRE(JsGetPropertyIdFromName(_u("column"), &property) == JsNoError);
-        REQUIRE(JsGetProperty(exceptionMetadata, property, &metadataValue) == JsNoError);
-        REQUIRE(JsGetValueType(metadataValue, &type) == JsNoError);
-        CHECK(type == JsNumber);
+        REQUIRE(JsGetAndClearExceptionWithMetadata(&exceptionMetadata) == JsNoError);
+        REQUIRE(JsHasException(&value) == JsNoError);
+        CHECK(value == false);
 
-        REQUIRE(JsGetPropertyIdFromName(_u("length"), &property) == JsNoError);
-        REQUIRE(JsGetProperty(exceptionMetadata, property, &metadataValue) == JsNoError);
-        REQUIRE(JsGetValueType(metadataValue, &type) == JsNoError);
-        CHECK(type == JsNumber);
-
-        REQUIRE(JsGetPropertyIdFromName(_u("url"), &property) == JsNoError);
-        REQUIRE(JsGetProperty(exceptionMetadata, property, &metadataValue) == JsNoError);
-        REQUIRE(JsGetValueType(metadataValue, &type) == JsNoError);
-        CHECK(type == JsString);
-
-        REQUIRE(JsGetPropertyIdFromName(_u("source"), &property) == JsNoError);
-        REQUIRE(JsGetProperty(exceptionMetadata, property, &metadataValue) == JsNoError);
-        REQUIRE(JsGetValueType(metadataValue, &type) == JsNoError);
-        CHECK(type == JsString);
+        CheckExceptionMetadata(exceptionMetadata);
 
         // Following requires eval to be enabled - no point in testing it if we've disabled eval
         if (!(attributes & JsRuntimeAttributeDisableEval))
@@ -1110,35 +1153,7 @@ namespace JsRTApiTest
             REQUIRE(JsHasException(&value) == JsNoError);
             CHECK(value == false);
 
-            REQUIRE(JsGetPropertyIdFromName(_u("exception"), &property) == JsNoError);
-            REQUIRE(JsGetProperty(exceptionMetadata, property, &metadataValue) == JsNoError);
-            REQUIRE(JsGetValueType(metadataValue, &type) == JsNoError);
-            CHECK(type == JsError);
-
-            REQUIRE(JsGetPropertyIdFromName(_u("line"), &property) == JsNoError);
-            REQUIRE(JsGetProperty(exceptionMetadata, property, &metadataValue) == JsNoError);
-            REQUIRE(JsGetValueType(metadataValue, &type) == JsNoError);
-            CHECK(type == JsNumber);
-
-            REQUIRE(JsGetPropertyIdFromName(_u("column"), &property) == JsNoError);
-            REQUIRE(JsGetProperty(exceptionMetadata, property, &metadataValue) == JsNoError);
-            REQUIRE(JsGetValueType(metadataValue, &type) == JsNoError);
-            CHECK(type == JsNumber);
-
-            REQUIRE(JsGetPropertyIdFromName(_u("length"), &property) == JsNoError);
-            REQUIRE(JsGetProperty(exceptionMetadata, property, &metadataValue) == JsNoError);
-            REQUIRE(JsGetValueType(metadataValue, &type) == JsNoError);
-            CHECK(type == JsNumber);
-
-            REQUIRE(JsGetPropertyIdFromName(_u("url"), &property) == JsNoError);
-            REQUIRE(JsGetProperty(exceptionMetadata, property, &metadataValue) == JsNoError);
-            REQUIRE(JsGetValueType(metadataValue, &type) == JsNoError);
-            CHECK(type == JsString);
-
-            REQUIRE(JsGetPropertyIdFromName(_u("source"), &property) == JsNoError);
-            REQUIRE(JsGetProperty(exceptionMetadata, property, &metadataValue) == JsNoError);
-            REQUIRE(JsGetValueType(metadataValue, &type) == JsNoError);
-            CHECK(type == JsString);
+            CheckExceptionMetadata(exceptionMetadata);
         }
     }
 
@@ -2177,13 +2192,18 @@ namespace JsRTApiTest
         return JsNoError;
     }
 
-    static JsErrorCode CALLBACK Succes_NMRC(_In_opt_ JsModuleRecord referencingModule, _In_opt_ JsValueRef exceptionVar)
+    static JsErrorCode CALLBACK Success_NMRC(_In_opt_ JsModuleRecord referencingModule, _In_opt_ JsValueRef exceptionVar)
     {
         if (successTest.mainModule == referencingModule)
         {
             successTest.mainModuleReady = true;
             successTest.mainModuleException = exceptionVar;
         }
+        return JsNoError;
+    }
+
+    static JsErrorCode CALLBACK Success_IIMC(_In_opt_ JsModuleRecord referencingModule, _In_opt_ JsValueRef importMetaVar)
+    {
         return JsNoError;
     }
 
@@ -2197,7 +2217,8 @@ namespace JsRTApiTest
         successTest.mainModule = requestModule;
         REQUIRE(JsSetModuleHostInfo(requestModule, JsModuleHostInfo_FetchImportedModuleCallback, Success_FIMC) == JsNoError);
         REQUIRE(JsSetModuleHostInfo(requestModule, JsModuleHostInfo_FetchImportedModuleFromScriptCallback, Success_FIMC) == JsNoError);
-        REQUIRE(JsSetModuleHostInfo(requestModule, JsModuleHostInfo_NotifyModuleReadyCallback, Succes_NMRC) == JsNoError);
+        REQUIRE(JsSetModuleHostInfo(requestModule, JsModuleHostInfo_NotifyModuleReadyCallback, Success_NMRC) == JsNoError);
+        REQUIRE(JsSetModuleHostInfo(requestModule, JsModuleHostInfo_InitializeImportMetaCallback, Success_IIMC) == JsNoError);
 
         JsValueRef errorObject = JS_INVALID_REFERENCE;
         const char* fileContent = "import {x} from 'foo.js'";
@@ -2239,7 +2260,70 @@ namespace JsRTApiTest
     TEST_CASE("ApiTest_ModuleSuccessTest", "[ApiTest]")
     {
         JsRTApiTest::WithSetup(JsRuntimeAttributeEnableExperimentalFeatures, ModuleSuccessTest);
+    }
 
+    void JsIsCallableTest(JsRuntimeAttributes attributes, JsRuntimeHandle runtime)
+    {
+        JsValueRef callables, callable, index, nonCallables, nonCallable;
+        bool check;
+
+        REQUIRE(JsRunScript(_u("[function(){},function*(){},async function(){},async function*(){},_=>_,async _=>_]"),
+                            JS_SOURCE_CONTEXT_NONE, _u(""), &callables) == JsNoError);
+
+        for (int i = 0; i < 6; i++)
+        {
+            REQUIRE(JsIntToNumber(i, &index) == JsNoError);
+            REQUIRE(JsGetIndexedProperty(callables, index, &callable) == JsNoError);
+            REQUIRE(JsIsCallable(callable, &check) == JsNoError);
+            CHECK(check);
+        }
+
+        
+        REQUIRE(JsRunScript(_u("[class{},Math,Reflect,{}]"), JS_SOURCE_CONTEXT_NONE, _u(""), &nonCallables) == JsNoError);
+
+        for (int i = 0; i < 4; i++)
+        {
+            REQUIRE(JsIntToNumber(i, &index) == JsNoError);
+            REQUIRE(JsGetIndexedProperty(nonCallables, index, &nonCallable) == JsNoError);
+            REQUIRE(JsIsCallable(nonCallable, &check) == JsNoError);
+            CHECK(!check);
+        }
+    }
+
+    TEST_CASE("ApiTest_JsIsCallableTest", "[ApiTest]") {
+        JsRTApiTest::RunWithAttributes(JsIsCallableTest);
+    }
+
+    void JsIsConstructorTest(JsRuntimeAttributes attributes, JsRuntimeHandle runtime)
+    {
+        JsValueRef constructables, constructable, index, nonConstructables, nonConstructable;
+        bool check;
+
+        REQUIRE(JsRunScript(_u("[class{},function(){}]"), JS_SOURCE_CONTEXT_NONE, _u(""), &constructables) == JsNoError);
+
+        for (int i = 0; i < 2; i++)
+        {
+            REQUIRE(JsIntToNumber(i, &index) == JsNoError);
+            REQUIRE(JsGetIndexedProperty(constructables, index, &constructable) == JsNoError);
+            REQUIRE(JsIsConstructor(constructable, &check) == JsNoError);
+            CHECK(check);
+        }
+
+        
+        REQUIRE(JsRunScript(_u("[Math,Reflect,{},function*(){},async function(){},async function*(){},_=>_,async _=>_]"),
+                            JS_SOURCE_CONTEXT_NONE, _u(""), &nonConstructables) == JsNoError);
+
+        for (int i = 0; i < 8; i++)
+        {
+            REQUIRE(JsIntToNumber(i, &index) == JsNoError);
+            REQUIRE(JsGetIndexedProperty(nonConstructables, index, &nonConstructable) == JsNoError);
+            REQUIRE(JsIsConstructor(nonConstructable, &check) == JsNoError);
+            CHECK(!check);
+        }
+    }
+
+    TEST_CASE("ApiTest_JsIsConstructorTest", "[ApiTest]") {
+        JsRTApiTest::RunWithAttributes(JsIsConstructorTest);
     }
 
     void SetModuleHostInfoTest(JsRuntimeAttributes attributes, JsRuntimeHandle runtime)
@@ -2265,7 +2349,7 @@ namespace JsRTApiTest
         REQUIRE(JsInitializeModuleRecord(nullptr, specifier, &requestModule) == JsNoError);
 
         successTest.mainModule = requestModule;
-        REQUIRE(JsSetModuleHostInfo(requestModule, JsModuleHostInfo_NotifyModuleReadyCallback, Succes_NMRC) == JsNoError);
+        REQUIRE(JsSetModuleHostInfo(requestModule, JsModuleHostInfo_NotifyModuleReadyCallback, Success_NMRC) == JsNoError);
 
         // Parsing
         JsValueRef errorObject1 = JS_INVALID_REFERENCE;
@@ -2313,7 +2397,7 @@ namespace JsRTApiTest
         successTest.mainModule = requestModule;
         REQUIRE(JsSetModuleHostInfo(requestModule, JsModuleHostInfo_FetchImportedModuleCallback, Success_FIMC1) == JsNoError);
         REQUIRE(JsSetModuleHostInfo(requestModule, JsModuleHostInfo_FetchImportedModuleFromScriptCallback, Success_FIMC1) == JsNoError);
-        REQUIRE(JsSetModuleHostInfo(requestModule, JsModuleHostInfo_NotifyModuleReadyCallback, Succes_NMRC) == JsNoError);
+        REQUIRE(JsSetModuleHostInfo(requestModule, JsModuleHostInfo_NotifyModuleReadyCallback, Success_NMRC) == JsNoError);
 
         JsValueRef errorObject = JS_INVALID_REFERENCE;
         const char* fileContent = "import {x} from 'foo.js'";

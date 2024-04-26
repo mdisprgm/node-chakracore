@@ -60,13 +60,13 @@ namespace Js
             return AllocWrapper(length, MaxVirtualSize);
         }
 
-        static void FreeMemAlloc(Var ptr)
+        static void __cdecl FreeMemAlloc(Var ptr)
         {
             BOOL fSuccess = VirtualFree((LPVOID)ptr, 0, MEM_RELEASE);
             Assert(fSuccess);
         }
 #else
-        static void FreeMemAlloc(Var ptr)
+        static void __cdecl FreeMemAlloc(Var ptr)
         {
             // This free function should never be used
             Js::Throw::FatalInternalError();
@@ -77,7 +77,12 @@ namespace Js
 
         virtual void MarshalToScriptContext(Js::ScriptContext * scriptContext) = 0;
 
-        ArrayBufferBase(DynamicType *type) : DynamicObject(type), isDetached(false) { }
+        ArrayBufferBase(DynamicType *type) :
+            DynamicObject(type),
+            isDetached(false),
+            infoBits(0),
+            externalized(false) { }
+
         bool IsDetached() { return isDetached; }
 
 #if ENABLE_TTD
@@ -94,14 +99,19 @@ namespace Js
         virtual BYTE* GetBuffer() const = 0;
         virtual bool IsValidVirtualBufferLength(uint length) const { return false; };
 
-        static bool Is(Var value);
-        static ArrayBufferBase* FromVar(Var value);
-        static ArrayBufferBase* UnsafeFromVar(Var value);
+        char GetExtraInfoBits() { return infoBits; }
+        void SetExtraInfoBits(char info) { infoBits = info; }
+
         static int GetIsDetachedOffset() { return offsetof(ArrayBufferBase, isDetached); }
 
+        void Externalize() { this->externalized = true; }
     protected:
         Field(bool) isDetached;
+        Field(bool) externalized;
+        Field(char) infoBits;
     };
+
+    template <> bool VarIsImpl<ArrayBufferBase>(RecyclableObject* obj);
 
     // This encapsulate buffer blob and the refCount.
     class RefCountedBuffer
@@ -139,9 +149,9 @@ namespace Js
         class ArrayBufferDetachedState : public ArrayBufferDetachedStateBase
         {
         public:
-            FreeFN* freeFunction;
+            FreeFN freeFunction;
             Recycler* recycler;
-            ArrayBufferDetachedState(RefCountedBuffer* buffer, uint32 bufferLength, FreeFN* freeFunction, Recycler* r, ArrayBufferAllocationType allocationType)
+            ArrayBufferDetachedState(RefCountedBuffer* buffer, uint32 bufferLength, FreeFN freeFunction, Recycler* r, ArrayBufferAllocationType allocationType)
                 : ArrayBufferDetachedStateBase(TypeIds_ArrayBuffer, buffer, bufferLength, allocationType),
                 recycler(r),
                 freeFunction(freeFunction)
@@ -192,10 +202,7 @@ namespace Js
         static Var EntryDetach(RecyclableObject* function, CallInfo callInfo, ...);
 #endif
 
-        static bool Is(Var aValue);
         static ArrayBuffer* NewFromDetachedState(DetachedStateBase* state, JavascriptLibrary *library);
-        static ArrayBuffer* FromVar(Var aValue);
-        static ArrayBuffer* UnsafeFromVar(Var aValue);
 
         virtual BOOL GetDiagTypeString(StringBuilder<ArenaAllocator>* stringBuilder, ScriptContext* requestContext) override;
         virtual BOOL GetDiagValueString(StringBuilder<ArenaAllocator>* stringBuilder, ScriptContext* requestContext) override;
@@ -205,9 +212,13 @@ namespace Js
         virtual BYTE* GetBuffer() const override;
         RefCountedBuffer *GetBufferContent() { return bufferContent;  }
         static int GetBufferContentsOffset() { return offsetof(ArrayBuffer, bufferContent); }
-        static int GetByteLengthOffset() { return offsetof(ArrayBuffer, bufferLength); }
 
+        typedef void(__cdecl *FreeFn)(void*);
+        virtual FreeFn GetArrayBufferFreeFn() { return nullptr; }
+        static int GetByteLengthOffset() { return offsetof(ArrayBuffer, bufferLength); }
         virtual void AddParent(ArrayBufferParent* parent) override;
+
+        void Detach();
 #if defined(TARGET_64)
         //maximum 2G -1  for amd64
         static const uint32 MaxArrayBufferLength = 0x7FFFFFFF;
@@ -220,7 +231,7 @@ namespace Js
         virtual bool IsValidAsmJsBufferLength(uint length, bool forceCheck = false) { return false; }
         virtual bool IsArrayBuffer() override { return true; }
         virtual bool IsSharedArrayBuffer() override { return false; }
-        virtual ArrayBuffer * GetAsArrayBuffer() override { return ArrayBuffer::FromVar(this); }
+        virtual ArrayBuffer * GetAsArrayBuffer() override;
 
         virtual ArrayBufferContentForDelayedFreeBase* CopyBufferContentForDelayedFree(RefCountedBuffer * content, DECLSPEC_GUARD_OVERFLOW uint32 bufferLength);
 
@@ -228,9 +239,7 @@ namespace Js
 
     protected:
         virtual void ReportExternalMemoryFree();
-        void Detach();
 
-        typedef void __cdecl FreeFn(void* ptr);
         virtual ArrayBufferDetachedStateBase* CreateDetachedState(RefCountedBuffer * content, DECLSPEC_GUARD_OVERFLOW uint32 bufferLength) = 0;
 
         // This function will be called from External buffer and projection buffer as they pass the buffer
@@ -252,6 +261,11 @@ namespace Js
         FieldNoBarrier(RefCountedBuffer *) bufferContent;
         Field(uint32) bufferLength;       // Number of bytes allocated
     };
+
+    template <> inline bool VarIsImpl<ArrayBuffer>(RecyclableObject* obj)
+    {
+        return JavascriptOperators::GetTypeId(obj) == TypeIds_ArrayBuffer;
+    }
 
     class ArrayBufferParent : public ArrayObject
     {
@@ -303,7 +317,9 @@ namespace Js
         virtual bool IsValidAsmJsBufferLength(uint length, bool forceCheck = false) override;
         virtual bool IsValidVirtualBufferLength(uint length) const override;
 
-    protected:
+        virtual FreeFn GetArrayBufferFreeFn() override;
+
+       protected:
         JavascriptArrayBuffer(DynamicType * type);
         virtual ArrayBufferDetachedStateBase* CreateDetachedState(RefCountedBuffer * content, DECLSPEC_GUARD_OVERFLOW uint32 bufferLength) override;
 
@@ -349,7 +365,7 @@ namespace Js
         DEFINE_VTABLE_CTOR(ProjectionArrayBuffer, ArrayBuffer);
         DEFINE_MARSHAL_OBJECT_TO_SCRIPT_CONTEXT(ProjectionArrayBuffer);
 
-        typedef void __stdcall FreeFn(LPVOID ptr);
+        typedef void (__stdcall *FreeFn)(LPVOID ptr);
         virtual ArrayBufferDetachedStateBase* CreateDetachedState(RefCountedBuffer * content, DECLSPEC_GUARD_OVERFLOW uint32 bufferLength) override
         {
             return HeapNew(ArrayBufferDetachedState<FreeFn>, content, bufferLength, CoTaskMemFree, GetScriptContext()->GetRecycler(), ArrayBufferAllocationType::CoTask);

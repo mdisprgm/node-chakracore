@@ -1,5 +1,6 @@
 //-------------------------------------------------------------------------------------------------------
 // Copyright (C) Microsoft. All rights reserved.
+// Copyright (c) ChakraCore Project Contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
 //-------------------------------------------------------------------------------------------------------
 //  Implements typed array.
@@ -10,7 +11,7 @@ namespace Js
 {
     typedef Var (*PFNCreateTypedArray)(Js::ArrayBufferBase* arrayBuffer, uint32 offSet, uint32 mappedLength, Js::JavascriptLibrary* javascriptLibrary);
 
-    template<typename T> int __cdecl TypedArrayCompareElementsHelper(void* context, const void* elem1, const void* elem2);
+    template<typename T> bool TypedArrayCompareElementsHelper(JavascriptArray::CompareVarsInfo* cvInfo, const void* elem1, const void* elem2);
 
     class TypedArrayBase : public ArrayBufferParent
     {
@@ -32,6 +33,7 @@ namespace Js
 
             static FunctionInfo From;
             static FunctionInfo Of;
+            static FunctionInfo At;
             static FunctionInfo CopyWithin;
             static FunctionInfo Entries;
             static FunctionInfo Every;
@@ -39,6 +41,8 @@ namespace Js
             static FunctionInfo Filter;
             static FunctionInfo Find;
             static FunctionInfo FindIndex;
+            static FunctionInfo FindLast;
+            static FunctionInfo FindLastIndex;
             static FunctionInfo ForEach;
             static FunctionInfo IndexOf;
             static FunctionInfo Includes;
@@ -70,6 +74,7 @@ namespace Js
         static Var EntrySubarray(RecyclableObject* function, CallInfo callInfo, ...);
         static Var EntryFrom(RecyclableObject* function, CallInfo callInfo, ...);
         static Var EntryOf(RecyclableObject* function, CallInfo callInfo, ...);
+        static Var EntryAt(RecyclableObject* function, CallInfo callInfo, ...);
         static Var EntryCopyWithin(RecyclableObject* function, CallInfo callInfo, ...);
         static Var EntryEntries(RecyclableObject* function, CallInfo callInfo, ...);
         static Var EntryEvery(RecyclableObject* function, CallInfo callInfo, ...);
@@ -77,6 +82,8 @@ namespace Js
         static Var EntryFilter(RecyclableObject* function, CallInfo callInfo, ...);
         static Var EntryFind(RecyclableObject* function, CallInfo callInfo, ...);
         static Var EntryFindIndex(RecyclableObject* function, CallInfo callInfo, ...);
+        static Var EntryFindLast(RecyclableObject* function, CallInfo callInfo, ...);
+        static Var EntryFindLastIndex(RecyclableObject* function, CallInfo callInfo, ...);
         static Var EntryForEach(RecyclableObject* function, CallInfo callInfo, ...);
         static Var EntryIndexOf(RecyclableObject* function, CallInfo callInfo, ...);
         static Var EntryIncludes(RecyclableObject* function, CallInfo callInfo, ...);
@@ -130,10 +137,7 @@ namespace Js
 
         virtual BOOL InitProperty(Js::PropertyId propertyId, Js::Var value, PropertyOperationFlags flags = PropertyOperation_None, Js::PropertyValueInfo* info = NULL) override;
         virtual BOOL SetPropertyWithAttributes(PropertyId propertyId, Var value, PropertyAttributes attributes, PropertyValueInfo* info, PropertyOperationFlags flags = PropertyOperation_None, SideEffects possibleSideEffects = SideEffects_Any) override;
-        static BOOL Is(Var aValue);
         static BOOL Is(TypeId typeId);
-        static TypedArrayBase* FromVar(Var aValue);
-        static TypedArrayBase* UnsafeFromVar(Var aValue);
         // Returns false if this is not a TypedArray or it's not detached
         static BOOL IsDetachedTypedArray(Var aValue);
         static HRESULT GetBuffer(Var aValue, ArrayBuffer** outBuffer, uint32* outOffset, uint32* outLength);
@@ -179,6 +183,7 @@ namespace Js
 
         // objectArray support
         virtual BOOL SetItemWithAttributes(uint32 index, Var value, PropertyAttributes attributes) override;
+        virtual BOOL IsObjectArrayFrozen() override;
 
         Var FindMinOrMax(Js::ScriptContext * scriptContext, TypeId typeId, bool findMax);
         template<typename T, bool checkNaNAndNegZero> Var FindMinOrMax(Js::ScriptContext * scriptContext, bool findMax);
@@ -197,8 +202,7 @@ namespace Js
         static BOOL CanonicalNumericIndexString(PropertyId propertyId, ScriptContext *scriptContext);
         static BOOL CanonicalNumericIndexString(JavascriptString *propertyString, ScriptContext *scriptContext);
 
-        typedef int(__cdecl* CompareElementsFunction)(void*, const void*, const void*);
-        virtual CompareElementsFunction GetCompareElementsFunction() = 0;
+        virtual void SortHelper(byte* listBuffer, uint32 length, RecyclableObject* compareFn, ScriptContext* scriptContext, ArenaAllocator* allocator) = 0;
 
         virtual Var Subarray(uint32 begin, uint32 end) = 0;
         Field(int32) BYTES_PER_ELEMENT;
@@ -215,6 +219,11 @@ namespace Js
         virtual void ExtractSnapObjectDataInto(TTD::NSSnapObjects::SnapObject* objData, TTD::SlabAllocator& alloc) override;
 #endif
     };
+
+    template <> inline bool VarIsImpl<TypedArrayBase>(RecyclableObject* obj)
+    {
+        return TypedArrayBase::Is(JavascriptOperators::GetTypeId(obj));
+    }
 
     template <typename TypeName, bool clamped = false, bool virtualAllocated = false>
     class TypedArray;
@@ -271,9 +280,6 @@ namespace Js
 
         Var Subarray(uint32 begin, uint32 end);
 
-        static BOOL Is(Var aValue);
-        static TypedArray<TypeName, clamped, virtualAllocated>* FromVar(Var aValue);
-        static TypedArray<TypeName, clamped, virtualAllocated>* UnsafeFromVar(Var aValue);
         static BOOL HasVirtualTableInfo(Var aValue)
         {
             return VirtualTableInfo<TypedArray<TypeName, clamped, virtualAllocated>>::HasVirtualTable(aValue) || VirtualTableInfo<CrossSiteObject<TypedArray<TypeName, clamped, virtualAllocated>>>::HasVirtualTable(aValue);
@@ -488,7 +494,6 @@ namespace Js
             return TRUE;
         }
 
-
         virtual BOOL DirectSetItem(__in uint32 index, __in Js::Var value) override sealed;
         virtual BOOL DirectSetItemNoSet(__in uint32 index, __in Js::Var value) override sealed;
         virtual Var  DirectGetItem(__in uint32 index) override sealed;
@@ -512,9 +517,14 @@ namespace Js
         }
 
     protected:
-        CompareElementsFunction GetCompareElementsFunction()
+        void SortHelper(byte* listBuffer, uint32 length, RecyclableObject* compareFn, ScriptContext* scriptContext, ArenaAllocator* allocator)
         {
-            return &TypedArrayCompareElementsHelper<TypeName>;
+            TypeName* list = reinterpret_cast<TypeName*>(listBuffer);
+            JavascriptArray::CompareVarsInfo cvInfo;
+            cvInfo.scriptContext = scriptContext;
+            cvInfo.compFn = compareFn;
+            cvInfo.compareType = &TypedArrayCompareElementsHelper<TypeName>;
+            JavascriptArray::TypedArraySort<TypeName>(list, length, &cvInfo, allocator);
         }
 
     public:
@@ -551,11 +561,8 @@ namespace Js
 
         static Var Create(ArrayBufferBase* arrayBuffer, uint32 byteOffSet, uint32 mappedLength, JavascriptLibrary* javascriptLibrary);
         static Var NewInstance(RecyclableObject* function, CallInfo callInfo, ...);
-        static BOOL Is(Var aValue);
 
         Var Subarray(uint32 begin, uint32 end);
-        static CharArray* FromVar(Var aValue);
-        static CharArray* UnsafeFromVar(Var aValue);
 
         virtual BOOL DirectSetItem(__in uint32 index, __in Js::Var value) override;
         virtual BOOL DirectSetItemNoSet(__in uint32 index, __in Js::Var value) override;
@@ -574,9 +581,14 @@ namespace Js
         virtual Var TypedCompareExchange(__in uint32 index, __in Var comparand, __in Var replacementValue) override;
 
     protected:
-        CompareElementsFunction GetCompareElementsFunction()
+        void SortHelper(byte* listBuffer, uint32 length, RecyclableObject* compareFn, ScriptContext* scriptContext, ArenaAllocator* allocator)
         {
-            return &TypedArrayCompareElementsHelper<char16>;
+            char16* list = reinterpret_cast<char16*>(listBuffer);
+            JavascriptArray::CompareVarsInfo cvInfo;
+            cvInfo.scriptContext = scriptContext;
+            cvInfo.compFn = compareFn;
+            cvInfo.compareType = &TypedArrayCompareElementsHelper<char16>;
+            JavascriptArray::TypedArraySort<char16>(list, length, &cvInfo, allocator);
         }
 
     public:
@@ -586,6 +598,7 @@ namespace Js
         }
     };
 
+    template <> bool VarIsImpl<CharArray>(RecyclableObject* obj);
 
     template <typename TypeName, bool clamped, bool virtualAllocated>
     TypedArray<TypeName, clamped, virtualAllocated>::TypedArray(ArrayBufferBase* arrayBuffer, uint32 byteOffset, uint32 mappedLength, DynamicType* type) :

@@ -23,6 +23,7 @@
   },
   {
     "this": {
+      "Symbol.toStringTag": "string global",
       "foo": {
         "#__proto__": "function <large string>",
         "prototype": "Object {...}",
@@ -102,7 +103,6 @@
           "getUTCMinutes": "function <large string>",
           "getUTCMonth": "function <large string>",
           "getUTCSeconds": "function <large string>",
-          "getVarDate": "function <large string>",
           "getYear": "function <large string>",
           "setDate": "function <large string>",
           "setFullYear": "function <large string>",
@@ -141,6 +141,7 @@
         "#__proto__": {
           "#__proto__": "Object {...}",
           "constructor": "function <large string>",
+          "at": "function <large string>",
           "push": "function <large string>",
           "concat": "function <large string>",
           "join": "function <large string>",
@@ -153,9 +154,7 @@
           "toLocaleString": "function <large string>",
           "toString": "function <large string>",
           "unshift": "function <large string>",
-          "indexOf": "function <large string>",
           "every": "function <large string>",
-          "filter": "function <large string>",
           "forEach": "function <large string>",
           "lastIndexOf": "function <large string>",
           "map": "function <large string>",
@@ -163,7 +162,9 @@
           "reduceRight": "function <large string>",
           "some": "function <large string>",
           "find": "function <large string>",
+          "findLast": "function <large string>",
           "findIndex": "function <large string>",
+          "findLastIndex": "function <large string>",
           "Symbol.unscopables": "Object {...}",
           "fill": "function <large string>",
           "copyWithin": "function <large string>",
@@ -172,6 +173,10 @@
           "values": "function <large string>",
           "Symbol.iterator": "function <large string>",
           "entries": "function <large string>",
+          "indexOf": "function <large string>",
+          "filter": "function <large string>",
+          "flat": "function <large string>",
+          "flatMap": "function <large string>",
           "length": "number 0"
         },
         "length": "number 0"
@@ -198,7 +203,6 @@
           "getUTCMinutes": "function <large string>",
           "getUTCMonth": "function <large string>",
           "getUTCSeconds": "function <large string>",
-          "getVarDate": "function <large string>",
           "getYear": "function <large string>",
           "setDate": "function <large string>",
           "setFullYear": "function <large string>",
@@ -232,6 +236,7 @@
       }
     },
     "globals": {
+      "Symbol.toStringTag": "string global",
       "foo": {
         "#__proto__": "function <large string>",
         "prototype": "Object {...}",

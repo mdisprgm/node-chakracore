@@ -1,5 +1,6 @@
 //-------------------------------------------------------------------------------------------------------
 // Copyright (C) Microsoft. All rights reserved.
+// Copyright (c) 2021 ChakraCore Project Contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
 //-------------------------------------------------------------------------------------------------------
 #pragma once
@@ -21,6 +22,7 @@ namespace Js
         public:
             static FunctionInfo NewInstance;
             static FunctionInfo HasOwnProperty;
+            static FunctionInfo HasOwn;
             static FunctionInfo PropertyIsEnumerable;
             static FunctionInfo IsPrototypeOf;
             static FunctionInfo ToLocaleString;
@@ -54,6 +56,7 @@ namespace Js
 
         static Var NewInstance(RecyclableObject* function, CallInfo callInfo, ...);
         static Var EntryHasOwnProperty(RecyclableObject* function, CallInfo callInfo, ...);
+        static Var EntryHasOwn(RecyclableObject* function, CallInfo callInfo, ...);
         static Var EntryPropertyIsEnumerable(RecyclableObject* function, CallInfo callInfo, ...);
         static Var EntryIsPrototypeOf(RecyclableObject* function, CallInfo callInfo, ...);
         static Var EntryToLocaleString(RecyclableObject* function, CallInfo callInfo, ...);
@@ -111,11 +114,18 @@ namespace Js
         static bool IsPrototypeOf(RecyclableObject* proto, RecyclableObject* obj, ScriptContext* scriptContext);
         static bool IsPrototypeOfStopAtProxy(RecyclableObject* proto, RecyclableObject* obj, ScriptContext* scriptContext);
 
+        static void SpreadObjectLiteral(Var source, Var to, ScriptContext* scriptContext);
+        static void Restify(Var source, Var to, void* excludedStatic, void* excludedComputed, ScriptContext* scriptContext);
+
     private:
-        template <bool tryCopy>
-        static void AssignHelper(Var fromArg, RecyclableObject* to, ScriptContext* scriptContext);
-        static void AssignForGenericObjects(RecyclableObject* from, RecyclableObject* to, ScriptContext* scriptContext);
-        static void AssignForProxyObjects(RecyclableObject* from, RecyclableObject* to, ScriptContext* scriptContext);
+        template <bool tryCopy, bool assign>
+        static void CopyDataPropertiesHelper(Var source, RecyclableObject* to, ScriptContext* scriptContext, const BVSparse<Recycler>* excluded = nullptr);
+        template <bool assign>
+        static void CopyDataPropertiesForGenericObjects(RecyclableObject* from, RecyclableObject* to, const BVSparse<Recycler>* excluded, ScriptContext* scriptContext);
+        template <bool assign>
+        static void CopyDataPropertiesForProxyObjects(RecyclableObject* from, RecyclableObject* to, const BVSparse<Recycler>* excluded, ScriptContext* scriptContext);
+
+        static BOOL CreateDataProperty(RecyclableObject* obj, PropertyId key, Var value, ScriptContext* scriptContext);
         static JavascriptArray* CreateKeysHelper(RecyclableObject* object, ScriptContext* scriptContext, BOOL enumNonEnumerable, bool includeSymbolProperties, bool includeStringProperties, bool includeSpecialProperties);
 
         static void ModifyGetterSetterFuncName(const PropertyRecord * propertyRecord, const PropertyDescriptor& descriptor, ScriptContext* scriptContext);
@@ -125,5 +135,7 @@ namespace Js
         static Var DefinePropertiesHelperForProxyObjects(RecyclableObject* object, RecyclableObject* properties, ScriptContext* scriptContext);
 
         static Var GetToStringTagValue(RecyclableObject *thisArg, ScriptContext *scriptContext);
+
+        
     };
 }

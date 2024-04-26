@@ -119,7 +119,7 @@ namespace Js
 
     template<> inline DynamicObject* InlineCache::GetSourceObject<CacheType::CacheType_Local>(RecyclableObject *const propertyObject)
     {
-        return DynamicObject::UnsafeFromVar(propertyObject);
+        return UnsafeVarTo<DynamicObject>(propertyObject);
     }
     template<> inline DynamicObject* InlineCache::GetSourceObject<CacheType::CacheType_Proto>(RecyclableObject *const propertyObject)
     {
@@ -212,10 +212,10 @@ namespace Js
         if (CheckLocal && type == u.local.type)
         {
             Assert(object->GetScriptContext() == requestContext); // we never cache a type from another script context
-            Assert(isRoot || object->GetPropertyIndex(propertyId) == DynamicObject::FromVar(object)->GetTypeHandler()->InlineOrAuxSlotIndexToPropertyIndex(u.local.slotIndex, true));
-            Assert(!isRoot || RootObjectBase::FromVar(object)->GetRootPropertyIndex(propertyId) == DynamicObject::FromVar(object)->GetTypeHandler()->InlineOrAuxSlotIndexToPropertyIndex(u.local.slotIndex, true));
+            Assert(isRoot || object->GetPropertyIndex(propertyId) == VarTo<DynamicObject>(object)->GetTypeHandler()->InlineOrAuxSlotIndexToPropertyIndex(u.local.slotIndex, true));
+            Assert(!isRoot || VarTo<RootObjectBase>(object)->GetRootPropertyIndex(propertyId) == VarTo<DynamicObject>(object)->GetTypeHandler()->InlineOrAuxSlotIndexToPropertyIndex(u.local.slotIndex, true));
             Assert(object->CanStorePropertyValueDirectly(propertyId, isRoot));
-            DynamicObject::UnsafeFromVar(object)->SetInlineSlot(SetSlotArgumentsRoot(propertyId, isRoot, u.local.slotIndex, propertyValue));
+            UnsafeVarTo<DynamicObject>(object)->SetInlineSlot(SetSlotArgumentsRoot(propertyId, isRoot, u.local.slotIndex, propertyValue));
             if (ReturnOperationInfo)
             {
                 operationInfo->cacheType = CacheType_Local;
@@ -228,10 +228,10 @@ namespace Js
         if (CheckLocal && TypeWithAuxSlotTag(type) == u.local.type)
         {
             Assert(object->GetScriptContext() == requestContext); // we never cache a type from another script context
-            Assert(isRoot || object->GetPropertyIndex(propertyId) == DynamicObject::FromVar(object)->GetTypeHandler()->InlineOrAuxSlotIndexToPropertyIndex(u.local.slotIndex, false));
-            Assert(!isRoot || RootObjectBase::FromVar(object)->GetRootPropertyIndex(propertyId) == DynamicObject::FromVar(object)->GetTypeHandler()->InlineOrAuxSlotIndexToPropertyIndex(u.local.slotIndex, false));
+            Assert(isRoot || object->GetPropertyIndex(propertyId) == VarTo<DynamicObject>(object)->GetTypeHandler()->InlineOrAuxSlotIndexToPropertyIndex(u.local.slotIndex, false));
+            Assert(!isRoot || VarTo<RootObjectBase>(object)->GetRootPropertyIndex(propertyId) == VarTo<DynamicObject>(object)->GetTypeHandler()->InlineOrAuxSlotIndexToPropertyIndex(u.local.slotIndex, false));
             Assert(object->CanStorePropertyValueDirectly(propertyId, isRoot));
-            DynamicObject::UnsafeFromVar(object)->SetAuxSlot(SetSlotArgumentsRoot(propertyId, isRoot, u.local.slotIndex, propertyValue));
+            UnsafeVarTo<DynamicObject>(object)->SetAuxSlot(SetSlotArgumentsRoot(propertyId, isRoot, u.local.slotIndex, propertyValue));
             if (ReturnOperationInfo)
             {
                 operationInfo->cacheType = CacheType_Local;
@@ -259,15 +259,15 @@ namespace Js
             AssertMsg(!((DynamicType*)u.local.typeWithoutProperty)->GetTypeHandler()->GetIsPrototype(), "Why did we cache a property add for a prototype?");
             Assert(((DynamicType*)typeWithProperty)->GetTypeHandler()->CanStorePropertyValueDirectly((const DynamicObject*)object, propertyId, isRoot));
 
-            DynamicObject *const dynamicObject = DynamicObject::UnsafeFromVar(object);
+            DynamicObject *const dynamicObject = UnsafeVarTo<DynamicObject>(object);
 
             // If we're adding a property to an inlined slot, we should never need to adjust auxiliary slot array size.
             Assert(newAuxSlotCapacity == 0);
 
             dynamicObject->type = typeWithProperty;
 
-            Assert(isRoot || object->GetPropertyIndex(propertyId) == DynamicObject::FromVar(object)->GetTypeHandler()->InlineOrAuxSlotIndexToPropertyIndex(propertyIndex, true));
-            Assert(!isRoot || RootObjectBase::FromVar(object)->GetRootPropertyIndex(propertyId) == DynamicObject::FromVar(object)->GetTypeHandler()->InlineOrAuxSlotIndexToPropertyIndex(propertyIndex, true));
+            Assert(isRoot || object->GetPropertyIndex(propertyId) == VarTo<DynamicObject>(object)->GetTypeHandler()->InlineOrAuxSlotIndexToPropertyIndex(propertyIndex, true));
+            Assert(!isRoot || VarTo<RootObjectBase>(object)->GetRootPropertyIndex(propertyId) == VarTo<DynamicObject>(object)->GetTypeHandler()->InlineOrAuxSlotIndexToPropertyIndex(propertyIndex, true));
 
             dynamicObject->SetInlineSlot(SetSlotArgumentsRoot(propertyId, isRoot, propertyIndex, propertyValue));
 
@@ -295,7 +295,7 @@ namespace Js
             AssertMsg(!((DynamicType*)TypeWithoutAuxSlotTag(u.local.typeWithoutProperty))->GetTypeHandler()->GetIsPrototype(), "Why did we cache a property add for a prototype?");
             Assert(((DynamicType*)typeWithProperty)->GetTypeHandler()->CanStorePropertyValueDirectly((const DynamicObject*)object, propertyId, isRoot));
 
-            DynamicObject *const dynamicObject = DynamicObject::UnsafeFromVar(object);
+            DynamicObject *const dynamicObject = UnsafeVarTo<DynamicObject>(object);
 
             if (newAuxSlotCapacity > 0)
             {
@@ -307,8 +307,8 @@ namespace Js
 
             dynamicObject->type = typeWithProperty;
 
-            Assert(isRoot || object->GetPropertyIndex(propertyId) == DynamicObject::FromVar(object)->GetTypeHandler()->InlineOrAuxSlotIndexToPropertyIndex(propertyIndex, false));
-            Assert(!isRoot || RootObjectBase::FromVar(object)->GetRootPropertyIndex(propertyId) == DynamicObject::FromVar(object)->GetTypeHandler()->InlineOrAuxSlotIndexToPropertyIndex(propertyIndex, false));
+            Assert(isRoot || object->GetPropertyIndex(propertyId) == VarTo<DynamicObject>(object)->GetTypeHandler()->InlineOrAuxSlotIndexToPropertyIndex(propertyIndex, false));
+            Assert(!isRoot || VarTo<RootObjectBase>(object)->GetRootPropertyIndex(propertyId) == VarTo<DynamicObject>(object)->GetTypeHandler()->InlineOrAuxSlotIndexToPropertyIndex(propertyIndex, false));
 
             dynamicObject->SetAuxSlot(SetSlotArgumentsRoot(propertyId, isRoot, propertyIndex, propertyValue));
 
@@ -328,11 +328,11 @@ namespace Js
             RecyclableObject * function;
             if (u.accessor.isOnProto)
             {
-                function = RecyclableObject::UnsafeFromVar(u.accessor.object->GetInlineSlot(u.accessor.slotIndex));
+                function = UnsafeVarTo<RecyclableObject>(u.accessor.object->GetInlineSlot(u.accessor.slotIndex));
             }
             else
             {
-                function = RecyclableObject::UnsafeFromVar(DynamicObject::FromVar(object)->GetInlineSlot(u.accessor.slotIndex));
+                function = UnsafeVarTo<RecyclableObject>(VarTo<DynamicObject>(object)->GetInlineSlot(u.accessor.slotIndex));
             }
 
             Assert(setterValue == nullptr || setterValue == function);
@@ -359,11 +359,11 @@ namespace Js
             RecyclableObject * function;
             if (u.accessor.isOnProto)
             {
-                function = RecyclableObject::UnsafeFromVar(u.accessor.object->GetAuxSlot(u.accessor.slotIndex));
+                function = UnsafeVarTo<RecyclableObject>(u.accessor.object->GetAuxSlot(u.accessor.slotIndex));
             }
             else
             {
-                function = RecyclableObject::UnsafeFromVar(DynamicObject::FromVar(object)->GetAuxSlot(u.accessor.slotIndex));
+                function = UnsafeVarTo<RecyclableObject>(VarTo<DynamicObject>(object)->GetAuxSlot(u.accessor.slotIndex));
             }
 
             Assert(setterValue == nullptr || setterValue == function);

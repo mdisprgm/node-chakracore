@@ -1,5 +1,6 @@
 //-------------------------------------------------------------------------------------------------------
 // Copyright (C) Microsoft. All rights reserved.
+// Copyright (c) ChakraCore Project Contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
 //-------------------------------------------------------------------------------------------------------
 #include "ParserPch.h"
@@ -2538,7 +2539,7 @@ namespace UnifiedRegex
                     {
                         // Root of trie will live in compile-time allocator, but body will be in run-time allocator
                         runtimeTrie = Anew(compiler.ctAllocator, RuntimeCharTrie);
-                        runtimeTrie->CloneFrom(compiler.rtAllocator, trie);
+                        runtimeTrie->CloneFrom(compiler.scriptContext, compiler.rtAllocator, trie);
                         scheme = Trie;
                     }
                     return;
@@ -4611,7 +4612,7 @@ namespace UnifiedRegex
     {
 
 #if ENABLE_REGEX_CONFIG_OPTIONS
-        if (w != 0)
+        if (w != 0 && REGEX_CONFIG_FLAG(RegexDebugAST))
         {
             w->PrintEOL(_u("REGEX AST /%s/ {"), PointerValue(program->source));
             w->Indent();
@@ -4723,7 +4724,7 @@ namespace UnifiedRegex
                     root->AnnotatePass4(compiler);
 
 #if ENABLE_REGEX_CONFIG_OPTIONS
-                    if (w != 0)
+                    if (w != 0 && REGEX_CONFIG_FLAG(RegexDebugAST) && REGEX_CONFIG_FLAG(RegexDebugAnnotatedAST))
                     {
                         w->PrintEOL(_u("REGEX ANNOTATED AST /%s/ {"), PointerValue(program->source));
                         w->Indent();

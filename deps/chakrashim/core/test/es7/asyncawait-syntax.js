@@ -1,5 +1,6 @@
 //-------------------------------------------------------------------------------------------------------
 // Copyright (C) Microsoft. All rights reserved.
+// Copyright (c) ChakraCore Project Contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
 //-------------------------------------------------------------------------------------------------------
 
@@ -42,16 +43,7 @@ var tests = [
 
             assert.throws(function () { eval("async function method() { var await = 1; }"); }, SyntaxError, "'await' cannot be used as an identifier in an async function.", "The use of a keyword for an identifier is invalid");
             assert.throws(function () { eval("async function method(await;) { }"); }, SyntaxError, "'await' cannot be used as an identifier in an async function.", "The use of a keyword for an identifier is invalid");
-            assert.throws(function () { eval("async function method() { var x = await; }"); }, SyntaxError, "'await' cannot be used as an identifier in an async function.", "Syntax error");
-        }
-    },
-    {
-        name: "Async keyword as generator",
-        body: function () {
-            assert.throws(function () { eval("async function* badFunction() { }"); }, SyntaxError, "'async' keyword is not allowed with a generator in a statement", "Syntax error");
-            assert.throws(function () { eval("var badVariable = async function*() { }"); }, SyntaxError, "'async' keyword is not allowed with a generator in an expression", "Syntax error");
-            assert.throws(function () { eval("var o { async *badFunction() { } };"); }, SyntaxError, "'async' keyword is not allowed with a generator in a object literal member", "Expected ';'");
-            assert.throws(function () { eval("class C { async *badFunction() { } };"); }, SyntaxError, "'async' keyword is not allowed with a generator in a class member", "Syntax error");
+            assert.throws(function () { eval("async function method() { var x = await; }"); }, SyntaxError, "'await' cannot be used as an identifier in an async function.", "Unexpected token ';' after 'await'");
         }
     },
     {
@@ -67,26 +59,26 @@ var tests = [
     {
         name: "Await in eval global scope",
         body: function () {
-            assert.throws(function () { eval("var result = await call();"); }, SyntaxError, "'await' keyword is not allowed in eval global scope", "Expected ';'");
-            assert.throws(function () { eval("await call();"); }, SyntaxError, "'await' keyword is not allowed in eval global scope", "Expected ';'");
+            assert.throws(function () { eval("var result = await call();"); }, SyntaxError, "'await' keyword is not allowed in eval global scope", `'await' expression not allowed in this context`);
+            assert.throws(function () { eval("await call();"); }, SyntaxError, "'await' keyword is not allowed in eval global scope", `'await' expression not allowed in this context`);
 
-            assert.throws(function () { eval("await a;"); }, SyntaxError, "'await' keyword is not allowed in eval global scope", "Expected ';'");
-            assert.throws(function () { eval("await a[0];"); }, SyntaxError, "'await' keyword is not allowed in eval global scope", "Expected ';'");
-            assert.throws(function () { eval("await o.p;"); }, SyntaxError, "'await' keyword is not allowed in eval global scope", "Expected ';'");
+            assert.throws(function () { eval("await a;"); }, SyntaxError, "'await' keyword is not allowed in eval global scope", `'await' expression not allowed in this context`);
+            assert.throws(function () { eval("await a[0];"); }, SyntaxError, "'await' keyword is not allowed in eval global scope", `'await' expression not allowed in this context`);
+            assert.throws(function () { eval("await o.p;"); }, SyntaxError, "'await' keyword is not allowed in eval global scope", `'await' expression not allowed in this context`);
             assert.throws(function () { eval("a[await p];"); }, SyntaxError, "'await' keyword is not allowed in eval global scope", "Expected ']'");
-            assert.throws(function () { eval("a + await p;"); }, SyntaxError, "'await' keyword is not allowed in eval global scope", "Expected ';'");
-            assert.throws(function () { eval("await p + await q;"); }, SyntaxError, "'await' keyword is not allowed in eval global scope", "Expected ';'");
+            assert.throws(function () { eval("a + await p;"); }, SyntaxError, "'await' keyword is not allowed in eval global scope", `'await' expression not allowed in this context`);
+            assert.throws(function () { eval("await p + await q;"); }, SyntaxError, "'await' keyword is not allowed in eval global scope", `'await' expression not allowed in this context`);
             assert.throws(function () { eval("foo(await p, await q);"); }, SyntaxError, "'await' keyword is not allowed in eval global scope", "Expected ')'");
 
             assert.throws(function () { eval("var lambdaParenNoArg = await () => x < y;"); }, SyntaxError, "'await' keyword is not allowed with a non-async lambda expression", "Syntax error");
-            assert.throws(function () { eval("var lambdaArgs = await async (a, b ,c) => a + b + c;"); }, SyntaxError, "There miss parenthises", "Expected ';'");
+            assert.throws(function () { eval("var lambdaArgs = await async (a, b ,c) => a + b + c;"); }, SyntaxError, "There miss parenthises", `'await' expression not allowed in this context`);
             assert.throws(function () { eval("var lambdaArgs = await (async (a, b ,c) => a + b + c);"); }, ReferenceError, "The 'await' function doesn't exists in this scope", "'await' is not defined");
         }
     },
     {
         name: "Await in a non-async function",
         body: function () {
-            assert.throws(function () { eval("function method() { var x = await call(); }"); }, SyntaxError, "'await' cannot be used in a non-async function.", "Expected ';'");
+            assert.throws(function () { eval("function method() { var x = await call(); }"); }, SyntaxError, "'await' cannot be used in a non-async function.", `'await' expression not allowed in this context`);
         }
     },
     {
@@ -132,6 +124,14 @@ var tests = [
             var c = async x => x;
             var d = async (a, b) => { };
             assert.doesNotThrow(function () { eval("(async function (z) {})[0]"); }, "Should not throw when async function occurs a type conversion");
+        }
+    },
+    {
+        name: "Async keyword cannot contain unicode escapes",
+        body: function () {
+            assert.throws(function () { eval("\\u0061sync function foo() {} }"); }, SyntaxError, "async keyword cannot contain unicode escapes");
+            assert.throws(function () { eval("({ \\u0061sync foo() {} })"); }, SyntaxError, "async keyword cannot contain unicode escapes");
+            assert.throws(function () { eval("class A { \\u0061sync foo() {} }"); }, SyntaxError, "async keyword cannot contain unicode escapes");
         }
     },
     {
@@ -198,10 +198,10 @@ var tests = [
     {
         name: "await is a keyword and disallowed within arrow function parameter syntax",
         body: function () {
-            assert.throws(function () { eval("async function af() { var a = await => { }; }"); }, SyntaxError, "await cannot appear as the formal name of an unparenthesized arrow function parameter list", "Syntax error");
-            assert.throws(function () { eval("async function af() { var a = (await) => { }; }"); }, SyntaxError, "await cannot appear as a formal name within parenthesized arrow function parameter list (single formal)", "Syntax error");
-            assert.throws(function () { eval("async function af() { var a = (x, y, await) => { }; }"); }, SyntaxError, "await cannot appear as a formal name within parenthesized arrow function parameter list (middle formal)", "Syntax error");
-            assert.throws(function () { eval("async function af() { var a = (x, await, y) => { }; }"); }, SyntaxError, "await cannot appear as a formal name within parenthesized arrow function parameter list (last formal)", "Syntax error");
+            assert.throws(function () { eval("async function af() { var a = await => { }; }"); }, SyntaxError, "await cannot appear as the formal name of an unparenthesized arrow function parameter list", "Unexpected token '=>' after 'await'");
+            assert.throws(function () { eval("async function af() { var a = (await) => { }; }"); }, SyntaxError, "await cannot appear as a formal name within parenthesized arrow function parameter list (single formal)", "Unexpected token ')' after 'await'");
+            assert.throws(function () { eval("async function af() { var a = (x, y, await) => { }; }"); }, SyntaxError, "await cannot appear as a formal name within parenthesized arrow function parameter list (middle formal)", "Unexpected token ')' after 'await'");
+            assert.throws(function () { eval("async function af() { var a = (x, await, y) => { }; }"); }, SyntaxError, "await cannot appear as a formal name within parenthesized arrow function parameter list (last formal)", "Unexpected token ',' after 'await'");
 
             assert.throws(function () { eval("async function af() { var a = (x = await 0) => { }; }"); }, SyntaxError, "await expression is disallowed within arrow function default parameter expression (single formal)", "'await' expression not allowed in this context");
             assert.throws(function () { eval("async function af() { var a = (x, y = await 0, z = 0) => { }; }"); }, SyntaxError, "await expression is disallowed within arrow function default parameter expression (middle formal)", "'await' expression not allowed in this context");
@@ -211,12 +211,20 @@ var tests = [
             assert.throws(function () { eval("async await => { }"); }, SyntaxError, "await cannot appear as the formal name of a unparathensized async arrow function", "The use of a keyword for an identifier is invalid");
             assert.throws(function () { eval("function () { a = async await => { } }"); }, SyntaxError, "await cannot appear as the formal name of a unparathensized async arrow function expression", "Expected identifier");
             assert.throws(function () { eval("async (a, b = await 1) => {}"); }, SyntaxError, "await expression cannot appear in the formals of an async arrow function", "Expected ')'");
-            assert.throws(function () { eval("async () => { await => { }; }"); }, SyntaxError, "await cannot appear as the formal name of an unparathensized arrow function within an async arrow function", "Syntax error");
-            assert.throws(function () { eval("async () => { (a, await) => { }; }"); }, SyntaxError, "await cannot appear as the formal name of a parathensized arrow function within an async arrow function", "Syntax error");
+            assert.throws(function () { eval("async () => { await => { }; }"); }, SyntaxError, "await cannot appear as the formal name of an unparathensized arrow function within an async arrow function", "Unexpected token '=>' after 'await'");
+            assert.throws(function () { eval("async () => { (a, await) => { }; }"); }, SyntaxError, "await cannot appear as the formal name of a parathensized arrow function within an async arrow function", "Unexpected token ')' after 'await'");
             assert.throws(function () { eval("async () => { (x, y, z = await 0) => { }; }"); }, SyntaxError, "await expression is disallowed within default parameter expression of an arrow function which is inside an async arrow function", "'await' expression not allowed in this context");
-            assert.throws(function () { eval("async function af() { (b = (c = await => {}) => {}) => {}; }"); }, SyntaxError, "await cannot appear as the formal name of an unparathensized arrow function in a nested case too", "Syntax error");
+            assert.throws(function () { eval("async function af() { (b = (c = await => {}) => {}) => {}; }"); }, SyntaxError, "await cannot appear as the formal name of an unparathensized arrow function in a nested case too", "Unexpected token '=>' after 'await'");
         }
     },
+    {
+        name: "Specific error message when using 'await' as a keyword outside 'async' context",
+        body: function () {
+            assert.throws(function () {
+                eval(`await new Promise(() => {});`);
+            }, SyntaxError, "await is not a keyword here", `'await' expression not allowed in this context`);
+        }
+    }
 ];
 
 testRunner.runTests(tests, { verbose: WScript.Arguments[0] != "summary" });

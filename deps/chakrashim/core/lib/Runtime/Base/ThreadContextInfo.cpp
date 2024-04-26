@@ -1,5 +1,6 @@
 //-------------------------------------------------------------------------------------------------------
 // Copyright (C) Microsoft. All rights reserved.
+// Copyright (c) ChakraCore Project Contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
 //-------------------------------------------------------------------------------------------------------
 
@@ -20,6 +21,10 @@
 #  include <cfguard.h>
 # else
    extern "C" void __fastcall _guard_check_icall(_In_ uintptr_t _Target);
+# endif
+
+# ifndef _GUARD_CHECK_ICALL
+#  define _GUARD_CHECK_ICALL _guard_check_icall
 # endif
 #endif
 
@@ -278,6 +283,24 @@ intptr_t
 ThreadContextInfo::GetX86AllOnesF4Addr() const
 {
     return ShiftAddr(this, &X86_ALL_ONES_F4);
+}
+
+intptr_t
+ThreadContextInfo::GetX86AllOnesI4Addr() const
+{
+    return ShiftAddr(this, &X86_ALL_ONES_I4);
+}
+
+intptr_t
+ThreadContextInfo::GetX86AllOnesI8Addr() const
+{
+    return ShiftAddr(this, &X86_ALL_ONES_I8);
+}
+
+intptr_t
+ThreadContextInfo::GetX86AllOnesI16Addr() const
+{
+    return ShiftAddr(this, &X86_ALL_ONES_I16);
 }
 
 intptr_t

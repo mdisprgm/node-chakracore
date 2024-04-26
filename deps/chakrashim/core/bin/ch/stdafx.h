@@ -1,5 +1,6 @@
 //-------------------------------------------------------------------------------------------------------
 // Copyright (C) Microsoft. All rights reserved.
+// Copyright (c) 2021 ChakraCore Project Contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
 //-------------------------------------------------------------------------------------------------------
 #pragma once
@@ -129,7 +130,6 @@ do { \
     if ((jsErrorCode) != JsNoError) { \
         fwprintf(stderr, _u("ERROR: ") _u(#expr) _u(" failed. JsErrorCode=0x%x (%s)\n"), jsErrorCode, Helpers::JsErrorCodeToString(jsErrorCode)); \
         fflush(stderr); \
-        Assert(false); \
         return JS_INVALID_REFERENCE; \
     } \
 } while (0)
@@ -140,7 +140,6 @@ do { \
     if ((jsErrorCode) != JsNoError) { \
         fwprintf(stderr, _u("ERROR: ") _u(#expr) _u(" failed. JsErrorCode=0x%x (%s)\n"), jsErrorCode, Helpers::JsErrorCodeToString(jsErrorCode)); \
         fflush(stderr); \
-        Assert(false); \
         return false; \
     } \
 } while (0)
@@ -199,6 +198,7 @@ public:
 
     JsErrorCode Initialize(JsValueRef value)
     {
+        errorCode = JsNoError;
         JsValueRef strValue;
         JsValueType type;
         ChakraRTInterface::JsGetValueType(value, &type);
